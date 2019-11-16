@@ -4,9 +4,9 @@ using System.Text;
 
 namespace TechnicalServices
 {
-    class DailyTeeSheet
+    public class DailyTeeSheet
     {
         public DateTime Date { get; set; }
-        public TeeTime[] TeeTimes { get; set; }
+        public IEnumerable<TeeTime> TeeTimes { get; set; }
     }
 }

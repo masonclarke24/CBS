@@ -1,8 +1,8 @@
-﻿namespace CBS
+﻿namespace CBS.Data
 {
     public class ApplicationUser : Microsoft.AspNetCore.Identity.IdentityUser
     {
         [Microsoft.AspNetCore.Identity.PersonalData]
-        public string MembershipLevel { get; set; }
+        public string MemberNumber { get; set; }
     }
 }

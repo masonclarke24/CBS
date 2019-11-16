@@ -23,9 +23,11 @@ namespace CBS.Data.Migrations
                 oldMaxLength: 128);
 
             migrationBuilder.AddColumn<string>(
-                name: "MembershipLevel",
+                name: "MemberNumber",
                 table: "AspNetUsers",
-                nullable: true);
+                type: "CHAR(10)",
+                nullable: false,
+                defaultValue: "");
 
             migrationBuilder.AlterColumn<string>(
                 name: "ProviderKey",
@@ -42,12 +44,20 @@ namespace CBS.Data.Migrations
                 oldClrType: typeof(string),
                 oldType: "nvarchar(128)",
                 oldMaxLength: 128);
+
+            migrationBuilder.AddForeignKey(
+                name: "FK_AspNetUsers_MemberNumber_Members",
+                table: "AspNetUsers",
+                column: "MemberNumber",
+                principalTable: "Members",
+                principalColumn: "MemberNumber"
+                );
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropColumn(
-                name: "MembershipLevel",
+                name: "MemberNumber",
                 table: "AspNetUsers");
 
             migrationBuilder.AlterColumn<string>(

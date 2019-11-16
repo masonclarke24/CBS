@@ -9,6 +9,8 @@ namespace TechnicalServices
     public class DailyTeeSheets
     {
         public string MemberNumber { get; private set; }
+
+        private const string ConnectionString = "Server=(localdb)\\mssqllocaldb;Database=CBS;Integrated Security=True;";
         private SortedDictionary<string, TeeTime> allTeeSheets;
 
         public DailyTeeSheets(string memberNumber)
@@ -28,7 +30,7 @@ namespace TechnicalServices
 
         public DailyTeeSheet FindDailyTeeSheet(DateTime date)
         {
-            using (SqlConnection connection = new SqlConnection("Server=(localdb)\\mssqllocaldb;Database=CBS;Integrated Security=True;"))
+            using (SqlConnection connection = new SqlConnection(ConnectionString))
             {
                 using (SqlCommand findDailyTeeSheet = new SqlCommand("FindDailyTeeSheet", connection) { CommandType = System.Data.CommandType.StoredProcedure })
                 {

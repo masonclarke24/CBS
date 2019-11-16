@@ -52,10 +52,17 @@ namespace CBS.Data.Migrations
                 principalTable: "Members",
                 principalColumn: "MemberNumber"
                 );
+            migrationBuilder.AddUniqueConstraint(
+                name: "UNIQUE_AspNetUsers_MemberNumber",
+                table: "AspNetUsers",
+                column: "MemberNumber"
+                );
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropUniqueConstraint("UNIQUE_AspNetUsers_MemberNumber", "AspNetUsers");
+            migrationBuilder.DropForeignKey("FK_AspNetUsers_MemberNumber_Members", "AspNetUsers");
             migrationBuilder.DropColumn(
                 name: "MemberNumber",
                 table: "AspNetUsers");

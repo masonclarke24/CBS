@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
 using System.Text;
@@ -24,7 +25,7 @@ namespace TechnicalServices
         public DailyTeeSheet FindDailyTeeSheet(DateTime date)
         {
             var minutes = new string[] { "00", "07", "15", "22", "30", "37", "45", "52" };
-            for (int i = 7; i < 20; i++)
+            for (int i = 7; i < 19; i++)
             {
                 foreach (string minute in minutes)
                 {
@@ -33,7 +34,7 @@ namespace TechnicalServices
             }
             using (SqlConnection connection = new SqlConnection(ConnectionString))
             {
-                using (SqlCommand findDailyTeeSheet = new SqlCommand("FindDailyTeeSheet", connection) { CommandType = System.Data.CommandType.StoredProcedure })
+                using (SqlCommand findDailyTeeSheet = new SqlCommand("FindDailyTeeSheet", connection) { CommandType = CommandType.StoredProcedure })
                 {
                     findDailyTeeSheet.Parameters.AddWithValue("@date", date.ToShortDateString());
                     findDailyTeeSheet.Connection.Open();
@@ -55,7 +56,7 @@ namespace TechnicalServices
                                     allTeeSheets.Add(key,
                                     new TeeTime()
                                     {
-                                        NumberOfCarts = int.Parse((string)reader["numberOfCarts"]),
+                                        NumberOfCarts = int.Parse(reader["numberOfCarts"].ToString()),
                                         Phone = (string)reader["phone"],
                                         Datetime = DateTime.Parse(key)
                                     }); ;
@@ -83,13 +84,29 @@ namespace TechnicalServices
                     reserveTeeTime.Parameters.AddWithValue("@date", requestedTeeTime.Datetime);
                     reserveTeeTime.Parameters.AddWithValue("@time", requestedTeeTime.Datetime);
                     reserveTeeTime.Parameters.AddWithValue("@numberOfCarts", requestedTeeTime.NumberOfCarts);
-                    reserveTeeTime.Parameters.AddWithValue("@golfers", requestedTeeTime.Golfers.ToArray());
-                    SqlParameter message = new SqlParameter("@message", System.Data.SqlDbType.VarChar) { Direction = System.Data.ParameterDirection.Output, Size = 64 };
+                    reserveTeeTime.Parameters.AddWithValue("@phone", requestedTeeTime.Phone);
+                    var golfers = new DataTable("@golfers");
+                    golfers.Columns.Add("MemberNumber");
+                    foreach (var item in requestedTeeTime.Golfers.ToArray())
+                    {
+                        golfers.Rows.Add(item);
+                    }
+                    
+                    reserveTeeTime.Parameters.AddWithValue("@golfers", golfers);
+                    SqlParameter message = new SqlParameter("@message", SqlDbType.VarChar) { Direction = ParameterDirection.Output, Size = 64 };
                     reserveTeeTime.Parameters.Add(message);
 
                     reserveTeeTime.Connection.Open();
 
-                    confirmation = reserveTeeTime.ExecuteNonQuery() > 0;
+
+                    try
+                    {
+                        confirmation = reserveTeeTime.ExecuteNonQuery() > 0;
+                    }
+                    catch (Exception)
+                    {
+                        confirmation = false;
+                    }
 
                 }
             }

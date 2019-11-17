@@ -1,0 +1,70 @@
+﻿@page
+@model CBS.Pages.ReserveTeeTimeModel
+@{
+    ViewData["Title"] = "Reserve Tee Time";
+}
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        function rowClicked(row) {
+            if ($(row).css("background-color") !== "rgb(204, 204, 204)") {
+                $(".selected").removeClass("selected");
+                $(row).addClass("selected");
+            }
+
+        }
+    </script>
+}
+
+<h1>
+    @ViewData["Title"]
+</h1>
+
+<form method="post">
+    <div class="form-group">
+        <label asp-for="@Model.Date"></label>
+        <input class="form-control" name="Date" />
+        <span asp-validation-for="@Model.Date" class="text-danger"></span>
+    </div>
+    <div class="form-group">
+        <button type="submit" class="btn btn-primary" asp-page-handler="View">View Daily Tee Sheet</button>
+    </div>
+</form>
+
+@if (Request.Method == "POST" && !(Model.DailyTeeSheet is null))
+{
+    <div style="height: 50vh">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <td>
+                        Time
+                    </td>
+                    <td>
+                        Avaliability
+                    </td>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var teeTime in Model.DailyTeeSheet.TeeTimes)
+                {
+                    <tr style="background-color: @(teeTime.Reservable ? "" : "#CCC")" onclick="rowClicked(this)">
+                        <td>@teeTime.Datetime.ToShortTimeString()</td>
+                        <td class="text-@(teeTime.Golfers is null ? "success" : "danger")">@(teeTime.Golfers is null ? "Avaliable" : "Reserved")</td>
+                    </tr>
+
+                }
+            </tbody>
+        </table>
+    </div>
+}
+<style>
+    .selected {
+        background-color: lightcyan;
+    }
+</style>
+
+
+
+

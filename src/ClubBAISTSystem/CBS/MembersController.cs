@@ -17,18 +17,17 @@ namespace CBS
             return View();
         }
 
-        [AcceptVerbs("GET","POST")]
-        public IActionResult CheckMemberNumber(string MemberNumber)
+        public IActionResult CheckMemberNumber([Bind(Prefix = "Input.MemberNumber")] string MemberNumber)
         {
             using (SqlConnection connection = new SqlConnection("Server=(localdb)\\mssqllocaldb;Database=CBS;Integrated Security=True;"))
             {
                 using (SqlCommand checkMemberNumber = new SqlCommand("MemberExists", connection) { CommandType = System.Data.CommandType.StoredProcedure})
                 {
                     checkMemberNumber.Parameters.AddWithValue("@memberNumber", MemberNumber);
-                    SqlParameter returnCode = new SqlParameter("@returnCode", -1) { Direction = System.Data.ParameterDirection.ReturnValue};
+                    //SqlParameter returnCode = new SqlParameter("@returnCode", -1) { Direction = System.Data.ParameterDirection.ReturnValue};
                     connection.Open();
-                    checkMemberNumber.ExecuteNonQuery();
-                    if ((int)returnCode.Value == 0)
+                    int returnCode = int.Parse(checkMemberNumber.ExecuteScalar().ToString());
+                    if (returnCode == 0)
                         return Json(true);
                 }
             }

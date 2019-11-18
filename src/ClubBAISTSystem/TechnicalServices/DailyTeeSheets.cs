@@ -12,26 +12,15 @@ namespace TechnicalServices
         public string MemberNumber { get; private set; }
 
         private const string ConnectionString = "Server=(localdb)\\mssqllocaldb;Database=CBS;Integrated Security=True;";
-        private SortedDictionary<string, TeeTime> allTeeSheets;
+        private List<TeeTime> teeTimes = new List<TeeTime>();
 
         public DailyTeeSheets(string memberNumber)
         {
-            
             MemberNumber = memberNumber;
-            allTeeSheets = new SortedDictionary<string, TeeTime>();
-
         }
 
         public DailyTeeSheet FindDailyTeeSheet(DateTime date)
         {
-            var minutes = new string[] { "00", "07", "15", "22", "30", "37", "45", "52" };
-            for (int i = 7; i < 19; i++)
-            {
-                foreach (string minute in minutes)
-                {
-                    allTeeSheets.Add($"{i:D2}:{minute}", new TeeTime() { Datetime = DateTime.Parse($"{date.ToShortDateString()} {i:D2}:{minute}") });
-                }
-            }
             using (SqlConnection connection = new SqlConnection(ConnectionString))
             {
                 using (SqlCommand findDailyTeeSheet = new SqlCommand("FindDailyTeeSheet", connection) { CommandType = CommandType.StoredProcedure })
@@ -44,23 +33,13 @@ namespace TechnicalServices
                         {
                             while (reader.Read())
                             {
-                                string key = reader["Time"].ToString();
-                                if (allTeeSheets.ContainsKey(key))
-                                {
-                                    if (allTeeSheets[key].Golfers is null)
-                                        allTeeSheets[key].Golfers = new List<string>();
-                                    allTeeSheets[key].Golfers.Add(reader["Member Name"].ToString());
-                                }
-                                else
-                                {
-                                    allTeeSheets.Add(key,
-                                    new TeeTime()
-                                    {
-                                        NumberOfCarts = int.Parse(reader["numberOfCarts"].ToString()),
-                                        Phone = (string)reader["phone"],
-                                        Datetime = DateTime.Parse(key)
-                                    }); ;
-                                }
+                                teeTimes.Add(new TeeTime() { Datetime = DateTime.Parse($"{date.ToShortDateString()} {reader["Time"]}"), Reservable = true });
+                                if (reader["Member Name"] is DBNull) continue;
+
+                                var teeTime = teeTimes.Find(t => t.Datetime.ToShortTimeString() == reader["Time"].ToString());
+                                if (teeTime.Golfers is null)
+                                    teeTime.Golfers = new List<string>();
+                                teeTime.Golfers.Add(reader["Member Name"].ToString());
                             }
 
                         }
@@ -68,9 +47,9 @@ namespace TechnicalServices
 
                 }
 
-                RestrictTeeSheetToPermissableTimes(connection);
+                RestrictTeeSheetToPermissableTimes(connection, date);
             }
-            return new DailyTeeSheet() { Date = date, TeeTimes = from kvp in allTeeSheets select kvp.Value };
+            return new DailyTeeSheet() { Date = date, TeeTimes = teeTimes };
         }
 
         public bool ReserveTeeTime(TeeTime requestedTeeTime)
@@ -113,26 +92,25 @@ namespace TechnicalServices
 
             return confirmation;
         }
-        private void RestrictTeeSheetToPermissableTimes(SqlConnection connection)
+        private void RestrictTeeSheetToPermissableTimes(SqlConnection connection, DateTime date)
         {
             using (SqlCommand getPermittedTeeTimes = new SqlCommand("GetPermittedTeeTimes", connection) { CommandType = System.Data.CommandType.StoredProcedure })
             {
                 getPermittedTeeTimes.Parameters.AddWithValue("@memberNumber", MemberNumber);
-                getPermittedTeeTimes.Parameters.Add(new SqlParameter("@message", System.Data.SqlDbType.VarChar, 64) { Direction = System.Data.ParameterDirection.Output });
+                getPermittedTeeTimes.Parameters.AddWithValue("@dayOfWeek", date.DayOfWeek == DayOfWeek.Saturday || date.DayOfWeek == DayOfWeek.Sunday ? "Weekend" : "Weekday");
+                SortedList<string, object> permissableTimes = new SortedList<string,object>();
                 using (SqlDataReader reader = getPermittedTeeTimes.ExecuteReader())
                 {
                     if (reader.HasRows)
                     {
                         while (reader.Read())
                         {
-                            foreach (var kvp in allTeeSheets)
-                            {
-                                if (DateTime.Parse(kvp.Key) >= DateTime.Parse(reader["TimeSpanStart"].ToString()) && DateTime.Parse(kvp.Key) <= DateTime.Parse(reader["TimeSpanEnd"].ToString()))
-                                    kvp.Value.Reservable = true;
-                            }
+                            permissableTimes.Add(reader["Time"].ToString(), null);
                         }
                     }
                 }
+
+                teeTimes.ForEach(t => { if (!permissableTimes.ContainsKey(t.Datetime.ToString("HH:mm:ss"))) t.Reservable = false; });
 
             }
         }

@@ -12,7 +12,7 @@ namespace TechnicalServices
         public string MemberNumber { get; private set; }
 
         private const string ConnectionString = "Server=(localdb)\\mssqllocaldb;Database=CBS;Integrated Security=True;";
-        private List<TeeTime> teeTimes = new List<TeeTime>();
+        private HashSet<TeeTime> teeTimes = new HashSet<TeeTime>();
 
         public DailyTeeSheets(string memberNumber)
         {
@@ -25,7 +25,7 @@ namespace TechnicalServices
             {
                 using (SqlCommand findDailyTeeSheet = new SqlCommand("FindDailyTeeSheet", connection) { CommandType = CommandType.StoredProcedure })
                 {
-                    findDailyTeeSheet.Parameters.AddWithValue("@date", date.ToShortDateString());
+                    findDailyTeeSheet.Parameters.AddWithValue("@date", date);
                     findDailyTeeSheet.Connection.Open();
                     using (SqlDataReader reader = findDailyTeeSheet.ExecuteReader())
                     {
@@ -36,7 +36,7 @@ namespace TechnicalServices
                                 teeTimes.Add(new TeeTime() { Datetime = DateTime.Parse($"{date.ToShortDateString()} {reader["Time"]}"), Reservable = true });
                                 if (reader["Member Name"] is DBNull) continue;
 
-                                var teeTime = teeTimes.Find(t => t.Datetime.ToShortTimeString() == reader["Time"].ToString());
+                                var teeTime = (from t in teeTimes where t.Datetime.ToShortTimeString() == reader["Time"].ToString() select t).FirstOrDefault();
                                 if (teeTime.Golfers is null)
                                     teeTime.Golfers = new List<string>();
                                 teeTime.Golfers.Add(reader["Member Name"].ToString());
@@ -109,8 +109,11 @@ namespace TechnicalServices
                         }
                     }
                 }
-
-                teeTimes.ForEach(t => { if (!permissableTimes.ContainsKey(t.Datetime.ToString("HH:mm:ss"))) t.Reservable = false; });
+                foreach (var item in teeTimes)
+                {
+                    if (!permissableTimes.ContainsKey(item.Datetime.ToString("HH:mm:ss")))
+                        item.Reservable = false;
+                }
 
             }
         }

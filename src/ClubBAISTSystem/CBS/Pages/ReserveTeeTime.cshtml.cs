@@ -24,10 +24,12 @@ namespace CBS.Pages
         public DailyTeeSheet DailyTeeSheet { get; set; }
         [BindProperty, Required, DisplayFormat(DataFormatString = "{0:dddd MMMM dd, yyyy}", ApplyFormatInEditMode = true)]
         public DateTime Date { get; set; } = DateTime.Today.AddDays(1);
-        [BindProperty,Required, Phone]
+        [BindProperty]
         public string Phone { get; set; }
-        [BindProperty, Required]
+        [BindProperty]
         public int NumberOfCarts { get; set; }
+        [BindProperty]
+        public string[] Golfers { get; set; } = new string[0];
 
         public void OnGet()
         {
@@ -48,7 +50,7 @@ namespace CBS.Pages
 
         public IActionResult OnPostView()
         {
-            //if (ModelState.IsValid)
+            if (ModelState.IsValid)
             {
                 var signedInUser = userManager.FindByNameAsync(User.Identity.Name);
                 signedInUser.Wait();
@@ -57,6 +59,11 @@ namespace CBS.Pages
             }
 
             return Page();
+        }
+
+        public void OnPostReserve()
+        {
+            
         }
     }
 }

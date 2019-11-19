@@ -5,9 +5,15 @@ VisualStudioVersion = 16.0.29411.108
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TechnicalServices", "TechnicalServices\TechnicalServices.csproj", "{83673083-411E-4675-B2B8-AD9F710C77B0}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CBS", "CBS\CBS.csproj", "{7A09085F-D5D5-4A86-9034-0A71E9A24039}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CBS", "CBS\CBS.csproj", "{7A09085F-D5D5-4A86-9034-0A71E9A24039}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CBSTest", "CBSTest\CBSTest.csproj", "{3E7F101A-4298-455B-B40F-17C49AB2E470}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CBSTest", "CBSTest\CBSTest.csproj", "{3E7F101A-4298-455B-B40F-17C49AB2E470}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{0550E608-A81C-4BE4-ACCB-E68CB3FC91BF}"
+	ProjectSection(SolutionItems) = preProject
+		CBScreationScript.sql = CBScreationScript.sql
+		CBSDataPopulationScript.sql = CBSDataPopulationScript.sql
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

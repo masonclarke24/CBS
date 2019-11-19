@@ -49,7 +49,7 @@ namespace TechnicalServices
 
                 RestrictTeeSheetToPermissableTimes(connection, date);
             }
-            return new DailyTeeSheet() { Date = date, TeeTimes = teeTimes };
+            return new DailyTeeSheet() { Date = date, TeeTimes = teeTimes.ToList() };
         }
 
         public bool ReserveTeeTime(TeeTime requestedTeeTime)

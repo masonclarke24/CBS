@@ -20,23 +20,43 @@ namespace CBS.Pages
         {
             this.userManager = userManager;
         }
+        public bool IsValidTeeTime { get; set; }
         public DailyTeeSheet DailyTeeSheet { get; set; }
+        [BindProperty, Required, DisplayFormat(DataFormatString = "{0:dddd MMMM dd, yyyy}", ApplyFormatInEditMode = true)]
+        public DateTime Date { get; set; } = DateTime.Today.AddDays(1);
+        [BindProperty,Required, Phone]
+        public string Phone { get; set; }
         [BindProperty, Required]
-        public DateTime Date { get; set; }
+        public int NumberOfCarts { get; set; }
+
         public void OnGet()
         {
-
+            if(Request.Query.TryGetValue("teeTime", out Microsoft.Extensions.Primitives.StringValues teeTime))
+            {
+                if(DateTime.TryParse(System.Web.HttpUtility.UrlDecode(teeTime.ToString()), out DateTime result))
+                {
+                    Date = result;
+                    IsValidTeeTime = true;
+                }
+            }
         }
 
-        public void OnPostView()
+        public IActionResult OnPostSelect(string teeTime)
         {
-            if (ModelState.IsValid)
+            return Redirect("/ReserveTeeTime?teeTime=" + System.Web.HttpUtility.UrlEncode($"{Date.ToLongDateString()} {teeTime}"));
+        }
+
+        public IActionResult OnPostView()
+        {
+            //if (ModelState.IsValid)
             {
                 var signedInUser = userManager.FindByNameAsync(User.Identity.Name);
                 signedInUser.Wait();
                 TechnicalServices.CBS requestDirector = new TechnicalServices.CBS(signedInUser.Result.MemberNumber);
                 DailyTeeSheet = requestDirector.ViewDailyTeeSheet(Date);
             }
+
+            return Page();
         }
     }
 }

@@ -7,6 +7,6 @@ namespace TechnicalServices
     public class DailyTeeSheet
     {
         public DateTime Date { get; set; }
-        public IEnumerable<TeeTime> TeeTimes { get; set; }
+        public List<TeeTime> TeeTimes { get; set; }
     }
 }

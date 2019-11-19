@@ -28,6 +28,8 @@ namespace CBS.Pages
         public string Phone { get; set; }
         [BindProperty, Required]
         public int NumberOfCarts { get; set; }
+        [BindProperty]
+        public string[] Golfers { get; set; } = new string[0];
 
         public void OnGet()
         {

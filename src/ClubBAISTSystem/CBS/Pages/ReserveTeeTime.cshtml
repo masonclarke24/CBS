@@ -32,7 +32,7 @@
 <form method="post">
     <div class="form-group">
         <label>Date</label>
-        <input class="form-control" name="Date" asp-for="@Model.Date"/>
+        <input class="form-control" name="Date" value="@Model.Date.ToLongDateString()" />
         <span asp-validation-for="@Model.Date" class="text-danger"></span>
     </div>
     <div class="form-group">
@@ -74,14 +74,29 @@
     @if (Model.IsValidTeeTime && Request.Query.ContainsKey("teeTime"))
     {
         <div class="form-group">
-            <label></label>
+            <label>Phone</label>
             <input class="form-control" name="Phone" />
             <span asp-validation-for="@Model.Phone" class="text-danger"></span>
         </div>
         <div class="form-group">
-            <label asp-for="@Model.NumberOfCarts"></label>
+            <label>Number of carts</label>
             <input class="form-control" name="NumberOfCarts" />
             <span asp-validation-for="@Model.NumberOfCarts" class="text-danger"></span>
+        </div>
+        <div class="form-group">
+            <label>Member Number</label>
+            <input class="form-control" name="Golfers[0]" />
+            <span asp-validation-for="@Model.Golfers" class="text-danger"></span>
+        </div>
+        <div class="form-group">
+            <label>Member Number</label>
+            <input class="form-control" name="Golfers[1]" />
+            <span asp-validation-for="@Model.Golfers" class="text-danger"></span>
+        </div>
+        <div class="form-group">
+            <label>Member Number</label>
+            <input class="form-control" name="Golfers[2]" />
+            <span asp-validation-for="@Model.Golfers" class="text-danger"></span>
         </div>
     }
 </form>

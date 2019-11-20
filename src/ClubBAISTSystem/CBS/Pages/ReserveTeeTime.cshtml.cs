@@ -61,7 +61,7 @@ namespace CBS.Pages
             return Page();
         }
 
-        public void OnPostReserve()
+        public void OnPostReserve(string[] golfers)
         {
             
         }

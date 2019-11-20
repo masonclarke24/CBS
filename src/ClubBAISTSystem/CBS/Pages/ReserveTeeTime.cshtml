@@ -15,13 +15,24 @@
                 $(row).find("input[type=radio]").attr("checked", true);
             }
         }
-        //function selectTeeTime(element) {
-        //    console.log($('.selected > td').first().text());
-        //    $.ajax('/ReserveTeeTime?handler=Select', {
-        //        type: 'POST', data: $('.selected > td').first().text(),
-        //        done: () => { console.log("post with ajax"); }, error: (err) => { console.log(err); }
-        //    })
-        //}
+        function addGolfer(button) {
+            var childCount = $("input[name^=Golfers]").length;
+            if (childCount > 3) return;
+            var formGroup = `<div class="form-group">
+                <label>Member Number</label>
+                <input class="form-control" name="Golfers[` + (childCount).toString() + `]" />
+                <span class="text-danger" \></span>
+            </div>`;
+            $(button).parent().append(formGroup);
+        }
+        function removeGolfer(button) {
+            $("input[name^=Golfers]").last().parent().remove()
+        }
+        function addErrorMessages(errors) {
+            for (var i = 0; i < errors.length; i++) {
+                $("input[name=Golfers[" + i.toString() + "]").parent().children("span").text("Member does not exist");
+            }
+        }
     </script>
 }
 
@@ -61,7 +72,7 @@
                         @for (int i = 0; i < Model.DailyTeeSheet.TeeTimes.Count; i++)
                         {
                             <tr style="background-color: @(Model.DailyTeeSheet.TeeTimes[i].Reservable ? "" : "#CCC")" onclick="rowClicked(this)">
-                                <td>@Model.DailyTeeSheet.TeeTimes[i].Datetime.ToShortTimeString() <input type="radio" style="display:none;" name="teeTime" value="@Model.DailyTeeSheet.TeeTimes[i].Datetime.ToShortTimeString()" /></td>
+                                <td>@Model.DailyTeeSheet.TeeTimes[i].Datetime.ToShortTimeString() <input type="radio" required style="display:none;" name="teeTime" value="@Model.DailyTeeSheet.TeeTimes[i].Datetime.ToShortTimeString()" /></td>
                                 <td class="text-@(Model.DailyTeeSheet.TeeTimes[i].Golfers is null ? "success" : "danger")">@(Model.DailyTeeSheet.TeeTimes[i].Golfers is null ? "Avaliable" : "Reserved")</td>
                             </tr>
 
@@ -72,31 +83,36 @@
         }
     </div>
     @if (Model.IsValidTeeTime && Request.Query.ContainsKey("teeTime"))
-    {
-        <div class="form-group">
-            <label>Phone</label>
-            <input class="form-control" name="Phone" />
-            <span asp-validation-for="@Model.Phone" class="text-danger"></span>
-        </div>
-        <div class="form-group">
-            <label>Number of carts</label>
-            <input class="form-control" name="NumberOfCarts" />
-            <span asp-validation-for="@Model.NumberOfCarts" class="text-danger"></span>
-        </div>
-        <div class="form-group">
-            <label>Member Number</label>
-            <input class="form-control" name="Golfers[0]" />
-            <span asp-validation-for="@Model.Golfers" class="text-danger"></span>
-        </div>
-        <div class="form-group">
-            <label>Member Number</label>
-            <input class="form-control" name="Golfers[1]" />
-            <span asp-validation-for="@Model.Golfers" class="text-danger"></span>
-        </div>
-        <div class="form-group">
-            <label>Member Number</label>
-            <input class="form-control" name="Golfers[2]" />
-            <span asp-validation-for="@Model.Golfers" class="text-danger"></span>
+    {<div id="teeTimeDetails">
+            <div class="form-group">
+                <label>Phone</label>
+                <input class="form-control" name="Phone" />
+                <span asp-validation-for="@Model.Phone" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label>Number of carts</label>
+                <input class="form-control" name="NumberOfCarts" />
+                <span asp-validation-for="@Model.NumberOfCarts" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <input type="button" class="btn btn-secondary" value="Add Golfer" onclick="addGolfer(this)" />
+                <input type="button" class="btn btn-secondary" value="Remove Golfer" onclick="removeGolfer(this)" />
+            </div>
+            @*<div class="form-group">
+                <label>Member Number</label>
+                <input class="form-control" name="Golfers[0]" />
+                <span asp-validation-for="@Model.Golfers" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label>Member Number</label>
+                <input class="form-control" name="Golfers[1]" />
+                <span asp-validation-for="@Model.Golfers" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label>Member Number</label>
+                <input class="form-control" name="Golfers[2]" />
+                <span asp-validation-for="@Model.Golfers" class="text-danger"></span>
+            </div>*@
         </div>
     }
 </form>

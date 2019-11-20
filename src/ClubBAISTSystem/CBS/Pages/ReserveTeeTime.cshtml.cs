@@ -24,12 +24,12 @@ namespace CBS.Pages
             GetMemberNumber();
         }
 
-
-        public string ErrorMessage;
-
-        public bool Confirmation { get; private set; }
+        [TempData]
+        public string ErrorMessage { get; set; }
+        [TempData]
+        public bool Confirmation { get; set; }
         public DailyTeeSheet DailyTeeSheet { get; set; }
-        [BindProperty, TempData, Required, DisplayFormat(DataFormatString = "{0:dddd MMMM dd, yyyy}", ApplyFormatInEditMode = true)]
+        [BindProperty, Required, DisplayFormat(DataFormatString = "{0:dddd MMMM dd, yyyy}", ApplyFormatInEditMode = true)]
         public DateTime Date { get; set; } = DateTime.Today.AddDays(1);
         [BindProperty]
         public string Phone { get; set; }
@@ -39,38 +39,35 @@ namespace CBS.Pages
 
         public void OnGet()
         {
+            Confirmation = false;
             if (Request.Query.TryGetValue("teeTime", out Microsoft.Extensions.Primitives.StringValues teeTime))
             {
                 if (DateTime.TryParse(System.Web.HttpUtility.UrlDecode(teeTime.ToString()), out DateTime result))
                 {
                     Date = result;
+                    TempData["Date"] = result;
                 }
             }
         }
 
         public IActionResult OnPostSelect(string teeTime)
         {
-            if (!TempData.ContainsKey(nameof(Date)))
-                TempData.Add(nameof(Date), Date.ToString("yyyy MMM dd HH:mm"));
-            return Redirect("/ReserveTeeTime?teeTime=" + System.Web.HttpUtility.UrlEncode($"{DateTime.Parse(TempData.Peek("Date").ToString()).ToShortDateString()} {teeTime}"));
+            Confirmation = false;
+            TempData["Date"] = Date;
+            return Redirect("/ReserveTeeTime?teeTime=" + System.Web.HttpUtility.UrlEncode($"{Date.ToShortDateString()} {teeTime}"));
         }
 
         public IActionResult OnPostView()
         {
-            if (ModelState.IsValid)
-            {
+            Confirmation = false;
                 if (memberNumber is null)
                     GetMemberNumber();
                 TechnicalServices.CBS requestDirector = new TechnicalServices.CBS(memberNumber);
-                if (!TempData.ContainsKey(nameof(Date)))
-                TempData.Add(nameof(Date), Date.ToString("yyyy MMM dd HH:mm"));
-                DailyTeeSheet = requestDirector.ViewDailyTeeSheet(DateTime.Parse(TempData.Peek(nameof(Date)).ToString()));
-            }
-
+                DailyTeeSheet = requestDirector.ViewDailyTeeSheet(Date);
             return Page();
         }
 
-        public void OnPostReserve(string[] golfers)
+        public IActionResult OnPostReserve(string[] golfers)
         {
             if (memberNumber is null) GetMemberNumber();
             Confirmation = false;
@@ -83,16 +80,17 @@ namespace CBS.Pages
                 {
                     MemberErrorIds.Add(Array.IndexOf(golfers, invalid));
                 }
-                return;
+                return Redirect(Request.Headers["Referer"].ToString());
             }
 
-            if (!requestDirector.ReserveTeeTime(new TeeTime() { Golfers = golfers.ToList(), Datetime = DateTime.Parse(TempData.Peek(nameof(Date)).ToString()), NumberOfCarts = NumberOfCarts, Phone = Phone }, out string error))
+            if (!requestDirector.ReserveTeeTime(new TeeTime() { Golfers = golfers.ToList(), Datetime = (DateTime)TempData.Peek(nameof(Date)), NumberOfCarts = NumberOfCarts, Phone = Phone }, out string error))
             {
                 ErrorMessage = error;
                 Confirmation = false;
             }
             else
                 Confirmation = true;
+            return Page();
         }
 
         private void GetMemberNumber()

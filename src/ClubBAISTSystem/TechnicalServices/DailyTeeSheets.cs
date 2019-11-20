@@ -36,7 +36,7 @@ namespace TechnicalServices
                                 teeTimes.Add(new TeeTime() { Datetime = DateTime.Parse($"{date.ToShortDateString()} {reader["Time"]}"), Reservable = true });
                                 if (reader["Member Name"] is DBNull) continue;
 
-                                var teeTime = (from t in teeTimes where t.Datetime.ToShortTimeString() == reader["Time"].ToString() select t).FirstOrDefault();
+                                var teeTime = (from t in teeTimes where t.Datetime.ToString("HH:mm") == reader["Time"].ToString() select t).FirstOrDefault();
                                 if (teeTime.Golfers is null)
                                     teeTime.Golfers = new List<string>();
                                 teeTime.Golfers.Add(reader["Member Name"].ToString());

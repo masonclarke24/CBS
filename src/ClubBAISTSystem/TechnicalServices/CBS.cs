@@ -19,12 +19,17 @@ namespace TechnicalServices
             return teeSheetManager.FindDailyTeeSheet(date);
         }
 
-        public bool ReserveTeeTime(TeeTime requestedTeeTime)
+        public bool ReserveTeeTime(TeeTime requestedTeeTime, out string message)
         {
             bool confirmation;
             DailyTeeSheets teeSheetManager = new DailyTeeSheets(MemberNumber);
-            confirmation = teeSheetManager.ReserveTeeTime(requestedTeeTime);
+            confirmation = teeSheetManager.ReserveTeeTime(requestedTeeTime, out message);
             return confirmation;
+        }
+
+        public bool VerifyMembersExist(string[] golfers, out List<string> invalidMembers)
+        {
+            return new DailyTeeSheets(MemberNumber).VerifyMembersExist(golfers, out invalidMembers);
         }
     }
 }

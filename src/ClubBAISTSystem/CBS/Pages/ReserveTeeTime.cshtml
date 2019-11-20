@@ -15,13 +15,6 @@
                 $(row).find("input[type=radio]").attr("checked", true);
             }
         }
-        //function selectTeeTime(element) {
-        //    console.log($('.selected > td').first().text());
-        //    $.ajax('/ReserveTeeTime?handler=Select', {
-        //        type: 'POST', data: $('.selected > td').first().text(),
-        //        done: () => { console.log("post with ajax"); }, error: (err) => { console.log(err); }
-        //    })
-        //}
     </script>
 }
 
@@ -40,6 +33,10 @@
         @if (Request.Method == "POST" && !(Model.DailyTeeSheet is null))
         {
             <button type="submit" class="btn btn-primary" asp-page-handler="Select">Select Tee Time</button>
+        }
+        @if (Request.Query.TryGetValue("teeTime", out Microsoft.Extensions.Primitives.StringValues teeTime) && DateTime.TryParse(System.Web.HttpUtility.HtmlDecode(teeTime.ToString()), out DateTime _))
+        {
+            <button type="submit" class="btn btn-success" asp-page-handler="Reserve">Reserve Tee Time</button>
         }
     </div>
     <div class="form-group">
@@ -71,36 +68,30 @@
             </div>
         }
     </div>
-    @if (Model.IsValidTeeTime && Request.Query.ContainsKey("teeTime"))
+    @if (Request.Query.TryGetValue("teeTime", out teeTime) && DateTime.TryParse(System.Web.HttpUtility.HtmlDecode(teeTime.ToString()), out DateTime _))
     {
         <div class="form-group">
             <label>Phone</label>
-            <input class="form-control" name="Phone" />
-            <span asp-validation-for="@Model.Phone" class="text-danger"></span>
+            <input class="form-control" name="Phone" required/>
         </div>
         <div class="form-group">
             <label>Number of carts</label>
-            <input class="form-control" name="NumberOfCarts" />
-            <span asp-validation-for="@Model.NumberOfCarts" class="text-danger"></span>
+            <input class="form-control" name="NumberOfCarts" required/>
         </div>
         <div class="form-group">
             <label>Member Number</label>
             <input class="form-control" name="Golfers[0]" />
-            <span asp-validation-for="@Model.Golfers" class="text-danger"></span>
-        </div>
-        <div class="form-group">
-            <label>Member Number</label>
-            <input class="form-control" name="Golfers[1]" />
-            <span asp-validation-for="@Model.Golfers" class="text-danger"></span>
-        </div>
-        <div class="form-group">
-            <label>Member Number</label>
-            <input class="form-control" name="Golfers[2]" />
-            <span asp-validation-for="@Model.Golfers" class="text-danger"></span>
+            <span class="text-danger"></span>
         </div>
     }
 </form>
 
+@if(Request.Query.TryGetValue("handler", out Microsoft.Extensions.Primitives.StringValues hander) && hander == "Reserve")
+{
+    <span class="text-@(Model.Confirmation ? "success" : "danger")">
+        @(Model.Confirmation ? "Tee time reserved successfully" : Model.ErrorMessage);
+    </span>
+}
 
 <style>
     .selected {

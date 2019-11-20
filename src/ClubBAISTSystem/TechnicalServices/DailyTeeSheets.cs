@@ -52,10 +52,10 @@ namespace TechnicalServices
             return new DailyTeeSheet() { Date = date, TeeTimes = teeTimes.ToList() };
         }
 
-        public bool ReserveTeeTime(TeeTime requestedTeeTime)
+        public bool ReserveTeeTime(TeeTime requestedTeeTime, out string error)
         {
             bool confirmation = false;
-            if (!requestedTeeTime.Reservable) return false;
+            error = "";
             using (SqlConnection connection = new SqlConnection(ConnectionString))
             {
                 using(SqlCommand reserveTeeTime = new SqlCommand("ReserveTeeTime", connection) { CommandType = System.Data.CommandType.StoredProcedure })
@@ -72,25 +72,55 @@ namespace TechnicalServices
                     }
                     
                     reserveTeeTime.Parameters.AddWithValue("@golfers", golfers);
-                    SqlParameter message = new SqlParameter("@message", SqlDbType.VarChar) { Direction = ParameterDirection.Output, Size = 64 };
+                    SqlParameter message = new SqlParameter("@message", SqlDbType.VarChar) { Direction = ParameterDirection.Output, Size = 8000 };
                     reserveTeeTime.Parameters.Add(message);
 
                     reserveTeeTime.Connection.Open();
 
-
+                    
                     try
                     {
-                        confirmation = reserveTeeTime.ExecuteNonQuery() > 0;
+                        confirmation = reserveTeeTime.ExecuteNonQuery() != 0;
+
                     }
-                    catch (Exception)
+                    catch (Exception ex)
                     {
                         confirmation = false;
+                        error = ex.Message;
                     }
 
+                    reserveTeeTime.Connection.Close();
                 }
             }
 
             return confirmation;
+        }
+
+        public bool VerifyMembersExist(string[] golfers, out List<string> invalidMembers)
+        {
+            invalidMembers = new List<string>();
+            bool membersExist = true;
+            using (SqlConnection connection = new SqlConnection(ConnectionString))
+            {
+                using(SqlCommand memberExists = new SqlCommand("MemberExists", connection) { CommandType = CommandType.StoredProcedure })
+                {
+                    connection.Open();
+                    foreach (var item in golfers)
+                    {
+                        memberExists.Parameters.AddWithValue("@memberNumber", item);
+                        if (int.Parse(memberExists.ExecuteScalar().ToString()) == 1)
+                        {
+                            invalidMembers.Add(item);
+                            membersExist = false;
+                        }
+                        memberExists.Parameters.Clear();
+                    }
+                    
+                }
+            }
+
+            
+            return membersExist;
         }
         private void RestrictTeeSheetToPermissableTimes(SqlConnection connection, DateTime date)
         {

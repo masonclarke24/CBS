@@ -16,10 +16,11 @@ namespace CBS
             return View();
         }
 
+        [AcceptVerbs("POST")]
         public IActionResult VerifyDate(DateTime date)
         {
             if (date.Ticks == 0)
-                return Json("Date is in the wrong format");
+                return Json("Supplied date is invalid");
             if (date.Date == DateTime.Today.Date)
                 return Json("Cannot reserve tee time for today");
             if ((DateTime.Today.AddDays(7) - date).TotalDays < 0)

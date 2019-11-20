@@ -4,7 +4,6 @@
     ViewData["Title"] = "Reserve Tee Time";
 }
 @section Scripts {
-    <partial name="_ValidationScriptsPartial" />
 
     <script>
         function rowClicked(row) {
@@ -69,7 +68,23 @@
             <button type="submit" class="btn btn-success" asp-page-handler="Reserve">Reserve Tee Time</button>
         }
     </div>
-    <span class="text-@(Model.Confirmation ? "success" : "danger")">@(Model.Confirmation ? "Tee time reserved successfully" : string.IsNullOrWhiteSpace(Model.ErrorMessage) ? "" :  Model.ErrorMessage)</span>
+    <div class="text-@(Model.Confirmation ? "success" : "danger")">
+    @if (Model.Confirmation) 
+    {
+       <p>Tee time reserved successfully</p>
+    }
+     @if (TempData.ContainsKey("ErrorMessages") && TempData.Peek<List<string>>("ErrorMessages").Any())
+     {
+         var errors = TempData.Peek<List<string>>("ErrorMessages");
+            @foreach (var error in errors)
+            {
+                <ul>
+                    <li>@error</li>
+                </ul>
+            }
+         TempData.Clear();
+     }
+    </div>
     <div class="form-group">
         @if (Request.Method == "POST" && !(Model.DailyTeeSheet is null))
         {
@@ -103,12 +118,12 @@
     {<div id="teeTimeDetails">
             <div class="form-group">
                 <label>Phone</label>
-                <input class="form-control" name="Phone" />
+                <input class="form-control" name="Phone" asp-for="Phone"/>
                 <span asp-validation-for="@Model.Phone" class="text-danger"></span>
             </div>
             <div class="form-group">
                 <label>Number of carts</label>
-                <input class="form-control" name="NumberOfCarts" />
+                <input class="form-control" name="NumberOfCarts" asp-for="NumberOfCarts"/>
                 <span asp-validation-for="@Model.NumberOfCarts" class="text-danger"></span>
             </div>
             <div class="form-group">

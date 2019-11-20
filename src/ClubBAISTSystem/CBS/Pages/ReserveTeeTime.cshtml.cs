@@ -24,16 +24,15 @@ namespace CBS.Pages
             GetMemberNumber();
         }
 
-        [TempData]
-        public string ErrorMessage { get; set; }
+        public List<string> ErrorMessages { get; set; } = new List<string>();
         [TempData]
         public bool Confirmation { get; set; }
         public DailyTeeSheet DailyTeeSheet { get; set; }
-        [BindProperty, Required, DisplayFormat(DataFormatString = "{0:dddd MMMM dd, yyyy}", ApplyFormatInEditMode = true)]
+        [BindProperty, Required, DisplayFormat(DataFormatString = "{0:dddd MMMM dd, yyyy}", ApplyFormatInEditMode = true), Remote("VerifyDate","Date", AdditionalFields = nameof(Date))]
         public DateTime Date { get; set; } = DateTime.Today.AddDays(1);
-        [BindProperty]
+        [BindProperty, Phone, Required]
         public string Phone { get; set; }
-        [BindProperty]
+        [BindProperty, Range(1,99),Required, Display(Name = "Number of Carts")]
         public int NumberOfCarts { get; set; }
         public List<int> MemberErrorIds { get; set; } = new List<int>();
 
@@ -59,6 +58,17 @@ namespace CBS.Pages
 
         public IActionResult OnPostView()
         {
+            foreach (var item in ModelState)
+            {
+                if (item.Key == nameof(Date) && item.Value.ValidationState == Microsoft.AspNetCore.Mvc.ModelBinding.ModelValidationState.Invalid)
+                {
+                    ErrorMessages.Add(item.Value.Errors.FirstOrDefault().ErrorMessage);
+                    TempData.Put(nameof(ErrorMessages), ErrorMessages);
+                    return Redirect(Request.Headers["Referer"].ToString());
+                }
+
+                
+            }
             Confirmation = false;
                 if (memberNumber is null)
                     GetMemberNumber();
@@ -69,13 +79,22 @@ namespace CBS.Pages
 
         public IActionResult OnPostReserve(string[] golfers)
         {
+            if (!ModelState.IsValid)
+            {
+                foreach (var e in from err in ModelState.Values where err.Errors.Count > 0 select err)
+                {
+                    ErrorMessages.Add(e.Errors.FirstOrDefault()?.ErrorMessage);
+                }
+                TempData.Put(nameof(ErrorMessages), ErrorMessages);
+                return Redirect(Request.Headers["Referer"].ToString());
+            }
             if (memberNumber is null) GetMemberNumber();
             Confirmation = false;
             TechnicalServices.CBS requestDirector = new TechnicalServices.CBS(memberNumber);
 
             if(!requestDirector.VerifyMembersExist(golfers, out List<string> invalidMembers))
             {
-                ErrorMessage = $"The following members do not exist: {new string(invalidMembers.SelectMany(m => m.ToArray().Append(',').Append(' ')).ToArray())}";
+                ErrorMessages.Add($"The following members do not exist: {new string(invalidMembers.SelectMany(m => m.ToArray().Append(',').Append(' ')).ToArray())}");
                 foreach (var invalid in invalidMembers)
                 {
                     MemberErrorIds.Add(Array.IndexOf(golfers, invalid));
@@ -85,7 +104,7 @@ namespace CBS.Pages
 
             if (!requestDirector.ReserveTeeTime(new TeeTime() { Golfers = golfers.ToList(), Datetime = (DateTime)TempData.Peek(nameof(Date)), NumberOfCarts = NumberOfCarts, Phone = Phone }, out string error))
             {
-                ErrorMessage = error;
+                ErrorMessages.Add(error);
                 Confirmation = false;
             }
             else

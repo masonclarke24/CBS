@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
-using System.Threading.Tasks;
 using CBS.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -28,8 +27,8 @@ namespace CBS.Pages
         [TempData]
         public bool Confirmation { get; set; }
         public DailyTeeSheet DailyTeeSheet { get; set; }
-        [BindProperty, Required, DisplayFormat(DataFormatString = "{0:dddd MMMM dd, yyyy}", ApplyFormatInEditMode = true), Remote("VerifyDate","Date", AdditionalFields = nameof(Date))]
-        public DateTime Date { get; set; } = DateTime.Today.AddDays(1);
+        [Required, DateValidation, BindProperty, DisplayFormat(DataFormatString = "{0:dddd MMMM dd, yyyy}", ApplyFormatInEditMode = true)]
+        public DateTime Date { get; set; }
         [BindProperty, Phone, Required]
         public string Phone { get; set; }
         [BindProperty, Range(1,99),Required, Display(Name = "Number of Carts")]
@@ -66,7 +65,6 @@ namespace CBS.Pages
                     TempData.Put(nameof(ErrorMessages), ErrorMessages);
                     return Redirect(Request.Headers["Referer"].ToString());
                 }
-
                 
             }
             Confirmation = false;
@@ -99,13 +97,15 @@ namespace CBS.Pages
                 {
                     MemberErrorIds.Add(Array.IndexOf(golfers, invalid));
                 }
+                TempData.Put(nameof(ErrorMessages), ErrorMessages);
                 return Redirect(Request.Headers["Referer"].ToString());
             }
-
-            if (!requestDirector.ReserveTeeTime(new TeeTime() { Golfers = golfers.ToList(), Datetime = (DateTime)TempData.Peek(nameof(Date)), NumberOfCarts = NumberOfCarts, Phone = Phone }, out string error))
+            
+            if (!requestDirector.ReserveTeeTime(new TeeTime() { Golfers = golfers.Prepend(memberNumber).ToList(), Datetime = (DateTime)TempData.Peek(nameof(Date)), NumberOfCarts = NumberOfCarts, Phone = Phone }, out string error))
             {
                 ErrorMessages.Add(error);
                 Confirmation = false;
+                TempData.Put(nameof(ErrorMessages), ErrorMessages);
             }
             else
                 Confirmation = true;
@@ -118,5 +118,6 @@ namespace CBS.Pages
             signedInUser.Wait();
             memberNumber = signedInUser.Result.MemberNumber;
         }
+
     }
 }

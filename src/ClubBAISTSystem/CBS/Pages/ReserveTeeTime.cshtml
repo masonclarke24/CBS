@@ -1,7 +1,7 @@
 ﻿@page
 @model CBS.Pages.ReserveTeeTimeModel
 @{
-    ViewData["Title"] = "Reserve Tee Time";
+    ViewData["Title"] = $"Reserve Tee Time";
 }
 @section Scripts {
 
@@ -50,11 +50,14 @@
 <h1>
     @ViewData["Title"]
 </h1>
+<h4>
+    @(Model.Request.Query.ContainsKey("teeTime") ? $"{Model.Date.ToString("dddd MMMM dd, yyyy HH:mm")}" : "")
+</h4>
 
 <form method="POST">
     <div class="form-group">
         <label>Date</label>
-        <input class="form-control" name="Date" value="@Model.Date.ToLongDateString()" />
+        <input class="form-control" name="Date" value="@(Model.Date.Ticks == 0 ? "" : Model.Date.ToLongDateString())" placeholder="@DateTime.Today.AddDays(1).ToLongDateString()" />
         <span asp-validation-for="@Model.Date" class="text-danger"></span>
     </div>
     <div class="form-group">
@@ -105,9 +108,8 @@
                         {
                             <tr style="background-color: @(!Model.DailyTeeSheet.TeeTimes[i].Reservable ? "#CCC" : !(Model.DailyTeeSheet.TeeTimes[i].Golfers is null) ? "#CCC" : "")" onclick="rowClicked(this)">
                                 <td>@Model.DailyTeeSheet.TeeTimes[i].Datetime.ToShortTimeString() <input type="radio" required style="display:none;" name="teeTime" value="@Model.DailyTeeSheet.TeeTimes[i].Datetime.ToShortTimeString()" /></td>
-                                <td class="text-@(Model.DailyTeeSheet.TeeTimes[i].Golfers is null ? "success" : "danger")">@(Model.DailyTeeSheet.TeeTimes[i].Golfers is null ? "Avaliable" : "Reserved")</td>
+                                <td class="text-@(Model.DailyTeeSheet.TeeTimes[i].Golfers is null ? "success" : "warning")">@(Model.DailyTeeSheet.TeeTimes[i].Golfers is null ? "Avaliable" : "Reserved")</td>
                             </tr>
-
                         }
                     </tbody>
                 </table>
@@ -123,7 +125,7 @@
             </div>
             <div class="form-group">
                 <label>Number of carts</label>
-                <input class="form-control" name="NumberOfCarts" asp-for="NumberOfCarts"/>
+                <input class="form-control" name="NumberOfCarts" asp-for="NumberOfCarts" value="1"/>
                 <span asp-validation-for="@Model.NumberOfCarts" class="text-danger"></span>
             </div>
             <div class="form-group">

@@ -7,7 +7,7 @@
 
     <script>
         function rowClicked(row) {
-            if ($(row).css("background-color") !== "rgb(204, 204, 204)") {
+            if ($(row).css("background-color") !== "rgb(204, 204, 204)" && $(row).find("input[type=radio]").length != 0) {
                 $(".selected").removeClass("selected");
                 $(row).addClass("selected");
 
@@ -18,10 +18,10 @@
             var childCount = $("input[name^=Golfers]").length;
             if (childCount > 3) return;
             var formGroup = `<div class="form-group">
-                <label>Member Number</label>
-                <input class="form-control" name="Golfers[` + (childCount).toString() + `]" />
-                <span class="text-danger" \></span>
-            </div>`;
+                    <label>Member Number</label>
+                    <input class="form-control" name="Golfers[` + (childCount).toString() + `]" />
+                    <span class="text-danger" \></span>
+                </div>`;
             $(button).parent().append(formGroup);
         }
         function removeGolfer(button) {
@@ -36,7 +36,9 @@
             var teeTimes = $("table").children("tbody").children("tr");
             for (var i = 0; i < teeTimes.length; i++) {
                 if ($(teeTimes[i]).attr("style") !== "background-color: #CCC") {
-                    $(teeTimes[i]).find("input[type=radio]").attr("checked", true);
+                    var radioButton = $(teeTimes[i]).find("input[type=radio]");
+                    if (radioButton.length == 0) continue;
+                    radioButton.attr("checked", true);
                     $(teeTimes[i]).addClass("selected");
                     return;
                 }
@@ -51,7 +53,7 @@
     @ViewData["Title"]
 </h1>
 <h4>
-    @(Model.Request.Query.ContainsKey("teeTime") ? $"{Model.Date.ToString("dddd MMMM dd, yyyy HH:mm")}" : "")
+    @(Model.Request.Query.ContainsKey("teeTime") ? $"{((DateTime)TempData.Peek("Date")).ToString("dddd MMMM dd, yyyy HH:mm")}" : "")
 </h4>
 
 <form method="POST">
@@ -72,21 +74,21 @@
         }
     </div>
     <div class="text-@(Model.Confirmation ? "success" : "danger")">
-    @if (Model.Confirmation) 
-    {
-       <p>Tee time reserved successfully</p>
-    }
-     @if (TempData.ContainsKey("ErrorMessages") && TempData.Peek<List<string>>("ErrorMessages").Any())
-     {
-         var errors = TempData.Peek<List<string>>("ErrorMessages");
+        @if (Model.Confirmation)
+        {
+            <p>Tee time reserved successfully</p>
+        }
+        @if (TempData.ContainsKey("ErrorMessages") && TempData.Peek<List<string>>("ErrorMessages").Any())
+        {
+            var errors = TempData.Peek<List<string>>("ErrorMessages");
             @foreach (var error in errors)
             {
                 <ul>
                     <li>@error</li>
                 </ul>
             }
-         TempData.Clear();
-     }
+            TempData.Remove("ErrorMessages");
+        }
     </div>
     <div class="form-group">
         @if (Request.Method == "POST" && !(Model.DailyTeeSheet is null))
@@ -106,8 +108,14 @@
                     <tbody>
                         @for (int i = 0; i < Model.DailyTeeSheet.TeeTimes.Count; i++)
                         {
-                            <tr style="background-color: @(!Model.DailyTeeSheet.TeeTimes[i].Reservable ? "#CCC" : !(Model.DailyTeeSheet.TeeTimes[i].Golfers is null) ? "#CCC" : "")" onclick="rowClicked(this)">
-                                <td>@Model.DailyTeeSheet.TeeTimes[i].Datetime.ToShortTimeString() <input type="radio" required style="display:none;" name="teeTime" value="@Model.DailyTeeSheet.TeeTimes[i].Datetime.ToShortTimeString()" /></td>
+                            <tr style="background-color: @(!Model.DailyTeeSheet.TeeTimes[i].Reservable ? "#CCC" : "")" onclick="rowClicked(this)">
+                                <td>
+                                    @Model.DailyTeeSheet.TeeTimes[i].Datetime.ToShortTimeString()
+                                    @if (Model.DailyTeeSheet.TeeTimes[i].Golfers is null)
+                                    {
+                                        <input type="radio" required style="display:none;" name="teeTime" value="@Model.DailyTeeSheet.TeeTimes[i].Datetime.ToShortTimeString()" />
+                                    }
+                                </td>
                                 <td class="text-@(Model.DailyTeeSheet.TeeTimes[i].Golfers is null ? "success" : "warning")">@(Model.DailyTeeSheet.TeeTimes[i].Golfers is null ? "Avaliable" : "Reserved")</td>
                             </tr>
                         }
@@ -120,33 +128,18 @@
     {<div id="teeTimeDetails">
             <div class="form-group">
                 <label>Phone</label>
-                <input class="form-control" name="Phone" asp-for="Phone"/>
+                <input class="form-control" name="Phone" asp-for="Phone" />
                 <span asp-validation-for="@Model.Phone" class="text-danger"></span>
             </div>
             <div class="form-group">
                 <label>Number of carts</label>
-                <input class="form-control" name="NumberOfCarts" asp-for="NumberOfCarts" value="1"/>
+                <input class="form-control" name="NumberOfCarts" asp-for="NumberOfCarts" value="1" />
                 <span asp-validation-for="@Model.NumberOfCarts" class="text-danger"></span>
             </div>
             <div class="form-group">
                 <input type="button" class="btn btn-secondary" value="Add Golfer" onclick="addGolfer(this)" />
                 <input type="button" class="btn btn-secondary" value="Remove Golfer" onclick="removeGolfer(this)" />
             </div>
-            @*<div class="form-group">
-                <label>Member Number</label>
-                <input class="form-control" name="Golfers[0]" />
-                <span asp-validation-for="@Model.Golfers" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label>Member Number</label>
-                <input class="form-control" name="Golfers[1]" />
-                <span asp-validation-for="@Model.Golfers" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label>Member Number</label>
-                <input class="form-control" name="Golfers[2]" />
-                <span asp-validation-for="@Model.Golfers" class="text-danger"></span>
-            </div>*@
         </div>
     }
 </form>

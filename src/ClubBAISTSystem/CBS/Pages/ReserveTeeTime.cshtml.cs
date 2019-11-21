@@ -79,6 +79,7 @@ namespace CBS.Pages
 
         public IActionResult OnPostReserve(string[] golfers)
         {
+            var memberNumbers = golfers.Where(s => !(string.IsNullOrWhiteSpace(s)));
             if (!ModelState.IsValid)
             {
                 foreach (var e in from err in ModelState.Values where err.Errors.Count > 0 select err)
@@ -92,18 +93,15 @@ namespace CBS.Pages
             Confirmation = false;
             TechnicalServices.CBS requestDirector = new TechnicalServices.CBS(memberNumber);
 
-            //if(!requestDirector.VerifyMembersExist(golfers, out List<string> invalidMembers))
-            //{
-            //    ErrorMessages.Add($"The following members do not exist: {new string(invalidMembers.SelectMany(m => m.ToArray().Append(',').Append(' ')).ToArray())}");
-            //    foreach (var invalid in invalidMembers)
-            //    {
-            //        MemberErrorIds.Add(Array.IndexOf(golfers, invalid));
-            //    }
-            //    TempData.Put(nameof(ErrorMessages), ErrorMessages);
-            //    return Redirect(Request.Headers["Referer"].ToString());
-            //}
-            
-            if (!requestDirector.ReserveTeeTime(new TeeTime() { Golfers = golfers.Prepend(memberNumber).ToList(), Datetime = (DateTime)TempData.Peek(nameof(Date)), NumberOfCarts = NumberOfCarts, Phone = Phone }, out string error))
+            var validMembers = dbContext.Users.Where(u => memberNumbers.Contains(u.MemberNumber));
+            if(validMembers.Count() != memberNumbers.Count())
+            {
+                ErrorMessages.Add("One or more provided member numbers do not exist");
+                TempData.Put(nameof(ErrorMessages), ErrorMessages);
+                return Redirect(Request.Headers["Referer"].ToString());
+            }
+
+            if (!requestDirector.ReserveTeeTime(new TeeTime() { Golfers = validMembers.Select(M => M.Id).ToList().Append(memberNumber).ToList(), Datetime = (DateTime)TempData.Peek(nameof(Date)), NumberOfCarts = NumberOfCarts, Phone = Phone }, out string error))
             {
                 ErrorMessages.Add(error);
                 Confirmation = false;
@@ -117,8 +115,6 @@ namespace CBS.Pages
         private void GetMemberNumber()
         {
             var s = userManager.FindByNameAsync(User.Identity.Name).GetAwaiter().GetResult();
-            //var signedInUser = dbContext.Users.Where(u => u.MemberNumber == s.MemberNumber).FirstOrDefault();
-            //signedInUser.Wait();
             memberNumber = s.Id;
         }
 

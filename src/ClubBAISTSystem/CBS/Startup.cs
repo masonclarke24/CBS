@@ -68,7 +68,7 @@ namespace CBS
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, UserManager<ApplicationUser> userManager)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager)
         {
             if (env.IsDevelopment())
             {
@@ -98,12 +98,16 @@ namespace CBS
                 endpoints.MapControllerRoute("default", "{controller=Home}/{action=Index}/{id?}");
             });
 
-            var user = userManager.FindByNameAsync("test@test.com");
+            var user = userManager.FindByNameAsync("shareholder@test.com");
             user.Wait();
 
             if(user.Result is null)
             {
-                userManager.CreateAsync(new ApplicationUser() { Email = "test@test.com", MemberNumber = "1029384756", UserName = "test@test.com" , MemberName = "John Doe"}, "Baist123$").GetAwaiter().GetResult();
+                var shareholder = new ApplicationUser() { Email = "shareholder@test.com", MemberNumber = "1", UserName = "shareholder@test.com", MemberName = "Nathan Smith" };
+                userManager.CreateAsync(shareholder, "Baist123$").GetAwaiter().GetResult();
+
+                roleManager.CreateAsync(new IdentityRole("Shareholder")).GetAwaiter().GetResult();
+                userManager.AddToRoleAsync(shareholder, "Shareholder");
             }
 
         }

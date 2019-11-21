@@ -27,9 +27,9 @@ namespace TechnicalServices
             return confirmation;
         }
 
-        public bool VerifyMembersExist(string[] golfers, out List<string> invalidMembers)
-        {
-            return new DailyTeeSheets(MemberNumber).VerifyMembersExist(golfers, out invalidMembers);
-        }
+        //public bool VerifyMembersExist(string[] golfers, out List<string> invalidMembers)
+        //{
+        //    return new DailyTeeSheets(MemberNumber).VerifyMembersExist(golfers, out invalidMembers);
+        //}
     }
 }

@@ -103,7 +103,7 @@ namespace CBS
 
             if(user.Result is null)
             {
-                userManager.CreateAsync(new ApplicationUser() { Email = "test@test.com", MemberNumber = "1029384756", UserName = "test@test.com" }, "Baist123$").GetAwaiter().GetResult();
+                userManager.CreateAsync(new ApplicationUser() { Email = "test@test.com", MemberNumber = "1029384756", UserName = "test@test.com" , MemberName = "John Doe"}, "Baist123$").GetAwaiter().GetResult();
             }
 
         }

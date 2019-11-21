@@ -2,7 +2,7 @@
 
 namespace CBS.Data.Migrations
 {
-    public partial class CustomUserData : Migration
+    public partial class MemberName : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
@@ -21,6 +21,13 @@ namespace CBS.Data.Migrations
                 oldClrType: typeof(string),
                 oldType: "nvarchar(128)",
                 oldMaxLength: 128);
+
+            migrationBuilder.AddColumn<string>(
+                name: "MemberName",
+                table: "AspNetUsers",
+                type: "VARCHAR(40)",
+                nullable: false,
+                defaultValue: "");
 
             migrationBuilder.AddColumn<string>(
                 name: "MemberNumber",
@@ -44,16 +51,8 @@ namespace CBS.Data.Migrations
                 oldClrType: typeof(string),
                 oldType: "nvarchar(128)",
                 oldMaxLength: 128);
-
-            migrationBuilder.AddForeignKey(
-                name: "FK_AspNetUsers_MemberNumber_Members",
-                table: "AspNetUsers",
-                column: "MemberNumber",
-                principalTable: "Members",
-                principalColumn: "MemberNumber"
-                );
             migrationBuilder.AddUniqueConstraint(
-                name: "UNIQUE_AspNetUsers_MemberNumber",
+                name: "UK_AspNetUsers_MemberNumber",
                 table: "AspNetUsers",
                 column: "MemberNumber"
                 );
@@ -61,8 +60,14 @@ namespace CBS.Data.Migrations
 
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropUniqueConstraint("UNIQUE_AspNetUsers_MemberNumber", "AspNetUsers");
-            migrationBuilder.DropForeignKey("FK_AspNetUsers_MemberNumber_Members", "AspNetUsers");
+            migrationBuilder.DropUniqueConstraint(
+                name: "UK_AspNetUsers_MemberNumber",
+                table: "AspNetUsers"
+                );
+            migrationBuilder.DropColumn(
+                name: "MemberName",
+                table: "AspNetUsers");
+
             migrationBuilder.DropColumn(
                 name: "MemberNumber",
                 table: "AspNetUsers");

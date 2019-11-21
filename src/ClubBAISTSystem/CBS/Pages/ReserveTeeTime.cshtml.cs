@@ -15,10 +15,12 @@ namespace CBS.Pages
     public class ReserveTeeTimeModel : PageModel
     {
         private UserManager<ApplicationUser> userManager;
+        private readonly ApplicationDbContext dbContext;
         private string memberNumber = null;
-        public ReserveTeeTimeModel(UserManager<ApplicationUser> userManager)
+        public ReserveTeeTimeModel(UserManager<ApplicationUser> userManager, ApplicationDbContext dbContext)
         {
             this.userManager = userManager;
+            this.dbContext = dbContext;
             if (User is null) return;
             GetMemberNumber();
         }
@@ -90,16 +92,16 @@ namespace CBS.Pages
             Confirmation = false;
             TechnicalServices.CBS requestDirector = new TechnicalServices.CBS(memberNumber);
 
-            if(!requestDirector.VerifyMembersExist(golfers, out List<string> invalidMembers))
-            {
-                ErrorMessages.Add($"The following members do not exist: {new string(invalidMembers.SelectMany(m => m.ToArray().Append(',').Append(' ')).ToArray())}");
-                foreach (var invalid in invalidMembers)
-                {
-                    MemberErrorIds.Add(Array.IndexOf(golfers, invalid));
-                }
-                TempData.Put(nameof(ErrorMessages), ErrorMessages);
-                return Redirect(Request.Headers["Referer"].ToString());
-            }
+            //if(!requestDirector.VerifyMembersExist(golfers, out List<string> invalidMembers))
+            //{
+            //    ErrorMessages.Add($"The following members do not exist: {new string(invalidMembers.SelectMany(m => m.ToArray().Append(',').Append(' ')).ToArray())}");
+            //    foreach (var invalid in invalidMembers)
+            //    {
+            //        MemberErrorIds.Add(Array.IndexOf(golfers, invalid));
+            //    }
+            //    TempData.Put(nameof(ErrorMessages), ErrorMessages);
+            //    return Redirect(Request.Headers["Referer"].ToString());
+            //}
             
             if (!requestDirector.ReserveTeeTime(new TeeTime() { Golfers = golfers.Prepend(memberNumber).ToList(), Datetime = (DateTime)TempData.Peek(nameof(Date)), NumberOfCarts = NumberOfCarts, Phone = Phone }, out string error))
             {
@@ -114,9 +116,10 @@ namespace CBS.Pages
 
         private void GetMemberNumber()
         {
-            var signedInUser = userManager.FindByNameAsync(User.Identity.Name);
-            signedInUser.Wait();
-            memberNumber = signedInUser.Result.MemberNumber;
+            var s = userManager.FindByNameAsync(User.Identity.Name).GetAwaiter().GetResult();
+            //var signedInUser = dbContext.Users.Where(u => u.MemberNumber == s.MemberNumber).FirstOrDefault();
+            //signedInUser.Wait();
+            memberNumber = s.Id;
         }
 
     }

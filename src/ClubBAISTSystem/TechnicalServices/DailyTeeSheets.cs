@@ -96,32 +96,32 @@ namespace TechnicalServices
             return confirmation;
         }
 
-        public bool VerifyMembersExist(string[] golfers, out List<string> invalidMembers)
-        {
-            invalidMembers = new List<string>();
-            bool membersExist = true;
-            using (SqlConnection connection = new SqlConnection(ConnectionString))
-            {
-                using(SqlCommand memberExists = new SqlCommand("MemberExists", connection) { CommandType = CommandType.StoredProcedure })
-                {
-                    connection.Open();
-                    foreach (var item in golfers)
-                    {
-                        memberExists.Parameters.AddWithValue("@memberNumber", item);
-                        if (int.Parse(memberExists.ExecuteScalar().ToString()) == 1)
-                        {
-                            invalidMembers.Add(item);
-                            membersExist = false;
-                        }
-                        memberExists.Parameters.Clear();
-                    }
+        //public bool VerifyMembersExist(string[] golfers, out List<string> invalidMembers)
+        //{
+        //    invalidMembers = new List<string>();
+        //    bool membersExist = true;
+        //    using (SqlConnection connection = new SqlConnection(ConnectionString))
+        //    {
+        //        using(SqlCommand memberExists = new SqlCommand("MemberExists", connection) { CommandType = CommandType.StoredProcedure })
+        //        {
+        //            connection.Open();
+        //            foreach (var item in golfers)
+        //            {
+        //                memberExists.Parameters.AddWithValue("@memberNumber", item);
+        //                if (int.Parse(memberExists.ExecuteScalar().ToString()) == 1)
+        //                {
+        //                    invalidMembers.Add(item);
+        //                    membersExist = false;
+        //                }
+        //                memberExists.Parameters.Clear();
+        //            }
                     
-                }
-            }
+        //        }
+        //    }
 
             
-            return membersExist;
-        }
+        //    return membersExist;
+        //}
         private void RestrictTeeSheetToPermissableTimes(SqlConnection connection, DateTime date)
         {
             using (SqlCommand getPermittedTeeTimes = new SqlCommand("GetPermittedTeeTimes", connection) { CommandType = System.Data.CommandType.StoredProcedure })

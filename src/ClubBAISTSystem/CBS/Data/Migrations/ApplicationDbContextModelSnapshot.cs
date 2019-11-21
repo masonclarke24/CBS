@@ -44,6 +44,10 @@ namespace CBS.Data.Migrations
                     b.Property<DateTimeOffset?>("LockoutEnd")
                         .HasColumnType("datetimeoffset");
 
+                    b.Property<string>("MemberName")
+                        .IsRequired()
+                        .HasColumnType("VARCHAR(40)");
+
                     b.Property<string>("MemberNumber")
                         .IsRequired()
                         .HasColumnType("CHAR(10)");

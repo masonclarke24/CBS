@@ -18,6 +18,7 @@ namespace CBS.Data
         {
             base.OnModelCreating(builder);
             builder.Entity<ApplicationUser>().Property("MemberNumber").HasColumnType("CHAR(10)").IsRequired(true);
+            builder.Entity<ApplicationUser>().Property("MemberName").HasColumnType("VARCHAR(40)").IsRequired(true);
         }
     }
 }

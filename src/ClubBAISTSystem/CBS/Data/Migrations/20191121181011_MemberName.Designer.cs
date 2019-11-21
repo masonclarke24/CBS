@@ -10,8 +10,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CBS.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20191116035403_CustomUserData")]
-    partial class CustomUserData
+    [Migration("20191121181011_MemberName")]
+    partial class MemberName
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -45,6 +45,10 @@ namespace CBS.Data.Migrations
 
                     b.Property<DateTimeOffset?>("LockoutEnd")
                         .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("MemberName")
+                        .IsRequired()
+                        .HasColumnType("VARCHAR(40)");
 
                     b.Property<string>("MemberNumber")
                         .IsRequired()

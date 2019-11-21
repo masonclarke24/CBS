@@ -28,6 +28,12 @@
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-area="" asp-page="/ReserveTeeTime">Reserve Tee Time</a>
                         </li>
+                        @if (User.IsInRole("Shareholder"))
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-area="" asp-page="/StandingTeeTimeRequests">Standing Tee Time Request</a>
+                            </li>
+                        }
                     </ul>
                 </div>
             </div>

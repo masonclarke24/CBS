@@ -101,13 +101,14 @@ namespace CBS
             var user = userManager.FindByNameAsync("shareholder@test.com");
             user.Wait();
 
-            if(user.Result is null)
+            userManager.AddToRoleAsync(user.GetAwaiter().GetResult(), "Shareholder");
+            if (user.Result is null)
             {
                 var shareholder = new ApplicationUser() { Email = "shareholder@test.com", MemberNumber = "1", UserName = "shareholder@test.com", MemberName = "Nathan Smith" };
                 userManager.CreateAsync(shareholder, "Baist123$").GetAwaiter().GetResult();
 
                 roleManager.CreateAsync(new IdentityRole("Shareholder")).GetAwaiter().GetResult();
-                userManager.AddToRoleAsync(shareholder, "Shareholder");
+                
             }
 
         }

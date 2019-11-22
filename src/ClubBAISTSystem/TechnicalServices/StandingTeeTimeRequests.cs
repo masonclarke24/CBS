@@ -40,9 +40,10 @@ namespace TechnicalServices
                                     standingTeeTime = result.Last();
                                 if (standingTeeTime.Members is null && !(standingTeeTime.StartDate is null))
                                     standingTeeTime.Members = new List<string>();
-                                if(!(standingTeeTime.Members is null) && !(standingTeeTime.StartDate is null))
+                                if (!(standingTeeTime.Members is null) && !(standingTeeTime.StartDate is null))
                                     standingTeeTime.Members.Add(reader["Member Name"].ToString());
-                                result.Add(standingTeeTime);
+                                if (standingTeeTime.Members is null || standingTeeTime.Members.Count == 1)
+                                    result.Add(standingTeeTime);
                             }
                         }
                     }

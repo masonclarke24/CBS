@@ -17,9 +17,11 @@ namespace CBS
 {
     public class Startup
     {
+        public static string ConnectionString { get; private set; }
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
+            ConnectionString = Configuration.GetConnectionString("CBSConnection");
         }
 
         public IConfiguration Configuration { get; }
@@ -33,6 +35,9 @@ namespace CBS
             services.AddIdentity<ApplicationUser,IdentityRole>(options => options.SignIn.RequireConfirmedAccount = false)
                 .AddEntityFrameworkStores<ApplicationDbContext>();
             services.AddRazorPages();
+
+            services.AddSession();
+            services.AddMemoryCache();
 
             services.Configure<IdentityOptions>(options =>
             {
@@ -90,6 +95,8 @@ namespace CBS
             app.UseAuthentication();
             app.UseAuthorization();
 
+            app.UseStaticFiles();
+            app.UseSession();
 
             app.UseEndpoints(endpoints =>
             {
@@ -99,9 +106,9 @@ namespace CBS
             });
 
             var user = userManager.FindByNameAsync("shareholder@test.com");
-            user.Wait();
 
-            userManager.AddToRoleAsync(user.GetAwaiter().GetResult(), "Shareholder");
+            var result = userManager.AddToRoleAsync(user.GetAwaiter().GetResult(), "Shareholder");
+            result.Wait();
             if (user.Result is null)
             {
                 var shareholder = new ApplicationUser() { Email = "shareholder@test.com", MemberNumber = "1", UserName = "shareholder@test.com", MemberName = "Nathan Smith" };

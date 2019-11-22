@@ -11,17 +11,18 @@ namespace TechnicalServices
     {
         public string MemberNumber { get; private set; }
 
-        private const string ConnectionString = "Server=(localdb)\\mssqllocaldb;Database=CBS;Integrated Security=True;";
         private HashSet<TeeTime> teeTimes = new HashSet<TeeTime>();
+        private readonly string connectionString;
 
-        public DailyTeeSheets(string memberNumber)
+        public DailyTeeSheets(string memberNumber, string connectionString)
         {
             MemberNumber = memberNumber;
+            this.connectionString = connectionString;
         }
 
         public DailyTeeSheet FindDailyTeeSheet(DateTime date)
         {
-            using (SqlConnection connection = new SqlConnection(ConnectionString))
+            using (SqlConnection connection = new SqlConnection(connectionString))
             {
                 using (SqlCommand findDailyTeeSheet = new SqlCommand("FindDailyTeeSheet", connection) { CommandType = CommandType.StoredProcedure })
                 {
@@ -56,7 +57,7 @@ namespace TechnicalServices
         {
             bool confirmation = false;
             error = "";
-            using (SqlConnection connection = new SqlConnection(ConnectionString))
+            using (SqlConnection connection = new SqlConnection(connectionString))
             {
                 using(SqlCommand reserveTeeTime = new SqlCommand("ReserveTeeTime", connection) { CommandType = System.Data.CommandType.StoredProcedure })
                 {

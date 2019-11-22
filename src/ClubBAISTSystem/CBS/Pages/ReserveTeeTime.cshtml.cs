@@ -37,7 +37,7 @@ namespace CBS.Pages
         public int NumberOfCarts { get; set; }
         public List<int> MemberErrorIds { get; set; } = new List<int>();
 
-        public void OnGet()
+        public IActionResult OnGet()
         {
             Confirmation = false;
             if (Request.Query.TryGetValue("teeTime", out Microsoft.Extensions.Primitives.StringValues teeTime))
@@ -47,7 +47,10 @@ namespace CBS.Pages
                     Date = result;
                     TempData["Date"] = result;
                 }
+                else
+                    return Redirect("/ReserveTeeTime");
             }
+            return Page();
         }
 
         public IActionResult OnPostSelect(string teeTime)
@@ -72,7 +75,7 @@ namespace CBS.Pages
             Confirmation = false;
                 if (memberNumber is null)
                     GetMemberNumber();
-                TechnicalServices.CBS requestDirector = new TechnicalServices.CBS(memberNumber);
+                TechnicalServices.CBS requestDirector = new TechnicalServices.CBS(memberNumber, Startup.ConnectionString);
                 DailyTeeSheet = requestDirector.ViewDailyTeeSheet(Date);
             return Page();
         }
@@ -91,7 +94,7 @@ namespace CBS.Pages
             }
             if (memberNumber is null) GetMemberNumber();
             Confirmation = false;
-            TechnicalServices.CBS requestDirector = new TechnicalServices.CBS(memberNumber);
+            TechnicalServices.CBS requestDirector = new TechnicalServices.CBS(memberNumber, Startup.ConnectionString);
 
             var validMembers = dbContext.Users.Where(u => memberNumbers.Contains(u.MemberNumber));
             if(validMembers.Count() != memberNumbers.Count())

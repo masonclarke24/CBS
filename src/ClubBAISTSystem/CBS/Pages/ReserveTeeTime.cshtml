@@ -53,7 +53,7 @@
     @ViewData["Title"]
 </h1>
 <h4>
-    @(Model.Request.Query.ContainsKey("teeTime") ? $"{((DateTime)TempData.Peek("Date")).ToString("dddd MMMM dd, yyyy HH:mm")}" : "")
+    @(Model.Request.Query.ContainsKey("teeTime") && TempData.ContainsKey("Date") ? $"{((DateTime)TempData.Peek("Date")).ToString("dddd MMMM dd, yyyy HH:mm")}" : "")
 </h4>
 
 <form method="POST">
@@ -125,7 +125,8 @@
         }
     </div>
     @if (Model.Request.Query.ContainsKey("teeTime"))
-    {<div id="teeTimeDetails">
+    {
+        <div id="teeTimeDetails">
             <div class="form-group">
                 <label>Phone</label>
                 <input class="form-control" name="Phone" asp-for="Phone" />
@@ -144,12 +145,6 @@
     }
 </form>
 
-
-<style>
-    .selected {
-        background-color: lightcyan;
-    }
-</style>
 
 
 

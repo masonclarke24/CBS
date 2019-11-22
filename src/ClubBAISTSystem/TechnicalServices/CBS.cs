@@ -6,30 +6,34 @@ namespace TechnicalServices
 {
     public class CBS
     {
-        public CBS(string memberNumber)
+        private readonly string connectionString;
+
+        public CBS(string memberNumber, string connectionString)
         {
             MemberNumber = memberNumber;
+            this.connectionString = connectionString;
         }
 
         public string MemberNumber { get; private set; }
 
         public DailyTeeSheet ViewDailyTeeSheet(DateTime date)
         {
-            DailyTeeSheets teeSheetManager = new DailyTeeSheets(MemberNumber);
+            DailyTeeSheets teeSheetManager = new DailyTeeSheets(MemberNumber, connectionString);
             return teeSheetManager.FindDailyTeeSheet(date);
         }
 
         public bool ReserveTeeTime(TeeTime requestedTeeTime, out string message)
         {
             bool confirmation;
-            DailyTeeSheets teeSheetManager = new DailyTeeSheets(MemberNumber);
+            DailyTeeSheets teeSheetManager = new DailyTeeSheets(MemberNumber, connectionString);
             confirmation = teeSheetManager.ReserveTeeTime(requestedTeeTime, out message);
             return confirmation;
         }
 
-        //public bool VerifyMembersExist(string[] golfers, out List<string> invalidMembers)
-        //{
-        //    return new DailyTeeSheets(MemberNumber).VerifyMembersExist(golfers, out invalidMembers);
-        //}
+        public List<StandingTeeTime> ViewStandingTeeTimeRequests(DayOfWeek dayOfWeek)
+        {
+            StandingTeeTimeRequests standingTeeTimeManager = new StandingTeeTimeRequests(connectionString);
+            return standingTeeTimeManager.ViewStandingTeeTimeRequests(dayOfWeek);
+        }
     }
 }

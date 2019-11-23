@@ -9,6 +9,12 @@ function rowClicked(row) {
 
         $(row).find("input[type=radio]").attr("checked", true);
     }
+    var td = $(row).children().filter(".text-warning");
+    var expandMe = $(td).parent().next();
+    if ($(expandMe).css("display") == "table-row")
+        $(expandMe).css("display", "none")
+    else
+        $(expandMe).css("display", "table-row")
 }
 function addGolfer(button) {
     var childCount = $("input[name^=Golfers]").length;
@@ -36,6 +42,8 @@ function selectAvaliableTime() {
             if (radioButton.length == 0) continue;
             radioButton.attr("checked", true);
             $(teeTimes[i]).addClass("selected");
+
+            $("table").parent().scrollTop((($("table tr.d-sm-table-row").index($(".selected")) + 1) * $(".selected").height()));
             return;
         }
 

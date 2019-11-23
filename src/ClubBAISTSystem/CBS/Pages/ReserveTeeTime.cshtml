@@ -3,51 +3,6 @@
 @{
     ViewData["Title"] = $"Reserve Tee Time";
 }
-@section Scripts {
-
-    <script>
-        function rowClicked(row) {
-            if ($(row).css("background-color") !== "rgb(204, 204, 204)" && $(row).find("input[type=radio]").length != 0) {
-                $(".selected").removeClass("selected");
-                $(row).addClass("selected");
-
-                $(row).find("input[type=radio]").attr("checked", true);
-            }
-        }
-        function addGolfer(button) {
-            var childCount = $("input[name^=Golfers]").length;
-            if (childCount > 3) return;
-            var formGroup = `<div class="form-group">
-                    <label>Member Number</label>
-                    <input class="form-control" name="Golfers[` + (childCount).toString() + `]" />
-                    <span class="text-danger" \></span>
-                </div>`;
-            $(button).parent().append(formGroup);
-        }
-        function removeGolfer(button) {
-            $("input[name^=Golfers]").last().parent().remove()
-        }
-        function addErrorMessages(errors) {
-            for (var i = 0; i < errors.length; i++) {
-                $("input[name=Golfers[" + i.toString() + "]").parent().children("span").text("Member does not exist");
-            }
-        }
-        function selectAvaliableTime() {
-            var teeTimes = $("table").children("tbody").children("tr");
-            for (var i = 0; i < teeTimes.length; i++) {
-                if ($(teeTimes[i]).attr("style") !== "background-color: #CCC") {
-                    var radioButton = $(teeTimes[i]).find("input[type=radio]");
-                    if (radioButton.length == 0) continue;
-                    radioButton.attr("checked", true);
-                    $(teeTimes[i]).addClass("selected");
-                    return;
-                }
-
-            }
-        }
-        window.document.onload = selectAvaliableTime();
-    </script>
-}
 
 <h1>
     @ViewData["Title"]
@@ -97,10 +52,10 @@
                 <table class="table table-hover" style="table-layout: fixed;">
                     <thead>
                         <tr>
-                            <td>
+                            <td class="font-weight-bold">
                                 Time
                             </td>
-                            <td>
+                            <td class="font-weight-bold">
                                 Avaliability
                             </td>
                         </tr>
@@ -108,7 +63,7 @@
                     <tbody>
                         @for (int i = 0; i < Model.DailyTeeSheet.TeeTimes.Count; i++)
                         {
-                            <tr style="background-color: @(!Model.DailyTeeSheet.TeeTimes[i].Reservable ? "#CCC" : "")" onclick="rowClicked(this)">
+                            <tr style="background-color: @(!Model.DailyTeeSheet.TeeTimes[i].Reservable ? "#CCC" : "")" onclick="rowClicked(this)" class="d-sm-table-row">
                                 <td>
                                     @Model.DailyTeeSheet.TeeTimes[i].Datetime.ToShortTimeString()
                                     @if (Model.DailyTeeSheet.TeeTimes[i].Golfers is null)
@@ -118,6 +73,33 @@
                                 </td>
                                 <td class="text-@(Model.DailyTeeSheet.TeeTimes[i].Golfers is null ? "success" : "warning")">@(Model.DailyTeeSheet.TeeTimes[i].Golfers is null ? "Avaliable" : "Reserved")</td>
                             </tr>
+                            @if (Model.DailyTeeSheet.TeeTimes[i].Golfers?.Any() ?? false)
+                            {
+                                <tr style="display: none">
+                                    <td colspan="2">
+                                        <table class="table table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <td class="font-weight-bold">
+                                                        Member Name
+                                                    </td>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach (var member in Model.DailyTeeSheet.TeeTimes[i].Golfers)
+                                                {
+                                                    <tr>
+                                                        <td>
+                                                            @member
+                                                        </td>
+                                                    </tr>
+                                                }
+                                            </tbody>
+                                        </table>
+                                    </td>
+                                </tr>
+                            }
+
                         }
                     </tbody>
                 </table>

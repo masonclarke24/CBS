@@ -89,6 +89,7 @@
                         Model.InitialDate = Model.InitialDate.AddDays(7);
                         break;
                 }
+                <option value="">Select Start Date</option>
                 @for (int i = 0; i < 52; i++)
                 {
                     <option value="@Model.InitialDate">@Model.InitialDate.ToLongDateString()</option>
@@ -97,6 +98,7 @@
             </select>
 
             <select name="EndDate">
+                <option value="">Select End Date</option>
                 @(Model.InitialDate = Model.InitialDate.AddDays(-(51 * 7)))
                 @for (int i = 0; i < 52; i++)
                 {
@@ -139,7 +141,7 @@
                 <tbody>
                     @foreach (var STTR in Model.STTRequests)
                     {
-                        <tr onclick="rowClicked(this)">
+                        <tr onclick="rowClicked(this)" class="d-sm-table-row">
                             <td>
                                 @STTR.RequestedTime.ToString("HH:mm")
                                 @if (STTR.Members is null)

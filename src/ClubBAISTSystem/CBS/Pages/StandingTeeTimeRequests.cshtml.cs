@@ -28,9 +28,9 @@ namespace CBS.Pages
         public List<string> ErrorMessages { get; set; } = new List<string>();
         [BindProperty, TempData, Display(Name = "Day of week")]
         public DayOfWeek DayOfWeek { get; set; }
-        [BindProperty, Required, DisplayFormat(DataFormatString = "{0:dddd MMMM dd, yyyy}", ApplyFormatInEditMode = true)]
+        [BindProperty, Required, DisplayFormat(DataFormatString = "{0:dddd MMMM dd, yyyy}", ApplyFormatInEditMode = true), TempData]
         public DateTime StartDate { get; set; }
-        [BindProperty, Required, DisplayFormat(DataFormatString = "{0:dddd MMMM dd, yyyy}", ApplyFormatInEditMode = true)]
+        [BindProperty, Required, DisplayFormat(DataFormatString = "{0:dddd MMMM dd, yyyy}", ApplyFormatInEditMode = true), TempData]
         public DateTime EndDate { get; set; }
         public List<StandingTeeTime> STTRequests { get; set; }
         [BindProperty, Required, ArrayLength(3, ErrorMessage = "A standing tee time request requires exactly 3 additional members"), Distinct(ErrorMessage = "Supplied members must be unique")]
@@ -86,6 +86,12 @@ namespace CBS.Pages
 
             for (int i = 0; i < SuppliedMemberNumbers.Length; i++)
                 SuppliedMemberNumbers[i] = SuppliedMemberNumbers[i].Trim();
+            var userIds = from user in dbContext.Users where SuppliedMemberNumbers.Contains(user.MemberNumber) select user.Id;
+            if (userIds.Count() != SuppliedMemberNumbers.Count())
+            {
+                ErrorMessages.Add("One or more supplied member numbers do not exist");
+                isError = true;
+            }
 
             if (SuppliedMemberNumbers.Contains(signedInMember.MemberNumber.Trim()))
             {
@@ -94,12 +100,7 @@ namespace CBS.Pages
             }
 
             SuppliedMemberNumbers = SuppliedMemberNumbers.Append(signedInMember.MemberNumber).ToArray();
-            var userIds = from user in dbContext.Users where SuppliedMemberNumbers.Contains(user.MemberNumber) select user.Id;
-            if (userIds.Count() != SuppliedMemberNumbers.Count())
-            {
-                ErrorMessages.Add("One or more supplied member numbers do not exist");
-                isError = true;
-            }
+            
 
             if (StartDate.DayOfWeek != EndDate.DayOfWeek)
             {

@@ -35,5 +35,11 @@ namespace TechnicalServices
             StandingTeeTimeRequests standingTeeTimeManager = new StandingTeeTimeRequests(connectionString);
             return standingTeeTimeManager.ViewStandingTeeTimeRequests(dayOfWeek);
         }
+
+        public bool RequestStandingTeeTime(StandingTeeTime requestedStandingTeeTime, out string message)
+        {
+            StandingTeeTimeRequests standingTeeTimeManager = new StandingTeeTimeRequests(connectionString);
+            return standingTeeTimeManager.RequestStandingTeeTime(requestedStandingTeeTime, out message);
+        }
     }
 }

@@ -105,18 +105,19 @@ namespace CBS
                 endpoints.MapControllerRoute("default", "{controller=Home}/{action=Index}/{id?}");
             });
 
-            var user = userManager.FindByNameAsync("shareholder@test.com");
+            //var shareholder = new ApplicationUser() { Email = "shareholder4@test.com", MemberNumber = "4", UserName = "shareholder4@test.com", MemberName = "Fourth Shareholder" };
+            //userManager.CreateAsync(shareholder, "Baist123$").GetAwaiter().GetResult();
 
-            var result = userManager.AddToRoleAsync(user.GetAwaiter().GetResult(), "Shareholder");
-            result.Wait();
-            if (user.Result is null)
-            {
-                var shareholder = new ApplicationUser() { Email = "shareholder@test.com", MemberNumber = "1", UserName = "shareholder@test.com", MemberName = "Nathan Smith" };
-                userManager.CreateAsync(shareholder, "Baist123$").GetAwaiter().GetResult();
+            //var result = userManager.AddToRoleAsync(shareholder, "Shareholder");
+            //result.Wait();
+            //if (user.Result is null)
+            //{
+            //    var shareholder = new ApplicationUser() { Email = "shareholder@test.com", MemberNumber = "1", UserName = "shareholder@test.com", MemberName = "Nathan Smith" };
+            //    userManager.CreateAsync(shareholder, "Baist123$").GetAwaiter().GetResult();
 
-                roleManager.CreateAsync(new IdentityRole("Shareholder")).GetAwaiter().GetResult();
+            //    roleManager.CreateAsync(new IdentityRole("Shareholder")).GetAwaiter().GetResult();
                 
-            }
+            
 
         }
     }

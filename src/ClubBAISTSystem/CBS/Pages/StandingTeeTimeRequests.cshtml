@@ -46,8 +46,7 @@
             <button type="submit" class="btn btn-success" asp-page-handler="Submit">Submit Standing Tee Time Request</button>
         }
     </div>
-
-    <div class="text-danger">
+    <div class="text-@(Model.Confirmation ? "success" : "danger")">
         @if (TempData.ContainsKey("ErrorMessages") && TempData.Peek<List<string>>("ErrorMessages").Any())
         {
             var errors = TempData.Peek<List<string>>("ErrorMessages");
@@ -59,9 +58,53 @@
             }
             TempData.Remove("ErrorMessages");
         }
+        @(Model.Confirmation ? "Standing Tee time request submitted successfully" : "")
     </div>
     @if (Model.ValidTimeSelected)
     {
+        <div class="form-group">
+            <select name="StartDate" asp-for="StartDate">
+                @(Model.InitialDate = DateTime.Today.AddDays(-(int)(DateTime.Today.DayOfWeek)))
+                @switch (HttpContext.Session.GetString(nameof(DayOfWeek)))
+                {
+                    case "Monday":
+                        Model.InitialDate = Model.InitialDate.AddDays(8);
+                        break;
+                    case "Tuesday":
+                        Model.InitialDate = Model.InitialDate.AddDays(9);
+                        break;
+                    case "Wednesday":
+                        Model.InitialDate = Model.InitialDate.AddDays(10);
+                        break;
+                    case "Thursday":
+                        Model.InitialDate = Model.InitialDate.AddDays(11);
+                        break;
+                    case "Friday":
+                        Model.InitialDate = Model.InitialDate.AddDays(12);
+                        break;
+                    case "Saturday":
+                        Model.InitialDate = Model.InitialDate.AddDays(13);
+                        break;
+                    case "Sunday":
+                        Model.InitialDate = Model.InitialDate.AddDays(7);
+                        break;
+                }
+                @for (int i = 0; i < 52; i++)
+                {
+                    <option value="@Model.InitialDate">@Model.InitialDate.ToLongDateString()</option>
+                    @(Model.InitialDate = Model.InitialDate.AddDays(7))
+                }
+            </select>
+
+            <select name="EndDate">
+                @(Model.InitialDate = Model.InitialDate.AddDays(-(51 * 7)))
+                @for (int i = 0; i < 52; i++)
+                {
+                    <option value="@Model.InitialDate">@Model.InitialDate.ToLongDateString()</option>
+                    @(Model.InitialDate = Model.InitialDate.AddDays(7))
+                }
+            </select>
+        </div>
         <div class="form-group">
             <label>Member Number 1</label>
             <input class="form-control" name="SuppliedMemberNumbers[0]" asp-for="SuppliedMemberNumbers" />

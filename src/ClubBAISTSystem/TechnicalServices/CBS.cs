@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace TechnicalServices
+namespace CBSClasses
 {
     public class CBS
     {
@@ -30,10 +30,10 @@ namespace TechnicalServices
             return confirmation;
         }
 
-        public List<StandingTeeTime> ViewStandingTeeTimeRequests(DayOfWeek dayOfWeek)
+        public List<StandingTeeTime> ViewStandingTeeTimeRequests(DateTime startDate, DateTime endDate)
         {
             StandingTeeTimeRequests standingTeeTimeManager = new StandingTeeTimeRequests(connectionString);
-            return standingTeeTimeManager.ViewStandingTeeTimeRequests(dayOfWeek);
+            return standingTeeTimeManager.ViewStandingTeeTimeRequests(startDate, endDate);
         }
 
         public bool RequestStandingTeeTime(StandingTeeTime requestedStandingTeeTime, out string message)

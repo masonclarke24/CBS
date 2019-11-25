@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace TechnicalServices
+namespace CBSClasses
 {
     public class StandingTeeTime
     {

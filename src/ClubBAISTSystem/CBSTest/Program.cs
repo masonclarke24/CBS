@@ -1,5 +1,5 @@
 ﻿using System;
-using TechnicalServices;
+using CBSClasses;
 namespace CBSTest
 {
     class Program
@@ -7,7 +7,7 @@ namespace CBSTest
         static void Main(string[] args)
         {
             StandingTeeTimeRequests sr = new StandingTeeTimeRequests("Server=(localdb)\\mssqllocaldb;Database=CBS;Integrated Security=True;");
-            var result = sr.ViewStandingTeeTimeRequests(DayOfWeek.Tuesday);
+            //var result = sr.ViewStandingTeeTimeRequests(DayOfWeek.Tuesday);
         }
     }
 }

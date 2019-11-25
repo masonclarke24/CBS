@@ -30,9 +30,15 @@
 
 <form method="post">
     <div class="form-group">
-        <label>Day of Week</label>
-        <input class="form-control" name="DayOfWeek" placeholder="@DateTime.Today.DayOfWeek.ToString()" value="@(HttpContext.Session.GetString(nameof(Model.DayOfWeek)) ?? "")" />
-        <span asp-validation-for="@Model.DayOfWeek" class="text-danger"></span>
+        <label>Start Date</label>
+        <input class="form-control" name="StartDate" placeholder="@DateTime.Today.AddDays(8).ToString("dddd MMMM dd yyyy")" onkeyup="startDateEntered(this.value)"/>
+        <span asp-validation-for="@Model.StartDate" class="text-danger"></span>
+    </div>
+    <div class="form-group">
+        <label>End Date</label>
+        <select name="EndDate">
+            <option value="">Please provide a start date</option>
+        </select>
     </div>
     <div class="form-group">
         <button type="submit" class="btn btn-primary" asp-page-handler="View">View Standing Tee Time Requests</button>
@@ -60,69 +66,6 @@
         }
         @(Model.Confirmation ? "Standing Tee time request submitted successfully" : "")
     </div>
-    @if (Model.ValidTimeSelected)
-    {
-        <div class="form-group">
-            <select name="StartDate" asp-for="StartDate">
-                @(Model.InitialDate = DateTime.Today.AddDays(-(int)(DateTime.Today.DayOfWeek)))
-                @switch (HttpContext.Session.GetString(nameof(DayOfWeek)))
-                {
-                    case "Monday":
-                        Model.InitialDate = Model.InitialDate.AddDays(8);
-                        break;
-                    case "Tuesday":
-                        Model.InitialDate = Model.InitialDate.AddDays(9);
-                        break;
-                    case "Wednesday":
-                        Model.InitialDate = Model.InitialDate.AddDays(10);
-                        break;
-                    case "Thursday":
-                        Model.InitialDate = Model.InitialDate.AddDays(11);
-                        break;
-                    case "Friday":
-                        Model.InitialDate = Model.InitialDate.AddDays(12);
-                        break;
-                    case "Saturday":
-                        Model.InitialDate = Model.InitialDate.AddDays(13);
-                        break;
-                    case "Sunday":
-                        Model.InitialDate = Model.InitialDate.AddDays(7);
-                        break;
-                }
-                <option value="">Select Start Date</option>
-                @for (int i = 0; i < 52; i++)
-                {
-                    <option value="@Model.InitialDate">@Model.InitialDate.ToLongDateString()</option>
-                    @(Model.InitialDate = Model.InitialDate.AddDays(7))
-                }
-            </select>
-
-            <select name="EndDate">
-                <option value="">Select End Date</option>
-                @(Model.InitialDate = Model.InitialDate.AddDays(-(51 * 7)))
-                @for (int i = 0; i < 52; i++)
-                {
-                    <option value="@Model.InitialDate">@Model.InitialDate.ToLongDateString()</option>
-                    @(Model.InitialDate = Model.InitialDate.AddDays(7))
-                }
-            </select>
-        </div>
-        <div class="form-group">
-            <label>Member Number 1</label>
-            <input class="form-control" name="SuppliedMemberNumbers[0]" asp-for="SuppliedMemberNumbers" />
-            <span asp-validation-for="@Model.SuppliedMemberNumbers" class="text-danger"></span>
-        </div>
-        <div class="form-group">
-            <label>Member Number 2</label>
-            <input class="form-control" name="SuppliedMemberNumbers[1]" asp-for="SuppliedMemberNumbers" />
-            <span asp-validation-for="@Model.SuppliedMemberNumbers" class="text-danger"></span>
-        </div>
-        <div class="form-group">
-            <label>Member Number 3</label>
-            <input class="form-control" name="SuppliedMemberNumbers[2]" asp-for="SuppliedMemberNumbers" />
-            <span asp-validation-for="@Model.SuppliedMemberNumbers" class="text-danger"></span>
-        </div>
-    }
 
     @if (Model.STTRequests?.Any() ?? false)
     {

@@ -50,3 +50,22 @@ function selectAvaliableTime() {
     }
 }
 window.document.onload = selectAvaliableTime();
+
+function startDateEntered(date) {
+    $.ajax({
+        type: "POST",
+        url: "/StandingTeeTimeRequests?handler=ChangeDate",
+        contentType: "text/plain",
+        beforeSend: function (xhr) {
+            xhr.setRequestHeader("RequestVerificationToken",
+                $('input:hidden[name="__RequestVerificationToken"]').val());
+        },
+        data: date,
+        success: function (response) {
+            $("select[name='EndDate']").replaceWith(response);
+        },
+        failure: function (response) {
+            console.log(response);
+        }
+    });
+}

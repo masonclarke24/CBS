@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using TechnicalServices;
+using CBSClasses;
 
 namespace CBS.Pages
 {
@@ -53,11 +53,11 @@ namespace CBS.Pages
             return Page();
         }
 
-        public IActionResult OnPostSelect(string teeTime)
+        public IActionResult OnPostSelect(string date)
         {
             Confirmation = false;
             TempData["Date"] = Date;
-            return Redirect("/ReserveTeeTime?teeTime=" + System.Web.HttpUtility.UrlEncode($"{Date.ToShortDateString()} {teeTime}"));
+            return Redirect("/ReserveTeeTime?teeTime=" + System.Web.HttpUtility.UrlEncode($"{Date.ToShortDateString()} {date}"));
         }
 
         public IActionResult OnPostView()
@@ -75,7 +75,7 @@ namespace CBS.Pages
             Confirmation = false;
                 if (memberNumber is null)
                     GetMemberNumber();
-                TechnicalServices.CBS requestDirector = new TechnicalServices.CBS(memberNumber, Startup.ConnectionString);
+                CBSClasses.CBS requestDirector = new CBSClasses.CBS(memberNumber, Startup.ConnectionString);
                 DailyTeeSheet = requestDirector.ViewDailyTeeSheet(Date);
             return Page();
         }
@@ -94,7 +94,7 @@ namespace CBS.Pages
             }
             if (memberNumber is null) GetMemberNumber();
             Confirmation = false;
-            TechnicalServices.CBS requestDirector = new TechnicalServices.CBS(memberNumber, Startup.ConnectionString);
+            CBSClasses.CBS requestDirector = new CBSClasses.CBS(memberNumber, Startup.ConnectionString);
 
             var validMembers = dbContext.Users.Where(u => memberNumbers.Contains(u.MemberNumber));
             if(validMembers.Count() != memberNumbers.Count())

@@ -10,7 +10,8 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Primitives;
-using TechnicalServices;
+using CBSClasses;
+using System.IO;
 
 namespace CBS.Pages
 {
@@ -50,20 +51,70 @@ namespace CBS.Pages
             }
         }
 
-        public void OnPostView(DayOfWeek dayOfWeek)
+        public void OnPostView(string startDate, long endDate)
         {
-            HttpContext.Session.SetString(nameof(DayOfWeek), dayOfWeek.ToString());
-            TechnicalServices.CBS requestDirector = new TechnicalServices.CBS(userManager.FindByNameAsync(User.Identity.Name).GetAwaiter().GetResult().Id,
-                Startup.ConnectionString);
-            STTRequests = requestDirector.ViewStandingTeeTimeRequests(dayOfWeek);
-            TempData.Put("PermissableTimes", from time in STTRequests where time.Members is null select time.RequestedTime.ToString("HH:mm"));
+            if (DateTime.TryParse(startDate, out DateTime dt))
+            {
+                StartDate = dt;
+                if ((DateTime.Today.AddDays(8) - StartDate).Days > 0)
+                    ErrorMessages.Add($"Start Date must be beyond { DateTime.Today.AddDays(7).ToLongDateString()}");
+                if (endDate > 0)
+                {
+                    EndDate = new DateTime(endDate);
+                    if (StartDate.DayOfWeek != EndDate.DayOfWeek)
+                        ErrorMessages.Add($"Day of week for Start Date ({StartDate.DayOfWeek.ToString()}) does not match day of week for End Date({EndDate.DayOfWeek.ToString()})");
+                }
+                else
+                    ErrorMessages.Add("Please select an End Date");
+                if (!(ErrorMessages?.Any() ?? false))
+                {
+                    CBSClasses.CBS requestDirector = new CBSClasses.CBS(userManager.FindByNameAsync(User.Identity.Name).GetAwaiter().GetResult().Id,
+                            Startup.ConnectionString);
+                    STTRequests = requestDirector.ViewStandingTeeTimeRequests(StartDate, new DateTime(endDate));
+                    TempData.Put("PermissableTimes", from time in STTRequests where time.Members is null select time.RequestedTime.ToString("HH:mm"));
+                    return;
+                }
+            }
+            TempData.Put(nameof(ErrorMessages), ErrorMessages);
+
         }
 
-        public IActionResult OnPostSelect(string selectedTime)
+        public IActionResult OnPostChangeDate()
         {
-            Confirmation = false;
-            TempData["selectedTime"] = selectedTime;
-            return Redirect($"/StandingTeeTimeRequests?selectedTime={System.Web.HttpUtility.UrlEncode(selectedTime)}");
+            byte[] buffer = new byte[1000];
+            Request.Body.ReadAsync(buffer).GetAwaiter().GetResult();
+
+            string requestBody = new string(buffer.TakeWhile(b => b != '\0').Select(b => (char)b).ToArray());
+
+            System.Text.StringBuilder selectBox = new System.Text.StringBuilder();
+
+            selectBox.Append("<select name='EndDate' class='text-danger'><option value=''>Please enter a valid date</option>");
+            if (DateTime.TryParse(requestBody, out DateTime startDate))
+            {
+                selectBox.Clear();
+
+                if((DateTime.Today.AddDays(8) - startDate).Days > 0)
+                {
+                    selectBox.Append($"<select name='EndDate' class='text-danger'><option value=''>Start Date must be beyond {DateTime.Today.AddDays(7).ToLongDateString()}</option>");
+                }
+                else
+                {
+                    TempData[nameof(StartDate)] = startDate;
+                    DateTime endDate = startDate.AddDays(7);
+
+                    selectBox.Append("<select name='EndDate'>");
+
+                    for (int i = 0; i < 52; i++)
+                    {
+                        selectBox.Append($"<option value='{endDate.Ticks}'>{endDate.ToLongDateString()}</option>");
+                        endDate = endDate.AddDays(7);
+                    }
+
+                    selectBox.Append("</select>"); 
+                }
+            }
+            return new JsonResult(selectBox.ToString());
+
         }
 
         public IActionResult OnPostSubmit()
@@ -81,7 +132,7 @@ namespace CBS.Pages
             }
 
             var signedInMember = userManager.FindByNameAsync(User.Identity.Name).GetAwaiter().GetResult();
-            TechnicalServices.CBS requestDirector = new TechnicalServices.CBS(signedInMember.Id, Startup.ConnectionString);
+            CBSClasses.CBS requestDirector = new CBSClasses.CBS(signedInMember.Id, Startup.ConnectionString);
             StandingTeeTime requestedStandingTeeTime = new StandingTeeTime() { StartDate = StartDate, EndDate = EndDate, RequestedTime = DateTime.Parse(TempData.Peek("selectedTime").ToString()) };
 
             for (int i = 0; i < SuppliedMemberNumbers.Length; i++)

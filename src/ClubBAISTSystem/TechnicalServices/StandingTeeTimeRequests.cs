@@ -5,7 +5,7 @@ using System.Data.SqlClient;
 using System.Linq;
 using System.Text;
 
-namespace TechnicalServices
+namespace CBSClasses
 {
     public class StandingTeeTimeRequests
     {
@@ -16,14 +16,15 @@ namespace TechnicalServices
             this.connectionString = connectionString;
         }
 
-        public List<StandingTeeTime> ViewStandingTeeTimeRequests(DayOfWeek dayOfWeek)
+        public List<StandingTeeTime> ViewStandingTeeTimeRequests(DateTime startDate, DateTime endDate)
         {
             List<StandingTeeTime> result = new List<StandingTeeTime>();
             using (SqlConnection connection = new SqlConnection(connectionString))
             {
                 using (SqlCommand viewStandingTeeTimes = new SqlCommand("ViewStandingTeeTimeRequests", connection) { CommandType = System.Data.CommandType.StoredProcedure })
                 {
-                    viewStandingTeeTimes.Parameters.AddWithValue("@dayOfWeek", dayOfWeek.ToString());
+                    viewStandingTeeTimes.Parameters.AddWithValue("@startDate", startDate);
+                    viewStandingTeeTimes.Parameters.AddWithValue("@endDate", endDate);
 
                     connection.Open();
                     using (SqlDataReader reader = viewStandingTeeTimes.ExecuteReader())
@@ -53,7 +54,6 @@ namespace TechnicalServices
                 }
             }
         }
-
         public bool RequestStandingTeeTime(StandingTeeTime requestedStandingTeeTime, out string message)
         {
             bool confirmation;
@@ -92,6 +92,12 @@ namespace TechnicalServices
             }
 
             return confirmation;
+        }
+                    
+                    
+        public void ScheduleStandingTeeTimes()
+        {
+            throw new NotImplementedException();
         }
     }
 }

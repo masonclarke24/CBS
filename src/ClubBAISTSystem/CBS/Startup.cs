@@ -105,10 +105,10 @@ namespace CBS
                 endpoints.MapControllerRoute("default", "{controller=Home}/{action=Index}/{id?}");
             });
 
-            //var shareholder = new ApplicationUser() { Email = "shareholder4@test.com", MemberNumber = "4", UserName = "shareholder4@test.com", MemberName = "Fourth Shareholder" };
-            
+            var shareholder = new ApplicationUser() { Email = "shareholder1@test.com", MemberNumber = "1", UserName = "shareholder1@test.com", MemberName = "First Shareholder" };
+            var newUser = userManager.CreateAsync(shareholder, "Baist123$").GetAwaiter().GetResult();
             //roleManager.CreateAsync(new IdentityRole("Shareholder")).GetAwaiter().GetResult();
-            var result = userManager.AddToRoleAsync(userManager.FindByEmailAsync("shareholder4@test.com").GetAwaiter().GetResult(), "Shareholder");
+            var result = userManager.AddToRoleAsync(shareholder, "Shareholder");
             result.Wait();
             //if (user.Result is null)
             //{

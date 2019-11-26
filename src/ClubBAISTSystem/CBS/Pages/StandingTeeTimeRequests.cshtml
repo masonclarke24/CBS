@@ -8,14 +8,9 @@
 
 @section Scripts{
     <script>
-        function rowClicked(row) {
-            if ($(row).css("background-color") !== "rgb(204, 204, 204)" && $(row).find("input[type=radio]").length != 0) {
-                $(".selected").removeClass("selected");
-                $(row).addClass("selected");
-
-                $(row).find("input[type=radio]").attr("checked", true);
-            }
-        }
+        document.addEventListener("onload", startDateEntered("@TempData.Peek(nameof(Model.StartDate))",
+            selectEndDate, "@TempData.Peek(nameof(Model.EndDate))"));
+        document.addEventListener("onload", selectAvaliableTime());
     </script>
 }
 
@@ -24,14 +19,17 @@
 <h4>
     @if (Model.ValidTimeSelected)
     {
-        @($"{HttpContext.Session.GetString(nameof(Model.DayOfWeek))}s at {Request.Query["selectedTime"]}")
+        @($"{((DateTime)TempData.Peek(nameof(Model.StartDate))).DayOfWeek}s at {Request.Query["selectedTime"]}")
     }
 </h4>
 
 <form method="post">
     <div class="form-group">
         <label>Start Date</label>
-        <input class="form-control" name="StartDate" placeholder="@DateTime.Today.AddDays(8).ToString("dddd MMMM dd yyyy")" onkeyup="startDateEntered(this.value)"/>
+        <input class="form-control" name="StartDate" placeholder="@DateTime.Today.AddDays(8).ToString("dddd MMMM dd yyyy")"
+               value="@(!TempData.ContainsKey(nameof(Model.StartDate))
+        ? "" : ((DateTime)TempData.Peek(nameof(Model.StartDate))).ToLongDateString())"
+               onkeyup="startDateEntered(this.value)" />
         <span asp-validation-for="@Model.StartDate" class="text-danger"></span>
     </div>
     <div class="form-group">
@@ -46,25 +44,45 @@
         {
             <button type="submit" class="btn btn-primary" asp-page-handler="Select">Select Tee Time</button>
         }
-
         @if (Model.ValidTimeSelected)
         {
             <button type="submit" class="btn btn-success" asp-page-handler="Submit">Submit Standing Tee Time Request</button>
         }
-    </div>
-    <div class="text-@(Model.Confirmation ? "success" : "danger")">
-        @if (TempData.ContainsKey("ErrorMessages") && TempData.Peek<List<string>>("ErrorMessages").Any())
-        {
-            var errors = TempData.Peek<List<string>>("ErrorMessages");
-            @foreach (var error in errors)
+
+        <div class="text-@(Model.Confirmation ? "success" : "danger")">
+            @if (TempData.ContainsKey("ErrorMessages") && TempData.Peek<List<string>>("ErrorMessages").Any())
             {
-                <ul>
-                    <li>@error</li>
-                </ul>
+                var errors = TempData.Peek<List<string>>("ErrorMessages");
+                @foreach (var error in errors)
+                {
+                    <ul>
+                        <li>@error</li>
+                    </ul>
+                }
+                TempData.Remove("ErrorMessages");
             }
-            TempData.Remove("ErrorMessages");
+            @(Model.Confirmation ? $"Standing Tee time request submitted successfully for " +
+                $"{((DateTime)TempData.Peek(nameof(Model.StartDate))).DayOfWeek}s at {TempData["selectedTime"]} between " +
+                $"{((DateTime)TempData[nameof(Model.StartDate)]).ToLongDateString()} and {((DateTime)TempData[nameof(Model.EndDate)]).ToLongDateString()}" : "")
+        </div>
+        @if (Model.ValidTimeSelected)
+        {
+            <div class="form-group">
+                <label>Member Number 1</label>
+                <input class="form-control" name="SuppliedMemberNumbers[0]" asp-for="SuppliedMemberNumbers" />
+                <span asp-validation-for="@Model.SuppliedMemberNumbers" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label>Member Number 2</label>
+                <input class="form-control" name="SuppliedMemberNumbers[1]" asp-for="SuppliedMemberNumbers" />
+                <span asp-validation-for="@Model.SuppliedMemberNumbers" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label>Member Number 3</label>
+                <input class="form-control" name="SuppliedMemberNumbers[2]" asp-for="SuppliedMemberNumbers" />
+                <span asp-validation-for="@Model.SuppliedMemberNumbers" class="text-danger"></span>
+            </div>
         }
-        @(Model.Confirmation ? "Standing Tee time request submitted successfully" : "")
     </div>
 
     @if (Model.STTRequests?.Any() ?? false)

@@ -29,9 +29,9 @@ namespace CBS.Pages
         public List<string> ErrorMessages { get; set; } = new List<string>();
         [BindProperty, TempData, Display(Name = "Day of week")]
         public DayOfWeek DayOfWeek { get; set; }
-        [BindProperty, Required, DisplayFormat(DataFormatString = "{0:dddd MMMM dd, yyyy}", ApplyFormatInEditMode = true), TempData]
+        [BindProperty, Required, DisplayFormat(DataFormatString = "{0:dddd MMMM dd, yyyy}", ApplyFormatInEditMode = true)]
         public DateTime StartDate { get; set; }
-        [BindProperty, Required, DisplayFormat(DataFormatString = "{0:dddd MMMM dd, yyyy}", ApplyFormatInEditMode = true), TempData]
+        [BindProperty, Required, DisplayFormat(DataFormatString = "{0:dddd MMMM dd, yyyy}", ApplyFormatInEditMode = true)]
         public DateTime EndDate { get; set; }
         public List<StandingTeeTime> STTRequests { get; set; }
         [BindProperty, Required, ArrayLength(3, ErrorMessage = "A standing tee time request requires exactly 3 additional members"), Distinct(ErrorMessage = "Supplied members must be unique")]
@@ -43,24 +43,29 @@ namespace CBS.Pages
         public void OnGet()
         {
             if (Request.Query.TryGetValue("selectedTime", out StringValues selectedTime)
-                && (TempData.Peek<IEnumerable<string>>("PermissableTimes")?.Any(s => s == selectedTime) ?? false)
-                && !string.IsNullOrEmpty(HttpContext.Session.GetString(nameof(DayOfWeek))))
+                && (TempData.Peek<IEnumerable<string>>("PermissableTimes")?.Any(s => s == selectedTime) ?? false))
             {
                 ValidTimeSelected = true;
                 TempData["selectedTime"] = selectedTime.ToString();
             }
         }
-
-        public void OnPostView(string startDate, long endDate)
+        public IActionResult OnPostSelect(string selectedTime)
         {
-            if (DateTime.TryParse(startDate, out DateTime dt))
+            Confirmation = false;
+            TempData["selectedTime"] = selectedTime;
+            return Redirect($"/StandingTeeTimeRequests?selectedTime={System.Web.HttpUtility.UrlEncode(selectedTime)}");
+        }
+
+        public void OnPostView(string startDate, string endDate)
+        {
+            if (DateTime.TryParse(startDate, out DateTime sd) && DateTime.TryParse(endDate, out DateTime ed))
             {
-                StartDate = dt;
+                StartDate = sd;
                 if ((DateTime.Today.AddDays(8) - StartDate).Days > 0)
                     ErrorMessages.Add($"Start Date must be beyond { DateTime.Today.AddDays(7).ToLongDateString()}");
-                if (endDate > 0)
+                if (ed.Ticks > 0)
                 {
-                    EndDate = new DateTime(endDate);
+                    EndDate = ed;
                     if (StartDate.DayOfWeek != EndDate.DayOfWeek)
                         ErrorMessages.Add($"Day of week for Start Date ({StartDate.DayOfWeek.ToString()}) does not match day of week for End Date({EndDate.DayOfWeek.ToString()})");
                 }
@@ -68,9 +73,11 @@ namespace CBS.Pages
                     ErrorMessages.Add("Please select an End Date");
                 if (!(ErrorMessages?.Any() ?? false))
                 {
-                    CBSClasses.CBS requestDirector = new CBSClasses.CBS(userManager.FindByNameAsync(User.Identity.Name).GetAwaiter().GetResult().Id,
+                    TempData[nameof(StartDate)] = StartDate;
+                    TempData[nameof(EndDate)] = EndDate;
+                        CBSClasses.CBS requestDirector = new CBSClasses.CBS(userManager.FindByNameAsync(User.Identity.Name).GetAwaiter().GetResult().Id,
                             Startup.ConnectionString);
-                    STTRequests = requestDirector.ViewStandingTeeTimeRequests(StartDate, new DateTime(endDate));
+                    STTRequests = requestDirector.ViewStandingTeeTimeRequests(StartDate, EndDate);
                     TempData.Put("PermissableTimes", from time in STTRequests where time.Members is null select time.RequestedTime.ToString("HH:mm"));
                     return;
                 }
@@ -106,7 +113,7 @@ namespace CBS.Pages
 
                     for (int i = 0; i < 52; i++)
                     {
-                        selectBox.Append($"<option value='{endDate.Ticks}'>{endDate.ToLongDateString()}</option>");
+                        selectBox.Append($"<option value='{endDate}'>{endDate.ToLongDateString()}</option>");
                         endDate = endDate.AddDays(7);
                     }
 
@@ -119,6 +126,7 @@ namespace CBS.Pages
 
         public IActionResult OnPostSubmit()
         {
+            
             ErrorMessages.Clear();
             bool isError = false;
             var errors = from error in ModelState
@@ -133,7 +141,11 @@ namespace CBS.Pages
 
             var signedInMember = userManager.FindByNameAsync(User.Identity.Name).GetAwaiter().GetResult();
             CBSClasses.CBS requestDirector = new CBSClasses.CBS(signedInMember.Id, Startup.ConnectionString);
+
+            StartDate = (DateTime)TempData.Peek(nameof(StartDate));
+            EndDate = (DateTime)TempData.Peek(nameof(EndDate));
             StandingTeeTime requestedStandingTeeTime = new StandingTeeTime() { StartDate = StartDate, EndDate = EndDate, RequestedTime = DateTime.Parse(TempData.Peek("selectedTime").ToString()) };
+            SuppliedMemberNumbers = SuppliedMemberNumbers.Where(s => !string.IsNullOrEmpty(s)).ToArray();
 
             for (int i = 0; i < SuppliedMemberNumbers.Length; i++)
                 SuppliedMemberNumbers[i] = SuppliedMemberNumbers[i].Trim();
@@ -144,14 +156,11 @@ namespace CBS.Pages
                 isError = true;
             }
 
-            if (SuppliedMemberNumbers.Contains(signedInMember.MemberNumber.Trim()))
+            if (SuppliedMemberNumbers.Contains(signedInMember.MemberNumber))
             {
                 ErrorMessages.Add("Do not enter your own member number");
                 isError = true;
             }
-
-            SuppliedMemberNumbers = SuppliedMemberNumbers.Append(signedInMember.MemberNumber).ToArray();
-            
 
             if (StartDate.DayOfWeek != EndDate.DayOfWeek)
             {

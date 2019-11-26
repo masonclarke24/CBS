@@ -49,9 +49,8 @@ function selectAvaliableTime() {
 
     }
 }
-window.document.onload = selectAvaliableTime();
 
-function startDateEntered(date) {
+function startDateEntered(date, callback, callbackArgs) {
     $.ajax({
         type: "POST",
         url: "/StandingTeeTimeRequests?handler=ChangeDate",
@@ -63,9 +62,22 @@ function startDateEntered(date) {
         data: date,
         success: function (response) {
             $("select[name='EndDate']").replaceWith(response);
+            if (typeof callback != 'undefined')
+                callback(callbackArgs);
         },
         failure: function (response) {
             console.log(response);
         }
     });
+}
+function rowClicked(row) {
+    if ($(row).css("background-color") !== "rgb(204, 204, 204)" && $(row).find("input[type=radio]").length != 0) {
+        $(".selected").removeClass("selected");
+        $(row).addClass("selected");
+
+        $(row).find("input[type=radio]").attr("checked", true);
+    }
+}
+function selectEndDate(endDate) {
+    $("option[value='" + endDate.toString() + "']").attr("selected", true);
 }

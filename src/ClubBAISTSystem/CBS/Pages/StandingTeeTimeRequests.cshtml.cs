@@ -10,7 +10,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Primitives;
-using CBSClasses;
+using TechnicalServices;
 using System.IO;
 
 namespace CBS.Pages
@@ -49,13 +49,15 @@ namespace CBS.Pages
                 TempData["selectedTime"] = selectedTime.ToString();
             }
         }
+        public void OnPost(){
+
+        }
         public IActionResult OnPostSelect(string selectedTime)
         {
             Confirmation = false;
             TempData["selectedTime"] = selectedTime;
             return Redirect($"/StandingTeeTimeRequests?selectedTime={System.Web.HttpUtility.UrlEncode(selectedTime)}");
         }
-
         public void OnPostView(string startDate, string endDate)
         {
             if (DateTime.TryParse(startDate, out DateTime sd) && DateTime.TryParse(endDate, out DateTime ed))
@@ -75,7 +77,7 @@ namespace CBS.Pages
                 {
                     TempData[nameof(StartDate)] = StartDate;
                     TempData[nameof(EndDate)] = EndDate;
-                        CBSClasses.CBS requestDirector = new CBSClasses.CBS(userManager.FindByNameAsync(User.Identity.Name).GetAwaiter().GetResult().Id,
+                        Domain.CBS requestDirector = new Domain.CBS(userManager.FindByNameAsync(User.Identity.Name).GetAwaiter().GetResult().Id,
                             Startup.ConnectionString);
                     STTRequests = requestDirector.ViewStandingTeeTimeRequests(StartDate, EndDate);
                     TempData.Put("PermissableTimes", from time in STTRequests where time.Members is null select time.RequestedTime.ToString("HH:mm"));
@@ -102,14 +104,14 @@ namespace CBS.Pages
 
                 if((DateTime.Today.AddDays(8) - startDate).Days > 0)
                 {
-                    selectBox.Append($"<select name='EndDate' class='text-danger'><option value=''>Start Date must be beyond {DateTime.Today.AddDays(7).ToLongDateString()}</option>");
+                    selectBox.Append($"<select name='EndDate' class='text-danger' onchange='dateChanged()'><option value=''>Start Date must be beyond {DateTime.Today.AddDays(7).ToLongDateString()}</option>");
                 }
                 else
                 {
                     TempData[nameof(StartDate)] = startDate;
                     DateTime endDate = startDate.AddDays(7);
 
-                    selectBox.Append("<select name='EndDate'>");
+                    selectBox.Append("<select name='EndDate'><option>Select End Date</option>");
 
                     for (int i = 0; i < 52; i++)
                     {
@@ -140,7 +142,7 @@ namespace CBS.Pages
             }
 
             var signedInMember = userManager.FindByNameAsync(User.Identity.Name).GetAwaiter().GetResult();
-            CBSClasses.CBS requestDirector = new CBSClasses.CBS(signedInMember.Id, Startup.ConnectionString);
+            Domain.CBS requestDirector = new Domain.CBS(signedInMember.Id, Startup.ConnectionString);
 
             StartDate = (DateTime)TempData.Peek(nameof(StartDate));
             EndDate = (DateTime)TempData.Peek(nameof(EndDate));

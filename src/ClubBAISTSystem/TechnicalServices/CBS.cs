@@ -1,8 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using TechnicalServices;
 
-namespace CBSClasses
+namespace Domain
 {
     public class CBS
     {

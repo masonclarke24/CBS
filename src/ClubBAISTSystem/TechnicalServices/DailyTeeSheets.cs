@@ -5,7 +5,7 @@ using System.Data.SqlClient;
 using System.Linq;
 using System.Text;
 
-namespace CBSClasses
+namespace TechnicalServices
 {
     public class DailyTeeSheets
     {
@@ -103,7 +103,7 @@ namespace CBSClasses
             using (SqlCommand getPermittedTeeTimes = new SqlCommand("GetPermittedTeeTimes", connection) { CommandType = System.Data.CommandType.StoredProcedure })
             {
                 getPermittedTeeTimes.Parameters.AddWithValue("@memberNumber", MemberNumber);
-                getPermittedTeeTimes.Parameters.AddWithValue("@dayOfWeek", date.DayOfWeek == DayOfWeek.Saturday || date.DayOfWeek == DayOfWeek.Sunday ? "Weekend" : "Weekday");
+                getPermittedTeeTimes.Parameters.AddWithValue("@dayOfWeek", date.DayOfWeek.ToString());
                 SortedList<string, object> permissableTimes = new SortedList<string,object>();
                 using (SqlDataReader reader = getPermittedTeeTimes.ExecuteReader())
                 {

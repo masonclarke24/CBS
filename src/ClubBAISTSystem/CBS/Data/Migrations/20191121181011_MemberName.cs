@@ -51,19 +51,10 @@ namespace CBS.Data.Migrations
                 oldClrType: typeof(string),
                 oldType: "nvarchar(128)",
                 oldMaxLength: 128);
-            migrationBuilder.AddUniqueConstraint(
-                name: "UK_AspNetUsers_MemberNumber",
-                table: "AspNetUsers",
-                column: "MemberNumber"
-                );
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropUniqueConstraint(
-                name: "UK_AspNetUsers_MemberNumber",
-                table: "AspNetUsers"
-                );
             migrationBuilder.DropColumn(
                 name: "MemberName",
                 table: "AspNetUsers");

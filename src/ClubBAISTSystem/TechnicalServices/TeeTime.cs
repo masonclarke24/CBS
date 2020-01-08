@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace CBSClasses
+namespace TechnicalServices
 {
     public class TeeTime
     {

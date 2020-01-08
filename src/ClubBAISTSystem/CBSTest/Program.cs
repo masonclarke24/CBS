@@ -1,5 +1,5 @@
 ﻿using System;
-using CBSClasses;
+using TechnicalServices;
 namespace CBSTest
 {
     class Program

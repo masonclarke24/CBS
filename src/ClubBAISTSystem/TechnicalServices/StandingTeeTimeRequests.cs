@@ -5,7 +5,7 @@ using System.Data.SqlClient;
 using System.Linq;
 using System.Text;
 
-namespace CBSClasses
+namespace TechnicalServices
 {
     public class StandingTeeTimeRequests
     {

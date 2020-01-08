@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace CBSClasses
+namespace TechnicalServices
 {
     public class DailyTeeSheet
     {

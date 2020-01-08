@@ -62,6 +62,8 @@ function startDateEntered(date, callback, callbackArgs) {
         data: date,
         success: function (response) {
             $("select[name='EndDate']").replaceWith(response);
+            $("select[name='EndDate']").parents("form").attr("action", "/StandingTeeTimeRequests?handler=View")
+            $("select[name='EndDate']").on("change", dateChanged);
             if (typeof callback != 'undefined')
                 callback(callbackArgs);
         },
@@ -80,4 +82,8 @@ function rowClicked(row) {
 }
 function selectEndDate(endDate) {
     $("option[value='" + endDate.toString() + "']").attr("selected", true);
+}
+
+function dateChanged() {
+    $("form").submit();
 }

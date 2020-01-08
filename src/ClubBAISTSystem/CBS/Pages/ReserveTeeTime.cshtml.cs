@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using CBSClasses;
+using TechnicalServices;
 
 namespace CBS.Pages
 {
@@ -75,7 +75,7 @@ namespace CBS.Pages
             Confirmation = false;
                 if (memberNumber is null)
                     GetMemberNumber();
-                CBSClasses.CBS requestDirector = new CBSClasses.CBS(memberNumber, Startup.ConnectionString);
+                Domain.CBS requestDirector = new Domain.CBS(memberNumber, Startup.ConnectionString);
                 DailyTeeSheet = requestDirector.ViewDailyTeeSheet(Date);
             return Page();
         }
@@ -94,7 +94,7 @@ namespace CBS.Pages
             }
             if (memberNumber is null) GetMemberNumber();
             Confirmation = false;
-            CBSClasses.CBS requestDirector = new CBSClasses.CBS(memberNumber, Startup.ConnectionString);
+            Domain.CBS requestDirector = new Domain.CBS(memberNumber, Startup.ConnectionString);
 
             var validMembers = dbContext.Users.Where(u => memberNumbers.Contains(u.MemberNumber));
             if(validMembers.Count() != memberNumbers.Count())

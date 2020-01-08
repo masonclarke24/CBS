@@ -9,6 +9,8 @@ namespace CBS.Data
         public string MemberNumber { get; set; }
         [Microsoft.AspNetCore.Identity.PersonalData]
         public string MemberName { get; set; }
+        [Microsoft.AspNetCore.Identity.PersonalData]
+        public string MembershipLevel { get; set; }
 
     }
 }

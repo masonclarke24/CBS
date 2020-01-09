@@ -4,6 +4,12 @@
     ViewData["Title"] = $"Reserve Tee Time";
 }
 
+@section Scripts
+{ 
+    <script>
+        window.addEventListener('load', selectAvaliableTime)
+    </script>
+}
 <h1>
     @ViewData["Title"]
 </h1>

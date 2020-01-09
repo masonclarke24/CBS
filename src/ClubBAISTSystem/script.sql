@@ -124,21 +124,21 @@ CREATE TYPE GolferList AS TABLE
 )
 GO
 
+
 CREATE PROCEDURE [dbo].[FindDailyTeeSheet](@date DATE)
 AS
 	SELECT
 		LEFT(CONVERT(NVARCHAR,PermissableTeeTimes.Time, 24),5) [Time],
 		TeeTimes.NumberOfCarts,
 		TeeTimes.Phone,
-		(SELECT TOP 1 MemberName FROM AspNetUsers WHERE TeeTimeGolfers.MemberNumber = AspNetUsers.MemberNumber) [Member Name]
+		(SELECT TOP 1 MemberName FROM AspNetUsers WHERE TeeTimeGolfers.MemberNumber = AspNetUsers.Id) [Member Name]
 	FROM
 		PermissableTeeTimes LEFT OUTER JOIN TeeTimes ON
 		PermissableTeeTimes.Time = TeeTimes.Time LEFT OUTER JOIN
 		TeeTimeGolfers ON TeeTimes.Date = TeeTimeGolfers.Date AND TeeTimes.Date = @date
 GO
 
-
-CREATE PROCEDURE [dbo].[GetPermittedTeeTimes](@memberNumber NVARCHAR(450), @dayOfWeek CHAR(10))
+CREATE PROCEDURE [dbo].[GetPermittedTeeTimes](@memberNumber NVARCHAR(450), @dayOfWeek INT)
 AS
 	SELECT
 		[Time]
@@ -146,7 +146,7 @@ AS
 		TeeTimesForMembershipLevel INNER JOIN AspNetUsers ON
 		TeeTimesForMembershipLevel.MembershipLevel = AspNetUsers.MembershipLevel
 	WHERE
-		AspNetUsers.MemberNumber = @memberNumber AND DayOfWeek = @dayOfWeek
+		AspNetUsers.Id = @memberNumber AND DayOfWeek = @dayOfWeek
 GO
 
 CREATE PROCEDURE [dbo].[RequestStandingTeeTime](@startDate DATE, @endDate DATE, @requestedTime TIME, @message VARCHAR(512) out, @memberNumbers AS GolferList READONLY)
@@ -212,13 +212,8 @@ BEGIN
 		#membership_levels
 
 	DECLARE @membershipLevel VARCHAR(9)
-	DECLARE @dayOfWeek VARCHAR(9) =
+	DECLARE @dayOfWeek INT = DATEPART(weekday, @date)
 
-	CASE DATEPART(weekday, @date)
-		WHEN 1 THEN 'Weekend'
-		WHEN 7 THEN 'Weekend'
-		ELSE 'Weekday'
-		END
 	OPEN cursor_membershipLevels
 
 	FETCH NEXT FROM cursor_membershipLevels INTO @membershipLevel

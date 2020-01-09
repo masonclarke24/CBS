@@ -103,7 +103,7 @@ namespace TechnicalServices
             using (SqlCommand getPermittedTeeTimes = new SqlCommand("GetPermittedTeeTimes", connection) { CommandType = System.Data.CommandType.StoredProcedure })
             {
                 getPermittedTeeTimes.Parameters.AddWithValue("@memberNumber", MemberNumber);
-                getPermittedTeeTimes.Parameters.AddWithValue("@dayOfWeek", date.DayOfWeek.ToString());
+                getPermittedTeeTimes.Parameters.AddWithValue("@dayOfWeek", (int)date.DayOfWeek + 1);
                 SortedList<string, object> permissableTimes = new SortedList<string,object>();
                 using (SqlDataReader reader = getPermittedTeeTimes.ExecuteReader())
                 {

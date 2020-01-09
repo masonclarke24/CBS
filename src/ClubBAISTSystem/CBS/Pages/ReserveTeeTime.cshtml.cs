@@ -44,6 +44,8 @@ namespace CBS.Pages
             {
                 if (DateTime.TryParse(System.Web.HttpUtility.UrlDecode(teeTime.ToString()), out DateTime result))
                 {
+                    if(!TempData.Peek<IEnumerable<DateTime>>("PermissableTimes").Contains(result))
+                        return Redirect("/ReserveTeeTime");
                     Date = result;
                     TempData["Date"] = result;
                 }
@@ -53,11 +55,11 @@ namespace CBS.Pages
             return Page();
         }
 
-        public IActionResult OnPostSelect(string date)
+        public IActionResult OnPostSelect(string teeTime)
         {
             Confirmation = false;
             TempData["Date"] = Date;
-            return Redirect("/ReserveTeeTime?teeTime=" + System.Web.HttpUtility.UrlEncode($"{Date.ToShortDateString()} {date}"));
+            return Redirect("/ReserveTeeTime?teeTime=" + System.Web.HttpUtility.UrlEncode($"{Date.ToShortDateString()} {teeTime}"));
         }
 
         public IActionResult OnPostView()
@@ -77,6 +79,8 @@ namespace CBS.Pages
                     GetMemberNumber();
                 Domain.CBS requestDirector = new Domain.CBS(memberNumber, Startup.ConnectionString);
                 DailyTeeSheet = requestDirector.ViewDailyTeeSheet(Date);
+
+            TempData.Put("PermissableTimes", from time in DailyTeeSheet.TeeTimes where time.Golfers is null && time.Reservable select time.Datetime);
             return Page();
         }
 

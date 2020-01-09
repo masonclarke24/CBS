@@ -72,14 +72,6 @@ function startDateEntered(date, callback, callbackArgs) {
         }
     });
 }
-function rowClicked(row) {
-    if ($(row).css("background-color") !== "rgb(204, 204, 204)" && $(row).find("input[type=radio]").length != 0) {
-        $(".selected").removeClass("selected");
-        $(row).addClass("selected");
-
-        $(row).find("input[type=radio]").attr("checked", true);
-    }
-}
 function selectEndDate(endDate) {
     $("option[value='" + endDate.toString() + "']").attr("selected", true);
 }

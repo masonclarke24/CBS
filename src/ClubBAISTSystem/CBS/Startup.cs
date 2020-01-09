@@ -112,7 +112,9 @@ namespace CBS
             //result.Wait();
 
             var shareholder = userManager.FindByEmailAsync("shareholder1@test.com").GetAwaiter().GetResult();
-            userManager.AddToRoleAsync(shareholder, "Shareholder");
+            //userManager.AddToRoleAsync(shareholder, "Shareholder");
+            shareholder.PhoneNumber = "(555) 555-5555";
+            userManager.UpdateAsync(shareholder).GetAwaiter().GetResult();
             //if (user.Result is null)
             //{
             //    var shareholder = new ApplicationUser() { Email = "shareholder@test.com", MemberNumber = "1", UserName = "shareholder@test.com", MemberName = "Nathan Smith" };

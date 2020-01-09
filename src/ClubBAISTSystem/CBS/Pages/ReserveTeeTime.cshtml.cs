@@ -14,12 +14,12 @@ namespace CBS.Pages
     [Authorize]
     public class ReserveTeeTimeModel : PageModel
     {
-        private UserManager<ApplicationUser> userManager;
+        public UserManager<ApplicationUser> UserManager { get; private set; }
         private readonly ApplicationDbContext dbContext;
         private string memberNumber = null;
         public ReserveTeeTimeModel(UserManager<ApplicationUser> userManager, ApplicationDbContext dbContext)
         {
-            this.userManager = userManager;
+            UserManager = userManager;
             this.dbContext = dbContext;
             if (User is null) return;
             GetMemberNumber();
@@ -29,7 +29,7 @@ namespace CBS.Pages
         [TempData]
         public bool Confirmation { get; set; }
         public DailyTeeSheet DailyTeeSheet { get; set; }
-        [Required, DateValidation, BindProperty, DisplayFormat(DataFormatString = "{0:dddd MMMM dd, yyyy}", ApplyFormatInEditMode = true)]
+        [Required, BindProperty, DisplayFormat(DataFormatString = "{0:dddd MMMM dd, yyyy}", ApplyFormatInEditMode = true)]
         public DateTime Date { get; set; }
         [BindProperty, Phone, Required]
         public string Phone { get; set; }
@@ -80,7 +80,8 @@ namespace CBS.Pages
                 Domain.CBS requestDirector = new Domain.CBS(memberNumber, Startup.ConnectionString);
                 DailyTeeSheet = requestDirector.ViewDailyTeeSheet(Date);
 
-            TempData.Put("PermissableTimes", from time in DailyTeeSheet.TeeTimes where time.Golfers is null && time.Reservable select time.Datetime);
+            TempData.Put("PermissableTimes", from time in DailyTeeSheet.TeeTimes where time.Golfers is null && 
+                time.Reservable && IsValidDate(time.Datetime, out string _) select time.Datetime);
             return Page();
         }
 
@@ -121,8 +122,38 @@ namespace CBS.Pages
 
         private void GetMemberNumber()
         {
-            var s = userManager.FindByNameAsync(User.Identity.Name).GetAwaiter().GetResult();
+            var s = UserManager.FindByNameAsync(User.Identity.Name).GetAwaiter().GetResult();
             memberNumber = s.Id;
+        }
+
+        private bool IsValidDate(DateTime value, out string errorMessage)
+        {
+            errorMessage = "";
+            if (value.Ticks == 0)
+            {
+                errorMessage = "Supplied date is invalid";
+                return false;
+            }
+
+            if (value.Date == DateTime.Today.Date)
+            {
+                errorMessage = "Cannot reserve tee time for today";
+                return false;
+            }
+
+            if ((DateTime.Today.AddDays(7) - value).TotalDays < 0)
+            {
+                errorMessage = $"Selected day must not be beyond {DateTime.Today.AddDays(7).ToLongDateString()}";
+                return false;
+            }
+
+            if ((DateTime.Today - value).TotalDays > 0)
+            {
+                errorMessage = "Selected day cannot be in the past";
+                return false;
+            }
+
+            return true;
         }
 
     }

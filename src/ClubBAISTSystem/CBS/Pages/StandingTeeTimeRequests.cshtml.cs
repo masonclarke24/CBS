@@ -19,7 +19,7 @@ namespace CBS.Pages
     public class StandingTeeTimeRequestsModel : PageModel
     {
         private UserManager<ApplicationUser> userManager;
-        private readonly ApplicationDbContext dbContext;
+        public readonly ApplicationDbContext dbContext;
 
         public StandingTeeTimeRequestsModel(UserManager<ApplicationUser> userManager, ApplicationDbContext dbContext)
         {

@@ -11,6 +11,19 @@
         document.addEventListener("onload", startDateEntered("@TempData.Peek(nameof(Model.StartDate))",
             selectEndDate, "@TempData.Peek(nameof(Model.EndDate))"));
         document.addEventListener("onload", selectAvaliableTime());
+        window.addEventListener('load', () => {
+            $("input[name='StartDate']").datepicker({ dateFormat: "DD, MM dd, yy", minDate: 8 });
+            $("input[name='EndDate']").datepicker({
+                dateFormat: "DD, MM dd, yy", minDate: 15, beforeShowDay:
+                    (date) =>
+                    {
+                        let startDate = new Date($("input[name='StartDate']").val())
+                        if (isNaN(startDate) || startDate.getDay() != date.getDay())
+                            return [false, ""]
+                        return [true, ""]
+                    }
+            });
+        })
     </script>
 }
 
@@ -26,7 +39,7 @@
 <form method="post">
     <div class="form-group">
         <label>Start Date</label>
-        <input class="form-control" name="StartDate" placeholder="@DateTime.Today.AddDays(8).ToString("dddd MMMM dd yyyy")"
+        <input class="form-control" name="StartDate"
                value="@(!TempData.ContainsKey(nameof(Model.StartDate))
         ? "" : ((DateTime)TempData.Peek(nameof(Model.StartDate))).ToLongDateString())"
                onkeyup="startDateEntered(this.value)" />
@@ -34,9 +47,8 @@
     </div>
     <div class="form-group">
         <label>End Date</label>
-        <select name="EndDate" onchange="dateChanged()">
-            <option value="">Please provide a start date</option>
-        </select>
+        <input class="form-control" name="EndDate" value="@(!TempData.ContainsKey(nameof(Model.EndDate))
+        ? "" : ((DateTime)TempData.Peek(nameof(Model.EndDate))).ToLongDateString())"/>
     </div>
     <div class="form-group">
         <button type="submit" class="btn btn-primary" asp-page-handler="View">View Standing Tee Time Requests</button>
@@ -68,17 +80,21 @@
         @if (Model.ValidTimeSelected)
         {
             <div class="form-group">
-                <label>Member Number 1</label> 
+                <label>Member Name</label>
+                <input class="form-control" disabled value="@(Model.dbContext.Users.Where(u => u.UserName == User.Identity.Name).FirstOrDefault().MemberName)" />
+            </div>
+            <div class="form-group">
+                <label>Member Number 2</label>
                 <input class="form-control" name="SuppliedMemberNumbers[0]" asp-for="SuppliedMemberNumbers" />
                 <span asp-validation-for="@Model.SuppliedMemberNumbers" class="text-danger"></span>
             </div>
             <div class="form-group">
-                <label>Member Number 2</label>
+                <label>Member Number 3</label>
                 <input class="form-control" name="SuppliedMemberNumbers[1]" asp-for="SuppliedMemberNumbers" />
                 <span asp-validation-for="@Model.SuppliedMemberNumbers" class="text-danger"></span>
             </div>
             <div class="form-group">
-                <label>Member Number 3</label>
+                <label>Member Number 4</label>
                 <input class="form-control" name="SuppliedMemberNumbers[2]" asp-for="SuppliedMemberNumbers" />
                 <span asp-validation-for="@Model.SuppliedMemberNumbers" class="text-danger"></span>
             </div>

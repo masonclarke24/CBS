@@ -52,6 +52,14 @@ IF EXISTS(SELECT * FROM SYSOBJECTS WHERE [name] LIKE 'FindDailyTeeSheet')
 	DROP PROCEDURE FindDailyTeeSheet
 GO
 
+IF EXISTS(SELECT * FROM SYSOBJECTS WHERE [name] LIKE 'FindReservedTeeTimes')
+	DROP PROCEDURE FindReservedTeeTimes
+GO
+
+IF EXISTS(SELECT * FROM SYSOBJECTS WHERE [name] LIKE 'CancelTeeTime')
+	DROP PROCEDURE CancelTeeTime
+GO
+
 IF EXISTS(SELECT * FROM SYS.TYPES WHERE [name] LIKE 'GolferList')
 	DROP TYPE GolferList
 GO
@@ -292,3 +300,24 @@ GO
 
 
 
+CREATE PROCEDURE FindReservedTeeTimes(@userID VARCHAR(450))
+AS
+	SELECT
+		TeeTimes.[Date],
+		LEFT(CONVERT(NVARCHAR,TeeTimes.[Time], 24),5) [Time],
+		NumberOfCarts,
+		Phone,
+		(SELECT TOP 1 MemberName FROM AspNetUsers WHERE TeeTimeGolfers.MemberNumber = AspNetUsers.Id) [Member Name]
+	FROM 
+		TeeTimes INNER JOIN TeeTimeGolfers ON TeeTimes.Date = TeeTimeGolfers.Date AND TeeTimes.Time = TeeTimeGolfers.Time
+	WHERE 
+		TeeTimeGolfers.MemberNumber IN(SELECT TeeTimeGolfers.MemberNumber FROM TeeTimeGolfers WHERE TeeTimeGolfers.Date = TeeTimes.Date)
+GO
+
+--SELECT * FROM TeeTimeGolfers
+
+EXEC FindDailyTeeSheet 'January 20, 2020'
+
+--UPDATE AspNetUsers SET MemberNumber = 2 WHERE Id = '51a35064-6572-455e-9ae6-ae58774e9f39'
+--EXEC FindReservedTeeTimes '51a35064-6572-455e-9ae6-ae58774e9f39'
+--GO

@@ -135,19 +135,19 @@ namespace CBS.Pages
                 return false;
             }
 
-            if (value.Date == DateTime.Today.Date)
+            if (value.Date == DateTime.Now.Date)
             {
                 errorMessage = "Cannot reserve tee time for today";
                 return false;
             }
 
-            if ((DateTime.Today.AddDays(7) - value).TotalDays < 0)
+            if ((DateTime.Now.AddDays(7) - value).TotalDays <= 0)
             {
                 errorMessage = $"Selected day must not be beyond {DateTime.Today.AddDays(7).ToLongDateString()}";
                 return false;
             }
 
-            if ((DateTime.Today - value).TotalDays > 0)
+            if ((DateTime.Now - value).TotalDays > 0)
             {
                 errorMessage = "Selected day cannot be in the past";
                 return false;

@@ -105,16 +105,17 @@ namespace CBS
                 endpoints.MapControllerRoute("default", "{controller=Home}/{action=Index}/{id?}");
             });
 
-            //var shareholder = new ApplicationUser() { Email = "shareholder1@test.com", MemberNumber = "1", UserName = "shareholder1@test.com", MemberName = "First Shareholder", MembershipLevel = "Gold" };
-            //var newUser = userManager.CreateAsync(shareholder, "Baist123$").GetAwaiter().GetResult();
+            var shareholder = new ApplicationUser() { Email = "member2@test.com", MemberNumber = "1", UserName = "member2@test.com", MemberName = "SecondMember", MembershipLevel = "Gold" };
+            shareholder.PhoneNumber = "(587) 534-4562";
+            var newUser = userManager.CreateAsync(shareholder, "Baist123$").GetAwaiter().GetResult();
             //roleManager.CreateAsync(new IdentityRole("Shareholder")).GetAwaiter().GetResult();
             //var result = userManager.AddToRoleAsync(shareholder, "Shareholder");
             //result.Wait();
 
-            var shareholder = userManager.FindByEmailAsync("shareholder1@test.com").GetAwaiter().GetResult();
-            //userManager.AddToRoleAsync(shareholder, "Shareholder");
-            shareholder.PhoneNumber = "(555) 555-5555";
-            userManager.UpdateAsync(shareholder).GetAwaiter().GetResult();
+            //shareholder = userManager.FindByEmailAsync("shareholder1@test.com").GetAwaiter().GetResult();
+            //userManager.AddToRoleAsync(shareholder, "Shareholder").GetAwaiter().GetResult();
+            //shareholder.PhoneNumber = "(555) 555-5555";
+            //userManager.UpdateAsync(shareholder).GetAwaiter().GetResult();
             //if (user.Result is null)
             //{
             //    var shareholder = new ApplicationUser() { Email = "shareholder@test.com", MemberNumber = "1", UserName = "shareholder@test.com", MemberName = "Nathan Smith" };

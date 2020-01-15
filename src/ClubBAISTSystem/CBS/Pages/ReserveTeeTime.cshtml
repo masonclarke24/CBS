@@ -61,7 +61,7 @@
                             <th>
                                 Avaliability
                             </th>
-                            @if ((DateTime.Today - Model.Date).TotalDays < 0 && (DateTime.Today.AddDays(7) - Model.Date).TotalDays >= 0)
+                            @if ((DateTime.Now - Model.Date).TotalDays < 0 && (DateTime.Now.AddDays(7) - Model.Date).TotalDays >= 0)
                             {
                                 <th>
                                     Select

@@ -83,8 +83,7 @@ namespace CBS.Pages
             TempData.Put("PermissableTimes", from time in DailyTeeSheet.TeeTimes where time.Golfers is null && 
                 time.Reservable && IsValidDate(time.Datetime, out string _) select time.Datetime);
 
-            TempData.Put("MemberTeeTimes", (from teeTime in requestDirector.FindReservedTeeTimes(
-                UserManager.FindByNameAsync(User.Identity.Name).GetAwaiter().GetResult().Id) select teeTime.Datetime).Distinct());
+            TempData.Put("MemberTeeTimes", (from teeTime in requestDirector.FindReservedTeeTimes() select teeTime.Datetime).Distinct());
             return Page();
         }
 
@@ -105,7 +104,7 @@ namespace CBS.Pages
             Domain.CBS requestDirector = new Domain.CBS(memberNumber, Startup.ConnectionString);
 
             var validMembers = dbContext.Users.Where(u => memberNumbers.Contains(u.MemberNumber));
-            if(validMembers.Count() != memberNumbers.Count())
+            if (validMembers.Count() != memberNumbers.Count())
             {
                 ErrorMessages.Add("One or more provided member numbers do not exist");
                 TempData.Put(nameof(ErrorMessages), ErrorMessages);
@@ -119,7 +118,25 @@ namespace CBS.Pages
                 TempData.Put(nameof(ErrorMessages), ErrorMessages);
             }
             else
+            {
                 Confirmation = true;
+                Response.Cookies.Append("success", "Tee time reserved successfully");
+            }
+            return Page();
+        }
+
+        public IActionResult OnPostCancel(string teeTime)
+        {
+            DateTime cancellationTime = DateTime.Parse(teeTime);
+            if (memberNumber is null)
+                GetMemberNumber();
+            Domain.CBS requestDirector = new Domain.CBS(memberNumber, Startup.ConnectionString);
+
+            Confirmation = requestDirector.CancelTeeTime(Date.Date.Add(cancellationTime.TimeOfDay));
+            if (Confirmation)
+                Response.Cookies.Append("success", "Tee time cancelled successfully");
+            else
+                Response.Cookies.Append("danger", "Tee time could not be canceled");
             return Page();
         }
 

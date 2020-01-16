@@ -43,10 +43,16 @@ namespace Domain
             return standingTeeTimeManager.RequestStandingTeeTime(requestedStandingTeeTime, out message);
         }
 
-        public List<TeeTime> FindReservedTeeTimes(string id)
+        public List<TeeTime> FindReservedTeeTimes()
         {
-            DailyTeeSheets teeSheetManager = new DailyTeeSheets(id, connectionString);
+            DailyTeeSheets teeSheetManager = new DailyTeeSheets(MemberNumber, connectionString);
             return teeSheetManager.FindReservedTeeTimes();
+        }
+
+        public bool CancelTeeTime(DateTime teeTimeTime)
+        {
+            DailyTeeSheets teeSheetManager = new DailyTeeSheets(MemberNumber, connectionString);
+            return teeSheetManager.CancelTeeTime(teeTimeTime);
         }
     }
 }

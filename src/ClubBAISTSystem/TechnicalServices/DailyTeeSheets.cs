@@ -97,23 +97,26 @@ namespace TechnicalServices
             return golferTeeTimes.ToList();
         }
 
-        public bool CancelTeeTime(DateTime teeTimeTime, string userID)
+        public bool CancelTeeTime(DateTime teeTimeTime)
         {
             bool confirmation = false;
 
             using(SqlConnection connection = new SqlConnection(connectionString))
             {
-                using(SqlCommand cancelTeeTime = new SqlCommand("CancelTeeTime", connection))
+                using(SqlCommand cancelTeeTime = new SqlCommand("CancelTeeTime", connection) { CommandType = CommandType.StoredProcedure })
                 {
-                    cancelTeeTime.Parameters.AddWithValue("@date", teeTimeTime.Date);
+                    cancelTeeTime.Parameters.AddWithValue("@date", teeTimeTime.ToShortDateString());
                     cancelTeeTime.Parameters.AddWithValue("@time", teeTimeTime.ToLongTimeString());
-                    cancelTeeTime.Parameters.AddWithValue("@userID", userID);
+                    cancelTeeTime.Parameters.AddWithValue("@userID", MemberNumber);
+
+                    cancelTeeTime.Parameters.Add(new SqlParameter("@ReturnCode", -1) { Direction = ParameterDirection.ReturnValue });
 
                     connection.Open();
 
                     try
                     {
-                        confirmation = cancelTeeTime.ExecuteNonQuery() > 0;
+                        cancelTeeTime.ExecuteNonQuery();
+                        confirmation = (int)cancelTeeTime.Parameters[cancelTeeTime.Parameters.Count - 1].Value == 0;
                     }
                     catch (SqlException ex)
                     {

@@ -96,7 +96,7 @@ namespace CBS.Pages
                 {
                     ErrorMessages.Add(e.Errors.FirstOrDefault()?.ErrorMessage);
                 }
-                TempData.Put(nameof(ErrorMessages), ErrorMessages);
+                Response.Cookies.Append("danger", $"<ul>{new string((from message in ErrorMessages select $"<li>{message}</li>").SelectMany(s => s).ToArray())}</ul>");
                 return Redirect(Request.Headers["Referer"].ToString());
             }
             if (memberNumber is null) GetMemberNumber();
@@ -107,7 +107,7 @@ namespace CBS.Pages
             if (validMembers.Count() != memberNumbers.Count())
             {
                 ErrorMessages.Add("One or more provided member numbers do not exist");
-                TempData.Put(nameof(ErrorMessages), ErrorMessages);
+                Response.Cookies.Append("danger", $"<ul>{new string((from message in ErrorMessages select $"<li>{message}</li>").SelectMany(s => s).ToArray())}</ul>");
                 return Redirect(Request.Headers["Referer"].ToString());
             }
 
@@ -115,7 +115,7 @@ namespace CBS.Pages
             {
                 ErrorMessages.Add(error);
                 Confirmation = false;
-                TempData.Put(nameof(ErrorMessages), ErrorMessages);
+                Response.Cookies.Append("danger", $"<ul>{new string((from message in ErrorMessages select $"<li>{message}</li>").SelectMany(s => s).ToArray())}</ul>");
             }
             else
             {

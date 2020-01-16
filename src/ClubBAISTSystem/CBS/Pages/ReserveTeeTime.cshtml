@@ -1,7 +1,7 @@
 ﻿@page
 @model CBS.Pages.ReserveTeeTimeModel
 @{
-    ViewData["Title"] = $"Reserve Tee Time";
+    ViewData["Title"] = $"View Tee Times";
 }
 
 @section Scripts
@@ -64,7 +64,7 @@
                             @if ((DateTime.Now - Model.Date).TotalDays < 0 && (DateTime.Now.AddDays(7) - Model.Date).TotalDays >= 0)
                             {
                                 <th>
-                                    Select
+                                    Action
                                 </th>
                             }
                         </tr>
@@ -72,21 +72,31 @@
                     <tbody>
                         @for (int i = 0; i < Model.DailyTeeSheet.TeeTimes.Count; i++)
                         {
-                            <tr style="background-color: @(!Model.DailyTeeSheet.TeeTimes[i].Reservable ? "#CCC" : "")" onclick="rowClicked(this)" class="d-sm-table-row">
+                        <tr style="background-color: @(!Model.DailyTeeSheet.TeeTimes[i].Reservable ? "#CCC" : "")" onclick="rowClicked(this)" class="d-sm-table-row">
+                            <td>
+                                @Model.DailyTeeSheet.TeeTimes[i].Datetime.ToShortTimeString()
+                            </td>
+                            <td class="text-@(Model.DailyTeeSheet.TeeTimes[i].Golfers is null ? "success" : "warning")">@(Model.DailyTeeSheet.TeeTimes[i].Golfers is null ? "Avaliable" : "Reserved")</td>
+
+                            @if (TempData.Peek<IEnumerable<DateTime>>("PermissableTimes").Contains(Model.DailyTeeSheet.TeeTimes[i].Datetime))
+                            {
                                 <td>
-                                    @Model.DailyTeeSheet.TeeTimes[i].Datetime.ToShortTimeString()
+                                    <input type="radio" required style="display:none;" name="teeTime" value="@Model.DailyTeeSheet.TeeTimes[i].Datetime.ToShortTimeString()" />
+                                    <button type="submit" class="btn btn-outline-primary" asp-page-handler="Select">Select Tee Time</button>
                                 </td>
-                                <td class="text-@(Model.DailyTeeSheet.TeeTimes[i].Golfers is null ? "success" : "warning")">@(Model.DailyTeeSheet.TeeTimes[i].Golfers is null ? "Avaliable" : "Reserved")</td>
 
-                                @if (TempData.Peek<IEnumerable<DateTime>>("PermissableTimes").Contains(Model.DailyTeeSheet.TeeTimes[i].Datetime))
-                                {
-                                    <td>
-                                        <input type="radio" required style="display:none;" name="teeTime" value="@Model.DailyTeeSheet.TeeTimes[i].Datetime.ToShortTimeString()" />
-                                        <button type="submit" class="btn btn-outline-primary" asp-page-handler="Select">Select Tee Time</button>
-                                    </td>
-                                }
+                            }
 
-                            </tr>
+                            @if (TempData.Peek<IEnumerable<DateTime>>("MemberTeeTimes").Contains(Model.DailyTeeSheet.TeeTimes[i].Datetime))
+                            {
+                                <td class="form-group">
+                                    <button type="submit" class="btn btn-outline-warning" asp-page-handler="Update">Update</button>
+                                    <button type="submit" class="btn btn-outline-danger" asp-page-handler="Cancel">Cancel</button>
+                                </td>
+                            }
+
+
+                        </tr>
                             @if (Model.DailyTeeSheet.TeeTimes[i].Golfers?.Any() ?? false)
                             {
                                 <tr style="display: none">
@@ -125,7 +135,7 @@
         <div id="teeTimeDetails">
             <div class="form-group">
                 <label>Phone</label>
-                <input class="form-control" name="Phone" asp-for="Phone" value="@Model.UserManager.FindByNameAsync(User.Identity.Name).GetAwaiter().GetResult().PhoneNumber"/>
+                <input class="form-control" name="Phone" asp-for="Phone" value="@Model.UserManager.FindByNameAsync(User.Identity.Name).GetAwaiter().GetResult().PhoneNumber" />
                 <span asp-validation-for="@Model.Phone" class="text-danger"></span>
             </div>
             <div class="form-group">

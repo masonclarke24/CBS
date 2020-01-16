@@ -133,7 +133,7 @@ CREATE TYPE GolferList AS TABLE
 GO
 
 
-CREATE PROCEDURE [dbo].[FindDailyTeeSheet](@date DATE)
+ALTER PROCEDURE [dbo].[FindDailyTeeSheet](@date DATE)
 AS
 	SELECT
 		LEFT(CONVERT(NVARCHAR,PermissableTeeTimes.Time, 24),5) [Time],
@@ -143,7 +143,7 @@ AS
 	FROM
 		PermissableTeeTimes LEFT OUTER JOIN TeeTimes ON
 		PermissableTeeTimes.Time = TeeTimes.Time LEFT OUTER JOIN
-		TeeTimeGolfers ON TeeTimes.Date = TeeTimeGolfers.Date AND TeeTimes.Date = @date
+		TeeTimeGolfers ON TeeTimes.Date = TeeTimeGolfers.Date AND TeeTimes.Date = @date AND TeeTimeGolfers.Time = TeeTimes.Time
 GO
 
 CREATE PROCEDURE [dbo].[GetPermittedTeeTimes](@memberNumber NVARCHAR(450), @dayOfWeek INT)
@@ -304,20 +304,33 @@ CREATE PROCEDURE FindReservedTeeTimes(@userID VARCHAR(450))
 AS
 	SELECT
 		TeeTimes.[Date],
-		LEFT(CONVERT(NVARCHAR,TeeTimes.[Time], 24),5) [Time],
-		NumberOfCarts,
-		Phone,
-		(SELECT TOP 1 MemberName FROM AspNetUsers WHERE TeeTimeGolfers.MemberNumber = AspNetUsers.Id) [Member Name]
+		TeeTimes.[Time]
+	INTO
+		#ReservedTeeTimes
 	FROM 
 		TeeTimes INNER JOIN TeeTimeGolfers ON TeeTimes.Date = TeeTimeGolfers.Date AND TeeTimes.Time = TeeTimeGolfers.Time
 	WHERE 
-		TeeTimeGolfers.MemberNumber IN(SELECT TeeTimeGolfers.MemberNumber FROM TeeTimeGolfers WHERE TeeTimeGolfers.Date = TeeTimes.Date)
+		TeeTimeGolfers.MemberNumber = @userID
+
+	SELECT
+		TeeTimes.[Date],
+		TeeTimes.[Time],
+		NumberOfCarts,
+		Phone,
+		(SELECT TOP 1 MemberName FROM AspNetUsers WHERE TeeTimeGolfers.MemberNumber = AspNetUsers.Id) [Member Name]
+	FROM
+		TeeTimes INNER JOIN TeeTimeGolfers ON TeeTimes.Date = TeeTimeGolfers.Date AND TeeTimes.Time = TeeTimeGolfers.Time
+	WHERE
+		TeeTimes.[Date] IN(SELECT [Date] FROM #ReservedTeeTimes) AND TeeTimes.[Time] IN(SELECT [Time] FROM #ReservedTeeTimes)
 GO
 
---SELECT * FROM TeeTimeGolfers
 
-EXEC FindDailyTeeSheet 'January 20, 2020'
+--SELECT * FROM AspNetUsers
 
---UPDATE AspNetUsers SET MemberNumber = 2 WHERE Id = '51a35064-6572-455e-9ae6-ae58774e9f39'
---EXEC FindReservedTeeTimes '51a35064-6572-455e-9ae6-ae58774e9f39'
+--EXEC FindDailyTeeSheet 'January 22, 2020'
+
+--SELECT MemberName FROM AspNetUsers WHERE Id = '52f66411-7e4e-4773-916c-354da9a05ee7'
+
+--UPDATE AspNetUsers SET MemberNumber = 2 WHERE Id = '9d13c967-8c80-460b-bb13-22d8666b3de7'
+--EXEC FindReservedTeeTimes '9d13c967-8c80-460b-bb13-22d8666b3de7'
 --GO

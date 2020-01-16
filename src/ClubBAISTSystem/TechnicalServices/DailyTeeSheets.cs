@@ -40,16 +40,10 @@ namespace TechnicalServices
                                     {
                                         teeTimes.Peek().Golfers.Add(reader["Member Name"].ToString());
                                         continue;
-                                    } 
+                                    }
                                 }
 
-                                TeeTime newTeeTime = new TeeTime()
-                                {
-                                    Datetime = DateTime.Parse($"{date.Date.ToLongDateString()} {reader["Time"]}"),
-                                    NumberOfCarts = int.Parse(reader["NumberOfCarts"].ToString()),
-                                    Phone = reader["Phone"].ToString(),
-                                    Golfers = new List<string> { reader["Member Name"].ToString() }
-                                };
+                                TeeTime newTeeTime = CreateTeeTimeFromReader(date, reader);
 
                                 teeTimes.Push(newTeeTime);
                             }
@@ -61,17 +55,17 @@ namespace TechnicalServices
 
                 GetPermittedTeeTimes(connection, date);
             }
-            return new DailyTeeSheet() { Date = date, TeeTimes = teeTimes.ToList() };
+            return new DailyTeeSheet() { Date = date, TeeTimes = teeTimes.Reverse().ToList() };
         }
 
-        public List<TeeTime> FindReservedTeeTimes(string userID)
+        public List<TeeTime> FindReservedTeeTimes()
         {
             Stack<TeeTime> golferTeeTimes = new Stack<TeeTime>();
             using(SqlConnection connection = new SqlConnection(connectionString))
             {
-                using(SqlCommand findReservedTeeTimes = new SqlCommand("FindReservedTeeTimes") { CommandType = CommandType.StoredProcedure })
+                using(SqlCommand findReservedTeeTimes = new SqlCommand("FindReservedTeeTimes", connection) { CommandType = CommandType.StoredProcedure })
                 {
-                    findReservedTeeTimes.Parameters.AddWithValue("@userID", userID);
+                    findReservedTeeTimes.Parameters.AddWithValue("@userID", MemberNumber);
 
                     connection.Open();
 
@@ -81,19 +75,17 @@ namespace TechnicalServices
                         {
                             while (reader.Read())
                             {
-                                if (DateTime.Parse($"{reader["Date"]} {reader["Time"]}") == golferTeeTimes.Peek().Datetime)
+                                if (golferTeeTimes.Any())
                                 {
-                                    golferTeeTimes.Peek().Golfers.Add(reader["Member Name"].ToString());
-                                    continue;
+                                    if (DateTime.Parse($"{reader["Date"]}").Add(DateTime.Parse($"{reader["Time"]}").TimeOfDay)
+                                                                == golferTeeTimes.Peek().Datetime)
+                                    {
+                                        golferTeeTimes.Peek().Golfers.Add(reader["Member Name"].ToString());
+                                        continue;
+                                    } 
                                 }
 
-                                TeeTime reservedTeeTime = new TeeTime()
-                                {
-                                    Datetime = DateTime.Parse($"{reader["Date"]} {reader["Time"]}"),
-                                    NumberOfCarts = int.Parse(reader["NumberOfCarts"].ToString()),
-                                    Phone = reader["Phone"].ToString(),
-                                    Golfers = new List<string> { reader["Member Name"].ToString() }
-                                };
+                                TeeTime reservedTeeTime = CreateTeeTimeFromReader(DateTime.Parse($"{reader["Date"]}"), reader);
 
                                 golferTeeTimes.Push(reservedTeeTime); 
                             }
@@ -202,6 +194,18 @@ namespace TechnicalServices
                 }
 
             }
+        }
+
+        private static TeeTime CreateTeeTimeFromReader(DateTime date, SqlDataReader reader)
+        {
+            return new TeeTime()
+            {
+                Datetime = DateTime.Parse($"{date.Date.ToLongDateString()} {reader["Time"]}"),
+                NumberOfCarts = reader["NumberOfCarts"] is DBNull ? default : int.Parse($"{reader["NumberOfCarts"]}"),
+                Phone = reader["Phone"] is DBNull ? default : $"{reader["Phone"]}",
+                Golfers = reader["Member Name"] is DBNull ? default : new List<string> { $"{reader["Member Name"]}" },
+                Reservable = true
+            };
         }
     }
 }

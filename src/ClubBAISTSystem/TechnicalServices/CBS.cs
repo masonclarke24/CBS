@@ -42,5 +42,11 @@ namespace Domain
             StandingTeeTimeRequests standingTeeTimeManager = new StandingTeeTimeRequests(connectionString);
             return standingTeeTimeManager.RequestStandingTeeTime(requestedStandingTeeTime, out message);
         }
+
+        public List<TeeTime> FindReservedTeeTimes(string id)
+        {
+            DailyTeeSheets teeSheetManager = new DailyTeeSheets(id, connectionString);
+            return teeSheetManager.FindReservedTeeTimes();
+        }
     }
 }

@@ -2,6 +2,8 @@
 // for details on configuring this project to bundle and minify static web assets.
 
 // Write your Javascript code.
+window.addEventListener("load", addStatusMessage);
+
 function rowClicked(row) {
     if ($(row).css("background-color") !== "rgb(204, 204, 204)" && $(row).find("input[type=radio]").length != 0) {
         $(".selected").removeClass("selected");
@@ -78,4 +80,41 @@ function selectEndDate(endDate) {
 
 function dateChanged() {
     $("form").submit();
+}
+
+function addStatusMessage() {
+
+    $("#statusMessage").empty();
+    if (getCookie("success") != "") {
+        $("#statusMessage").append(`<div class="alert alert-success" role="alert">${getCookie('success')}</div>`)
+        setCookie("success", "", "1901/01/01")
+    }
+
+    if (getCookie("danger") != "") {
+        $("#statusMessage").append(`<div class="alert alert-danger" role="alert">${getCookie('success')}</div>`)
+        setCookie("danger", "", "1901/01/01")
+    }
+}
+
+function setCookie(cname, cvalue, exdays) {
+    var d = new Date();
+    d.setTime(d.getTime() + (exdays * 24 * 60 * 60 * 1000));
+    var expires = "expires=" + d.toUTCString();
+    document.cookie = cname + "=" + cvalue + ";" + expires + ";path=/";
+}
+
+function getCookie(cname) {
+    var name = cname + "=";
+    var decodedCookie = decodeURIComponent(document.cookie);
+    var ca = decodedCookie.split(';');
+    for (var i = 0; i < ca.length; i++) {
+        var c = ca[i];
+        while (c.charAt(0) == ' ') {
+            c = c.substring(1);
+        }
+        if (c.indexOf(name) == 0) {
+            return c.substring(name.length, c.length);
+        }
+    }
+    return "";
 }

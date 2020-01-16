@@ -301,3 +301,5 @@ DROP TABLE #Weekdays
 
 --DELETE TeeTimesForMembershipLevel
 SELECT * FROM TeeTimesForMembershipLevel
+
+

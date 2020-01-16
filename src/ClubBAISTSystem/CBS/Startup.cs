@@ -105,7 +105,7 @@ namespace CBS
                 endpoints.MapControllerRoute("default", "{controller=Home}/{action=Index}/{id?}");
             });
 
-            var shareholder = new ApplicationUser() { Email = "member2@test.com", MemberNumber = "1", UserName = "member2@test.com", MemberName = "SecondMember", MembershipLevel = "Gold" };
+            var shareholder = new ApplicationUser() { Email = "member2@test.com", MemberNumber = "2", UserName = "member2@test.com", MemberName = "SecondMember", MembershipLevel = "Silver" };
             shareholder.PhoneNumber = "(587) 534-4562";
             var newUser = userManager.CreateAsync(shareholder, "Baist123$").GetAwaiter().GetResult();
             //roleManager.CreateAsync(new IdentityRole("Shareholder")).GetAwaiter().GetResult();

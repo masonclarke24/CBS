@@ -133,7 +133,7 @@ CREATE TYPE GolferList AS TABLE
 GO
 
 
-ALTER PROCEDURE [dbo].[FindDailyTeeSheet](@date DATE)
+CREATE PROCEDURE FindDailyTeeSheet(@date DATE)
 AS
 	SELECT
 		LEFT(CONVERT(NVARCHAR,PermissableTeeTimes.Time, 24),5) [Time],
@@ -151,11 +151,11 @@ AS
 	SELECT
 		[Time]
 	FROM
-		TeeTimesForMembershipLevel INNER JOIN AspNetUsers ON
-		TeeTimesForMembershipLevel.MembershipLevel = AspNetUsers.MembershipLevel
+		TeeTimesForMembershipLevel
 	WHERE
-		AspNetUsers.Id = @memberNumber AND DayOfWeek = @dayOfWeek
+		MembershipLevel = (SELECT TOP 1 MembershipLevel FROM AspNetUsers WHERE Id = @memberNumber) AND [DayOfWeek] = @dayOfWeek
 GO
+
 
 CREATE PROCEDURE [dbo].[RequestStandingTeeTime](@startDate DATE, @endDate DATE, @requestedTime TIME, @message VARCHAR(512) out, @memberNumbers AS GolferList READONLY)
 AS
@@ -324,7 +324,41 @@ AS
 		TeeTimes.[Date] IN(SELECT [Date] FROM #ReservedTeeTimes) AND TeeTimes.[Time] IN(SELECT [Time] FROM #ReservedTeeTimes)
 GO
 
+CREATE PROCEDURE CancelTeeTime(@date DATE, @time TIME, @userID VARCHAR(450))
+AS
+	BEGIN TRANSACTION
+	
+	DELETE TeeTimeGolfers WHERE [Date] = @date AND [Time] = @time AND MemberNumber = @userID
+	DECLARE @rowCount INT = @@ROWCOUNT
 
+	IF @@ERROR <> 0
+	BEGIN
+		ROLLBACK TRANSACTION
+		RAISERROR('Unable to remove golfer from tee time',16,1)
+		RETURN 1
+	END
+
+	COMMIT TRANSACTION
+	BEGIN TRANSACTION
+
+	IF NOT EXISTS(SELECT * FROM TeeTimeGolfers WHERE [Date] = @date AND [Time] = @time)
+	BEGIN
+		DELETE TeeTimes WHERE [Date] = @date AND [Time] = @time
+	END
+
+	IF @@ERROR <> 0
+	BEGIN
+		ROLLBACK TRANSACTION
+		RAISERROR('Unable to cancel from tee time',16,1)
+		RETURN 1
+	END
+
+	COMMIT TRANSACTION
+
+	IF @rowCount <> 0
+		RETURN 0
+	RETURN 1
+GO
 --SELECT * FROM AspNetUsers
 
 --EXEC FindDailyTeeSheet 'January 22, 2020'
@@ -334,3 +368,8 @@ GO
 --UPDATE AspNetUsers SET MemberNumber = 2 WHERE Id = '9d13c967-8c80-460b-bb13-22d8666b3de7'
 --EXEC FindReservedTeeTimes '9d13c967-8c80-460b-bb13-22d8666b3de7'
 --GO
+
+EXEC CancelTeeTime '1/22/2020', '7:00:00 AM', '51a35064-6572-455e-9ae6-ae58774e9f39'
+SELECT @@ROWCOUNT
+
+SELECT [Date], [Time], MemberNumber FROM TeeTimeGolfers WHERE [Date] = '1/22/2020' AND [Time] = '7:00:00 AM' AND MemberNumber = '51a35064-6572-455e-9ae6-ae58774e9f39'

@@ -1,0 +1,78 @@
+﻿@page
+@model CBS.Areas.Identity.Pages.Account.Manage.MyTeeTimesModel
+@{
+}
+
+<form class="form">
+    <div class="form-group">
+        <table class="table table-hover" style="table-layout: fixed;">
+            <thead>
+                <tr>
+                    <th>
+                        Date / Time
+                    </th>
+                    <th>
+                        Phone
+                    </th>
+                    <th>
+                        Number of Carts
+                    </th>
+                    <th>
+                        Checked In
+                    </th>
+                    <th>
+                        Action
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var teeTime in Model.reservedTeeTimes)
+                {
+                    <tr>
+                        <td>
+                            @(teeTime.Datetime.ToString("dddd MMMM dd, yyyy HH:mm"))
+                        </td>
+                        <td>
+                            @(teeTime.Phone)
+                        </td>
+                        <td>
+                            @teeTime.NumberOfCarts
+                        </td>
+                        <td>
+                            @teeTime.CheckedIn
+                        </td>
+                        <td class="form-group">
+                            <input type="radio" required style="display:none;" name="teeTime" value="@teeTime.Datetime.Ticks" />
+                            <button type="submit" class="btn btn-outline-warning" asp-page-handler="Update">Update</button>
+                            <button type="submit" class="btn btn-outline-danger" asp-page-handler="Cancel">Cancel</button>
+                        </td>
+                    </tr>
+
+                    <tr style="display: none">
+                        <td colspan="3">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <td class="font-weight-bold">
+                                            Member Name
+                                        </td>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var member in teeTime.Golfers)
+                                    {
+                                        <tr>
+                                            <td>
+                                                @member
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</form>

@@ -10,7 +10,9 @@ namespace TechnicalServices
         public int NumberOfCarts { get; set; }
         public List<string> Golfers { get; set; }
         public string Phone { get; set; }
+        [Obsolete("TODO refactor-remove", false)]
         public bool Reservable { get; set; }
+        public bool CheckedIn { get; set; }
 
         public override bool Equals(object obj)
         {

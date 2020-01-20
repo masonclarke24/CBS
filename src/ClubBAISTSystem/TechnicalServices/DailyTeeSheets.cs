@@ -128,6 +128,46 @@ namespace TechnicalServices
             return confirmation;
         }
 
+        public bool UpdateTeeTime(DateTime teeTimeTime, string newPhone, int newNumberOfCarts, List<string> newGolfers)
+        {
+            bool confirmation = false;
+
+            using(SqlConnection connection = new SqlConnection(connectionString))
+            {
+                using(SqlCommand updateTeeTime = new SqlCommand("UpdateTeeTime", connection) { CommandType = CommandType.StoredProcedure })
+                {
+                    updateTeeTime.Parameters.AddWithValue("@date", teeTimeTime.ToLongDateString());
+                    updateTeeTime.Parameters.AddWithValue("@time", teeTimeTime.ToLongTimeString());
+                    updateTeeTime.Parameters.AddWithValue("phone", newPhone);
+                    updateTeeTime.Parameters.AddWithValue("@numberOfCarts", newNumberOfCarts);
+
+                    DataTable golfers = new DataTable("@newGolfers");
+                    golfers.Columns.Add("MemberNumber");
+                    foreach (string golfer in newGolfers)
+                    {
+                        golfers.Rows.Add(golfer);
+                    }
+
+                    updateTeeTime.Parameters.AddWithValue("@newGolfers", golfers);
+
+                    updateTeeTime.Parameters.Add(new SqlParameter("@ReturnCode", -1) { Direction = ParameterDirection.ReturnValue });
+
+                    connection.Open();
+
+                    try
+                    {
+                        updateTeeTime.ExecuteNonQuery();
+                        confirmation = (int)updateTeeTime.Parameters[updateTeeTime.Parameters.Count - 1].Value == 0;
+                    }
+                    catch (SqlException ex)
+                    {
+                        confirmation = false;
+                    }
+                }
+            }
+
+            return confirmation;
+        }
         public bool ReserveTeeTime(TeeTime requestedTeeTime, out string error)
         {
             bool confirmation = false;

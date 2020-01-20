@@ -60,6 +60,10 @@ IF EXISTS(SELECT * FROM SYSOBJECTS WHERE [name] LIKE 'CancelTeeTime')
 	DROP PROCEDURE CancelTeeTime
 GO
 
+IF EXISTS(SELECT * FROM SYSOBJECTS WHERE [name] LIKE 'UpdateTeeTime')
+	DROP PROCEDURE UpdateTeeTime
+GO
+
 IF EXISTS(SELECT * FROM SYS.TYPES WHERE [name] LIKE 'GolferList')
 	DROP TYPE GolferList
 GO
@@ -287,13 +291,16 @@ AS
 		RETURN 1
 	END
 
-	COMMIT TRANSACTION
-	BEGIN TRANSACTION
-
 	DECLARE @numGolfers INT = (SELECT COUNT(*) FROM TeeTimeGolfers WHERE [Date] = @date AND [Time] = @time)
 	IF @numGolfers = 0
 	BEGIN
 		DELETE TeeTimes WHERE [Date] = @date AND [Time] = @time
+	END
+	ELSE
+	BEGIN
+		UPDATE TeeTimes SET Phone = (SELECT TOP 1 PhoneNumber FROM AspNetUsers WHERE Id = (SELECT TOP 1 MemberNumber FROM TeeTimeGolfers WHERE [Date] = @date AND [Time] = @time AND MemberNumber <> @userID))
+			WHERE
+				[Date] = @date AND [Time] = @time 
 	END
 
 	IF @@ERROR <> 0
@@ -310,18 +317,40 @@ AS
 	RETURN 1
 GO
 
-SELECT * FROM TeeTimes
---SELECT * FROM AspNetUsers
+CREATE PROCEDURE UpdateTeeTime (@date DATE, @time TIME, @numberOfCarts INT, @phone VARCHAR(14), @newGolfers AS dbo.GolferList READONLY)
+AS
+	BEGIN TRANSACTION
 
---EXEC FindDailyTeeSheet 'January 22, 2020'
+	UPDATE TeeTimes
+		SET NumberOfCarts = @numberOfCarts,
+			Phone = @phone
+		WHERE [Date] = @date AND [Time] = @time
 
---SELECT MemberName FROM AspNetUsers WHERE Id = '52f66411-7e4e-4773-916c-354da9a05ee7'
+	IF @@ERROR <> 0
+	BEGIN
+		ROLLBACK TRANSACTION
+		RAISERROR('Unable to update tee time',16,1)
+		RETURN 1
+	END
 
---UPDATE AspNetUsers SET MemberNumber = 2 WHERE Id = '9d13c967-8c80-460b-bb13-22d8666b3de7'
---EXEC FindReservedTeeTimes '9d13c967-8c80-460b-bb13-22d8666b3de7'
---GO
+	INSERT INTO TeeTimeGolfers([Date],[Time], MemberNumber)
+		SELECT
+			@date, @time, MemberNumber
+		FROM @newGolfers
 
-EXEC CancelTeeTime '1/22/2020', '7:00:00 AM', '51a35064-6572-455e-9ae6-ae58774e9f39'
-SELECT @@ROWCOUNT
+	IF @@ERROR <> 0
+	BEGIN
+		ROLLBACK TRANSACTION
+		RAISERROR('Unable to update tee time details',16,1)
+		RETURN 1
+	END
 
-SELECT [Date], [Time], MemberNumber FROM TeeTimeGolfers WHERE [Date] = '1/22/2020' AND [Time] = '7:00:00 AM' AND MemberNumber = '51a35064-6572-455e-9ae6-ae58774e9f39'
+	COMMIT TRANSACTION
+	RETURN 0
+GO
+
+--DECLARE @newGolfers AS GolferList
+
+--INSERT INTO @newGolfers VALUES('52f66411-7e4e-4773-916c-354da9a05ee7')
+
+--EXEC UpdateTeeTime 'January 23, 2020', '07:00', 2, '(123) 456-7890', @newGolfers

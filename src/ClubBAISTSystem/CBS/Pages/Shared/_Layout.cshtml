@@ -1,4 +1,6 @@
 ﻿<!DOCTYPE html>
+@using static Microsoft.AspNetCore.Http.SessionExtensions
+@using System.Linq
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -44,22 +46,36 @@
     </header>
     <div class="container">
         <main role="main" class="pb-3">
-            <div id="statusMessage"></div>
-            @RenderBody()
+            <div id="statusMessage">
+                @if (Model.HttpContext.Session.TryGetValue("success", out byte[] message))
+                {
+                    <div class="alert alert-success" role="alert">@(new string((from c in message select (char)c).ToArray()))</div>
+
+                    Model.HttpContext.Session.Remove("success");
+                }
+
+                @if (Model.HttpContext.Session.TryGetValue("danger", out message))
+                {
+                    <div class="alert alert-success" role="alert">@(new string((from c in message select (char)c).ToArray()))</div>
+
+                    Model.HttpContext.Session.Remove("danger");
+                }
+            </div>
+        @RenderBody()
         </main>
-    </div>
-
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2019 - CBS - <a asp-area="" asp-page="/Privacy">Privacy</a>
         </div>
-    </footer>
 
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
-    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/lib/jquery/dist/jquery-ui.min.js"></script>
-    <script src="~/js/site.js" asp-append-version="true"></script>
+        <footer class="border-top footer text-muted">
+            <div class="container">
+                &copy; 2019 - CBS - <a asp-area="" asp-page="/Privacy">Privacy</a>
+            </div>
+        </footer>
 
-    @RenderSection("Scripts", required: false)
-</body>
+        <script src="~/lib/jquery/dist/jquery.min.js"></script>
+        <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+        <script src="~/lib/jquery/dist/jquery-ui.min.js"></script>
+        <script src="~/js/site.js" asp-append-version="true"></script>
+
+        @RenderSection("Scripts", required: false)
+    </body>
 </html>

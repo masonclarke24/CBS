@@ -17,6 +17,7 @@ namespace CBS.Areas.Identity.Pages.Account.Manage
         public MyTeeTimesModel(UserManager<ApplicationUser> userManager)
         {
             this.userManager = userManager;
+
         }
 
         public void OnGet()

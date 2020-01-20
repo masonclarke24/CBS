@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using TechnicalServices;
+using Microsoft.AspNetCore.Http;
 
 namespace CBS.Pages
 {
@@ -107,7 +108,6 @@ namespace CBS.Pages
             if (validMembers.Count() != memberNumbers.Count())
             {
                 ErrorMessages.Add("One or more provided member numbers do not exist");
-                Response.Cookies.Append("danger", $"<ul>{new string((from message in ErrorMessages select $"<li>{message}</li>").SelectMany(s => s).ToArray())}</ul>");
                 return Redirect(Request.Headers["Referer"].ToString());
             }
 
@@ -115,12 +115,11 @@ namespace CBS.Pages
             {
                 ErrorMessages.Add(error);
                 Confirmation = false;
-                Response.Cookies.Append("danger", $"<ul>{new string((from message in ErrorMessages select $"<li>{message}</li>").SelectMany(s => s).ToArray())}</ul>");
             }
             else
             {
                 Confirmation = true;
-                Response.Cookies.Append("success", "Tee time reserved successfully");
+                HttpContext.Session.SetString("success", "Tee time reserved successfully");
             }
             return Page();
         }
@@ -133,11 +132,13 @@ namespace CBS.Pages
             Domain.CBS requestDirector = new Domain.CBS(memberNumber, Startup.ConnectionString);
 
             Confirmation = requestDirector.CancelTeeTime(Date.Date.Add(cancellationTime.TimeOfDay));
+
             if (Confirmation)
-                Response.Cookies.Append("success", "Tee time cancelled successfully");
+                HttpContext.Session.SetString("success", "Tee time cancelled successfully");
             else
-                Response.Cookies.Append("danger", "Tee time could not be canceled");
+                HttpContext.Session.SetString("danger", "Tee time could not be canceled");
             return Page();
+            
         }
 
         private void GetMemberNumber()

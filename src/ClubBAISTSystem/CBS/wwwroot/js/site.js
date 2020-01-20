@@ -82,19 +82,6 @@ function dateChanged() {
     $("form").submit();
 }
 
-function addStatusMessage() {
-
-    $("#statusMessage").empty();
-    if (getCookie("success") != "") {
-        $("#statusMessage").append(`<div class="alert alert-success" role="alert">${getCookie('success')}</div>`)
-        setCookie("success", "", "1901/01/01")
-    }
-
-    if (getCookie("danger") != "") {
-        $("#statusMessage").append(`<div class="alert alert-danger" role="alert">${getCookie('success')}</div>`)
-        setCookie("danger", "", "1901/01/01")
-    }
-}
 
 function setCookie(cname, cvalue, exdays) {
     var d = new Date();

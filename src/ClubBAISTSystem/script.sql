@@ -132,19 +132,20 @@ CREATE TYPE GolferList AS TABLE
 )
 GO
 
-
 CREATE PROCEDURE FindDailyTeeSheet(@date DATE)
 AS
-	SELECT
+	SELECT DISTINCT
 		LEFT(CONVERT(NVARCHAR,PermissableTeeTimes.Time, 24),5) [Time],
+		TeeTimes.Date,
 		TeeTimes.NumberOfCarts,
 		TeeTimes.Phone,
 		(SELECT TOP 1 MemberName FROM AspNetUsers WHERE TeeTimeGolfers.MemberNumber = AspNetUsers.Id) [Member Name]
 	FROM
 		PermissableTeeTimes LEFT OUTER JOIN TeeTimes ON
-		PermissableTeeTimes.Time = TeeTimes.Time LEFT OUTER JOIN
-		TeeTimeGolfers ON TeeTimes.Date = TeeTimeGolfers.Date AND TeeTimes.Date = @date AND TeeTimeGolfers.Time = TeeTimes.Time
+		PermissableTeeTimes.Time = TeeTimes.Time AND TeeTimes.Date = @date LEFT OUTER JOIN
+		TeeTimeGolfers ON TeeTimes.Date = TeeTimeGolfers.Date
 GO
+
 
 CREATE PROCEDURE [dbo].[GetPermittedTeeTimes](@memberNumber NVARCHAR(450), @dayOfWeek INT)
 AS
@@ -197,57 +198,6 @@ CREATE PROCEDURE [dbo].[ReserveTeeTime]
 AS
 BEGIN
 	DECLARE @returnCode AS INT = 0
-	--Verify that the selected tee time is permissable for anyone
-	IF NOT EXISTS(SELECT * FROM PermissableTeeTimes WHERE [Time] = @time)
-		BEGIN
-			SET @message = 'Selected time: ' + CAST(@time AS nvarchar(8)) + ' is forbidden'
-			RAISERROR(@message, 16,1)
-			RETURN 1
-		END
-	--Verify that the selected tee time does not conflict with any member's membership level
-
-	SELECT DISTINCT
-		MembershipLevels.MembershipLevel INTO #membership_levels
-	FROM
-		MembershipLevels INNER JOIN AspNetUsers ON MembershipLevels.MembershipLevel = AspNetUsers.MembershipLevel
-	WHERE
-		AspNetUsers.Id IN(SELECT * FROM @golfers)
-
-	DECLARE cursor_membershipLevels CURSOR  
-	FOR SELECT
-		MembershipLevel
-	FROM
-		#membership_levels
-
-	DECLARE @membershipLevel VARCHAR(9)
-	DECLARE @dayOfWeek INT = DATEPART(weekday, @date)
-
-	OPEN cursor_membershipLevels
-
-	FETCH NEXT FROM cursor_membershipLevels INTO @membershipLevel
-	WHILE @@FETCH_STATUS = 0
-	BEGIN
-		IF NOT EXISTS(SELECT * FROM TeeTimesForMembershipLevel WHERE MembershipLevel = @membershipLevel AND DayOfWeek = @dayOfWeek AND [Time] = @time)
-			BEGIN
-				DECLARE @conflictingMembers VARCHAR(512)
-					SELECT @conflictingMembers = COALESCE(@conflictingMembers + ', ', '') + MemberName
-					FROM
-						AspNetUsers
-					WHERE MembershipLevel = @membershipLevel AND AspNetUsers.Id IN(SELECT * FROM @golfers)
-
-				SET @message = 'Selected tee time: ' + CAST(@time AS nvarchar(8)) + ' conflicts with membership level: ' + @membershipLevel + ' for members: ' + @conflictingMembers
-				CLOSE cursor_membershipLevels
-				DEALLOCATE cursor_membershipLevels
-				RAISERROR(@message,16,1)
-				RETURN 1
-			END
-		FETCH NEXT FROM cursor_membershipLevels INTO @membershipLevel
-	END
-	IF CURSOR_STATUS('local','cursor_membershipLevels')>=-1
-		BEGIN
-			CLOSE cursor_membershipLevels
-			DEALLOCATE cursor_membershipLevels
-		END	
 
 	BEGIN TRANSACTION
 	INSERT INTO TeeTimes(Date,Time,NumberOfCarts, Phone) VALUES(@date,@time,@numberOfCarts, @phone)
@@ -259,8 +209,7 @@ BEGIN
 		RAISERROR(@message,16,1)
 		RETURN 1
 	END
-	COMMIT TRANSACTION
-	BEGIN TRANSACTION
+
 	INSERT INTO TeeTimeGolfers(Date, Time, MemberNumber)
 		SELECT
 			@date,
@@ -341,7 +290,8 @@ AS
 	COMMIT TRANSACTION
 	BEGIN TRANSACTION
 
-	IF NOT EXISTS(SELECT * FROM TeeTimeGolfers WHERE [Date] = @date AND [Time] = @time)
+	DECLARE @numGolfers INT = (SELECT COUNT(*) FROM TeeTimeGolfers WHERE [Date] = @date AND [Time] = @time)
+	IF @numGolfers = 0
 	BEGIN
 		DELETE TeeTimes WHERE [Date] = @date AND [Time] = @time
 	END
@@ -359,6 +309,8 @@ AS
 		RETURN 0
 	RETURN 1
 GO
+
+SELECT * FROM TeeTimes
 --SELECT * FROM AspNetUsers
 
 --EXEC FindDailyTeeSheet 'January 22, 2020'

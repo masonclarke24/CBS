@@ -11,7 +11,7 @@ function rowClicked(row) {
 
         $(row).find("input[type=radio]").attr("checked", true);
     }
-    var td = $(row).children().filter(".text-warning");
+    var td = $(row).children();
     var expandMe = $(td).parent().next();
     if ($(expandMe).css("display") == "table-row")
         $(expandMe).css("display", "none")

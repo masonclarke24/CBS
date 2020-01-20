@@ -97,7 +97,7 @@ namespace CBS.Pages
                 {
                     ErrorMessages.Add(e.Errors.FirstOrDefault()?.ErrorMessage);
                 }
-                Response.Cookies.Append("danger", $"<ul>{new string((from message in ErrorMessages select $"<li>{message}</li>").SelectMany(s => s).ToArray())}</ul>");
+                TempData.Put(nameof(ErrorMessages), ErrorMessages);
                 return Redirect(Request.Headers["Referer"].ToString());
             }
             if (memberNumber is null) GetMemberNumber();
@@ -108,6 +108,7 @@ namespace CBS.Pages
             if (validMembers.Count() != memberNumbers.Count())
             {
                 ErrorMessages.Add("One or more provided member numbers do not exist");
+                TempData.Put(nameof(ErrorMessages), ErrorMessages);
                 return Redirect(Request.Headers["Referer"].ToString());
             }
 
@@ -115,6 +116,8 @@ namespace CBS.Pages
             {
                 ErrorMessages.Add(error);
                 Confirmation = false;
+                TempData.Put(nameof(ErrorMessages), ErrorMessages);
+                return Redirect(Request.Headers["Referer"].ToString());
             }
             else
             {
@@ -126,19 +129,17 @@ namespace CBS.Pages
 
         public IActionResult OnPostCancel(string teeTime)
         {
-            DateTime cancellationTime = DateTime.Parse(teeTime);
-            if (memberNumber is null)
-                GetMemberNumber();
+            string memberNumber = UserManager.FindByNameAsync(User.Identity.Name).GetAwaiter().GetResult().Id;
             Domain.CBS requestDirector = new Domain.CBS(memberNumber, Startup.ConnectionString);
 
-            Confirmation = requestDirector.CancelTeeTime(Date.Date.Add(cancellationTime.TimeOfDay));
+            bool confirmation = requestDirector.CancelTeeTime(new DateTime(long.Parse(teeTime)));
 
-            if (Confirmation)
+            if (confirmation)
                 HttpContext.Session.SetString("success", "Tee time cancelled successfully");
             else
                 HttpContext.Session.SetString("danger", "Tee time could not be canceled");
             return Page();
-            
+
         }
 
         private void GetMemberNumber()

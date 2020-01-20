@@ -85,7 +85,7 @@
                                 @if (TempData.Peek<IEnumerable<DateTime>>("MemberTeeTimes").Contains(Model.DailyTeeSheet.TeeTimes[i].Datetime))
                                 {
                                     <td class="form-group">
-                                        <input type="radio" required style="display:none;" name="teeTime" value="@Model.DailyTeeSheet.TeeTimes[i].Datetime.ToShortTimeString()" />
+                                        <input type="radio" required style="display:none;" name="teeTime" value="@Model.DailyTeeSheet.TeeTimes[i].Datetime.Ticks" />
                                         <button type="submit" class="btn btn-outline-warning" asp-page-handler="Update">Update</button>
                                         <button type="submit" class="btn btn-outline-danger" asp-page-handler="Cancel">Cancel</button>
                                     </td>

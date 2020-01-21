@@ -84,7 +84,7 @@ namespace CBS.Pages
             TempData.Put("PermissableTimes", from time in DailyTeeSheet.TeeTimes where time.Golfers is null && 
                 time.Reservable && IsValidDate(time.Datetime, out string _) select time.Datetime);
 
-            TempData.Put("MemberTeeTimes", (from teeTime in requestDirector.FindReservedTeeTimes() select teeTime.Datetime).Distinct());
+            TempData.Put("reservedTeeTimes", requestDirector.FindReservedTeeTimes());
             return Page();
         }
 

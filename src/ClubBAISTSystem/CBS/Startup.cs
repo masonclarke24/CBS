@@ -97,6 +97,7 @@ namespace CBS
             app.UseStaticFiles();
             app.UseSession();
 
+            app.UseStatusCodePages();
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapRazorPages();

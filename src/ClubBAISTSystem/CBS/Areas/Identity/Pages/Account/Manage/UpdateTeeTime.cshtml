@@ -1,4 +1,44 @@
 ﻿@page
 @model CBS.Areas.Identity.Pages.Account.Manage.UpdateTeeTimeModel
+@using CBS
+@using TechnicalServices
+@section Scripts
+{
+    <partial name="_ValidationScriptsPartial" />
+}
+<h1>Update Tee Time</h1>
+<div class="text-danger">@TempData["errorMessage"]</div>
+<form method="post" class="form">
+    @Html.AntiForgeryToken()
+    <div class="form-group">
+        <strong>Date:</strong>
+        <p>@(TempData.Peek<TeeTime>("TeeTimeToUpdate").Datetime.ToString("dddd MMMM dd, yyyy"))</p>
+        @if (User.IsInRole("ProShop"))
+        {
+            <input class="form-control" name="CheckedIn" value="@(TempData.Peek<TeeTime>("TeeTimeToUpdate").CheckedIn)" />
+        }
+        <button type="submit" class="btn btn-outline-warning">Update Tee Time</button>
+    </div>
+    <div class="form-group">
+        <label>Phone</label>
+        <input class="form-control" name="Phone" value="@(TempData.Peek<TeeTime>("TeeTimeToUpdate").Phone)" asp-for="@Model.Phone" />
+        <span asp-validation-for="@Model.Phone" class="text-danger"></span>
+    </div>
+    <div class="form-group">
+        <label>Number of carts</label>
+        <input class="form-control" name="NumberOfCarts" value="@(TempData.Peek<TeeTime>("TeeTimeToUpdate").NumberOfCarts)" asp-for="@Model.NumberOfCarts" />
+        <span asp-validation-for="@Model.NumberOfCarts" class="text-danger"></span>
+    </div>
 
-<h3>Update Tee Time</h3>
+    @foreach (string golfer in TempData.Peek<TeeTime>("TeeTimeToUpdate").Golfers)
+    {
+        <div class="form-group">
+            <label>Member Name:</label>
+            <input class="form-control-sm" disabled value="@golfer" />
+        </div>
+    }
+    <div class="form-group">
+        <input type="button" class="btn btn-secondary" value="Add Golfer" onclick="addGolfer(this, @(TempData.Peek<TeeTime>("TeeTimeToUpdate").Golfers.Count))" />
+        <input type="button" class="btn btn-secondary" value="Remove Golfer" onclick="removeGolfer(this)" />
+    </div>
+</form>

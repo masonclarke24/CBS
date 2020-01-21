@@ -82,16 +82,15 @@
 
                                 }
 
-                                @if (TempData.Peek<IEnumerable<DateTime>>("MemberTeeTimes").Contains(Model.DailyTeeSheet.TeeTimes[i].Datetime))
+                                @if (TempData.Peek<IEnumerable<TechnicalServices.TeeTime>>("reservedTeeTimes")
+                                    .Where(t=> t.Datetime == Model.DailyTeeSheet.TeeTimes[i].Datetime).FirstOrDefault() != null)
                                 {
                                     <td class="form-group">
                                         <input type="radio" required style="display:none;" name="teeTime" value="@Model.DailyTeeSheet.TeeTimes[i].Datetime.Ticks" />
-                                        <a class="btn btn-outline-warning" href="Identity/Acount/Manage/UpdateTeeTime?teeTimeTime=@Model.DailyTeeSheet.TeeTimes[i].Datetime.Ticks">Update</a>
+                                        <a class="btn btn-outline-warning" href="Identity/Account/Manage/UpdateTeeTime?teeTimeTime=@Model.DailyTeeSheet.TeeTimes[i].Datetime.Ticks">Update</a>
                                         <button type="submit" class="btn btn-outline-danger" asp-page-handler="Cancel">Cancel</button>
                                     </td>
                                 }
-
-
                             </tr>
                             @if (Model.DailyTeeSheet.TeeTimes[i].Golfers?.Any() ?? false)
                             {

@@ -73,22 +73,25 @@ namespace TechnicalServices
                     {
                         if (reader.HasRows)
                         {
-                            while (reader.Read())
+                            do
                             {
-                                if (golferTeeTimes.Any())
+                                while (reader.Read())
                                 {
-                                    if (DateTime.Parse($"{reader["Date"]}").Add(DateTime.Parse($"{reader["Time"]}").TimeOfDay)
-                                                                == golferTeeTimes.Peek().Datetime)
+                                    if (golferTeeTimes.Any())
                                     {
-                                        golferTeeTimes.Peek().Golfers.Add(reader["Member Name"].ToString());
-                                        continue;
-                                    } 
+                                        if (DateTime.Parse($"{reader["Date"]}").Add(DateTime.Parse($"{reader["Time"]}").TimeOfDay)
+                                                                    == golferTeeTimes.Peek().Datetime)
+                                        {
+                                            golferTeeTimes.Peek().Golfers.Add(reader["Member Name"].ToString());
+                                            continue;
+                                        }
+                                    }
+
+                                    TeeTime reservedTeeTime = CreateTeeTimeFromReader(DateTime.Parse($"{reader["Date"]}"), reader);
+
+                                    golferTeeTimes.Push(reservedTeeTime);
                                 }
-
-                                TeeTime reservedTeeTime = CreateTeeTimeFromReader(DateTime.Parse($"{reader["Date"]}"), reader);
-
-                                golferTeeTimes.Push(reservedTeeTime); 
-                            }
+                            } while (reader.NextResult());
                         }
                     }
                 }
@@ -128,15 +131,15 @@ namespace TechnicalServices
             return confirmation;
         }
 
-        public bool UpdateTeeTime(DateTime teeTimeTime, string newPhone, int newNumberOfCarts, List<string> newGolfers)
+        public bool UpdateTeeTime(DateTime teeTimeTime, string newPhone, int newNumberOfCarts, List<string> newGolfers, out string message)
         {
             bool confirmation = false;
-
+            message = "";
             using(SqlConnection connection = new SqlConnection(connectionString))
             {
                 using(SqlCommand updateTeeTime = new SqlCommand("UpdateTeeTime", connection) { CommandType = CommandType.StoredProcedure })
                 {
-                    updateTeeTime.Parameters.AddWithValue("@date", teeTimeTime.ToLongDateString());
+                    updateTeeTime.Parameters.AddWithValue("@date", teeTimeTime.ToShortDateString());
                     updateTeeTime.Parameters.AddWithValue("@time", teeTimeTime.ToLongTimeString());
                     updateTeeTime.Parameters.AddWithValue("phone", newPhone);
                     updateTeeTime.Parameters.AddWithValue("@numberOfCarts", newNumberOfCarts);
@@ -162,6 +165,7 @@ namespace TechnicalServices
                     catch (SqlException ex)
                     {
                         confirmation = false;
+                        message = ex.Message;
                     }
                 }
             }

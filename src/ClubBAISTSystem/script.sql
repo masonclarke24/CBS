@@ -1,5 +1,7 @@
 USE CBS
 GO
+
+
 IF EXISTS(SELECT * FROM SYS.TABLES WHERE [name] LIKE 'GolferMembershipLevels')
 	DROP TABLE GolferMembershipLevels
 GO
@@ -251,21 +253,30 @@ AS
 		LEFT OUTER JOIN StandingTeeTimeGolfers ON StandingTeeTimeRequests.ID = StandingTeeTimeGolfers.ID
 GO
 
-
+EXEC FindReservedTeeTimes '9d13c967-8c80-460b-bb13-22d8666b3de7'
+SELECT * FROM TeeTimeGolfers WHERE [Date] = '2020-01-22'
 
 CREATE PROCEDURE FindReservedTeeTimes(@userID VARCHAR(450))
 AS
+	DECLARE cursorReservedTeeTimes CURSOR FOR
 	SELECT
 		TeeTimes.[Date],
 		TeeTimes.[Time]
-	INTO
-		#ReservedTeeTimes
 	FROM 
 		TeeTimes INNER JOIN TeeTimeGolfers ON TeeTimes.Date = TeeTimeGolfers.Date AND TeeTimes.Time = TeeTimeGolfers.Time
 	WHERE 
 		TeeTimeGolfers.MemberNumber = @userID
 
-	SELECT
+	DECLARE @date Date
+	DECLARE @time Time
+
+	OPEN cursorReservedTeeTimes
+
+	FETCH NEXT FROM cursorReservedTeeTimes INTO @date, @time
+
+	WHILE @@FETCH_STATUS = 0
+	BEGIN
+		SELECT
 		TeeTimes.[Date],
 		TeeTimes.[Time],
 		NumberOfCarts,
@@ -274,7 +285,13 @@ AS
 	FROM
 		TeeTimes INNER JOIN TeeTimeGolfers ON TeeTimes.Date = TeeTimeGolfers.Date AND TeeTimes.Time = TeeTimeGolfers.Time
 	WHERE
-		TeeTimes.[Date] IN(SELECT [Date] FROM #ReservedTeeTimes) AND TeeTimes.[Time] IN(SELECT [Time] FROM #ReservedTeeTimes)
+		TeeTimes.[Date] = @date AND TeeTimes.Time = @time
+
+	FETCH NEXT FROM cursorReservedTeeTimes INTO @date, @time
+	END
+
+	CLOSE cursorReservedTeeTimes
+	DEALLOCATE cursorReservedTeeTimes
 GO
 
 CREATE PROCEDURE CancelTeeTime(@date DATE, @time TIME, @userID VARCHAR(450))

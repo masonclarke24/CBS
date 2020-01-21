@@ -45,7 +45,7 @@
                                 @teeTime.CheckedIn
                             </td>
                             <td class="form-group">
-                                <button type="submit" class="btn btn-outline-warning" value="@teeTime.Datetime.Ticks" name="teeTime" asp-page-handler="Update">Update</button>
+                                <a class="btn btn-outline-warning" href="/Identity/Account/Manage/UpdateTeeTime?teeTimeTime=@teeTime.Datetime.Ticks">Update</a>
                                 <button type="submit" class="btn btn-outline-danger" value="@teeTime.Datetime.Ticks" name="teeTime" asp-page-handler="Cancel">Cancel</button>
                             </td>
                         </tr>

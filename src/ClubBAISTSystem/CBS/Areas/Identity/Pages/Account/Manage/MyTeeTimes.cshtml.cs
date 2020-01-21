@@ -7,9 +7,11 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Authorization;
 
 namespace CBS.Areas.Identity.Pages.Account.Manage
 {
+    [Authorize]
     public class MyTeeTimesModel : PageModel
     {
         private UserManager<ApplicationUser> userManager;

@@ -18,12 +18,12 @@ function rowClicked(row) {
     else
         $(expandMe).css("display", "table-row")
 }
-function addGolfer(button) {
-    var childCount = $("input[name^=Golfers]").length;
+function addGolfer(button, length = 0) {
+    var childCount = $("input[name^=Golfers]").length + length;
     if (childCount > 3) return;
     var formGroup = `<div class="form-group">
                     <label>Member Number</label>
-                    <input class="form-control" name="Golfers[` + (childCount).toString() + `]" />
+                    <input class="form-control" name="Golfers[` + (childCount - length).toString() + `]" />
                     <span class="text-danger" \></span>
                 </div>`;
     $(button).parent().append(formGroup);

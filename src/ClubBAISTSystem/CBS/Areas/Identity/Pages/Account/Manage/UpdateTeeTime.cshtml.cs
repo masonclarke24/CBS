@@ -65,6 +65,7 @@ namespace CBS.Areas.Identity.Pages.Account.Manage
                 updatedGolfers, out string message))
             {
                 TempData.Put("errorMessage", message);
+
                 return Page();
             }
 

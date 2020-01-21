@@ -82,6 +82,7 @@ CREATE TABLE TeeTimes
 	[Time] TIME CONSTRAINT FK_TeeTimes_Time FOREIGN KEY REFERENCES PermissableTeeTimes([Time]),
 	Phone VARCHAR(14) NOT NULL,
 	NumberOfCarts TINYINT NOT NULL,
+	CheckedIn BIT NOT NULL,
 	CONSTRAINT PK_TeeTimes_DateTime PRIMARY KEY ([Date],[Time])
 )
 GO
@@ -138,18 +139,17 @@ CREATE TYPE GolferList AS TABLE
 )
 GO
 
-CREATE PROCEDURE FindDailyTeeSheet(@date DATE)
+ALTER PROCEDURE FindDailyTeeSheet(@date DATE)
 AS
 	SELECT DISTINCT
 		LEFT(CONVERT(NVARCHAR,PermissableTeeTimes.Time, 24),5) [Time],
-		TeeTimes.Date,
-		TeeTimes.NumberOfCarts,
-		TeeTimes.Phone,
-		(SELECT TOP 1 MemberName FROM AspNetUsers WHERE TeeTimeGolfers.MemberNumber = AspNetUsers.Id) [Member Name]
+		Date,
+		(SELECT TOP 1 MemberName FROM AspNetUsers WHERE TeeTimeGolfers.MemberNumber = AspNetUsers.Id) [Member Name],
+		(SELECT Phone FROM TeeTimes WHERE TeeTimes.[Date] = TeeTimeGolfers.[Date] AND TeeTimes.[Time] = TeeTimeGolfers.[Time]) [Phone],
+		(SELECT NumberOfCarts FROM TeeTimes WHERE TeeTimes.[Date] = TeeTimeGolfers.[Date] AND TeeTimes.[Time] = TeeTimeGolfers.[Time]) NumberofCarts,
+		(SELECT CheckedIn FROM TeeTimes WHERE TeeTimes.[Date] = TeeTimeGolfers.[Date] AND TeeTimes.[Time] = TeeTimeGolfers.[Time]) [Checked In]
 	FROM
-		PermissableTeeTimes LEFT OUTER JOIN TeeTimes ON
-		PermissableTeeTimes.Time = TeeTimes.Time AND TeeTimes.Date = @date LEFT OUTER JOIN
-		TeeTimeGolfers ON TeeTimes.Date = TeeTimeGolfers.Date
+		PermissableTeeTimes LEFT OUTER JOIN TeeTimeGolfers ON PermissableTeeTimes.Time = TeeTimeGolfers.Time AND TeeTimeGolfers.Date = @date
 GO
 
 
@@ -252,9 +252,6 @@ AS
 		PermissableTeeTimes.Time = StandingTeeTimeRequests.RequestedTime AND (StandingTeeTimeRequests.StartDate BETWEEN @startDate AND @endDate) AND StandingTeeTimeRequests.DayOfWeek = @dayOfWeek
 		LEFT OUTER JOIN StandingTeeTimeGolfers ON StandingTeeTimeRequests.ID = StandingTeeTimeGolfers.ID
 GO
-
-EXEC FindReservedTeeTimes '9d13c967-8c80-460b-bb13-22d8666b3de7'
-SELECT * FROM TeeTimeGolfers WHERE [Date] = '2020-01-22'
 
 CREATE PROCEDURE FindReservedTeeTimes(@userID VARCHAR(450))
 AS

@@ -92,9 +92,9 @@ namespace CBS.Pages
                 time.Reservable && IsValidDate(time.Datetime, out string _) select time.Datetime);
 
             if (User.IsInRole("Golfer"))
-            {
-                TempData.Put("reservedTeeTimes", requestDirector.FindReservedTeeTimes()); 
-            }
+                TempData.Put("reservedTeeTimes", requestDirector.FindReservedTeeTimes());
+            else
+                TempData.Put("reservedTeeTimes", from teeTime in DailyTeeSheet.TeeTimes where !(teeTime.Golfers is null) select teeTime);
             return Page();
         }
 
@@ -118,13 +118,14 @@ namespace CBS.Pages
             }
             else
             {
-                userId = GetUserId(golfers.First());
+                userId = GetUserId(golfers.FirstOrDefault());
             }
 
             Domain.CBS requestDirector = new Domain.CBS(userId, Startup.ConnectionString);
 
             var validMembers = dbContext.Users.Where(u => golfers.Contains(u.MemberNumber));
 
+            validMembers = from member in validMembers where member.Id != userId select member;
             if (!requestDirector.ReserveTeeTime(new TeeTime() { Golfers = validMembers.Select(M => M.Id).ToList().Append(userId).ToList(), 
                 Datetime = (DateTime)TempData.Peek(nameof(Date)), NumberOfCarts = NumberOfCarts, Phone = Phone }, out string error))
             {
@@ -163,7 +164,7 @@ namespace CBS.Pages
 
         private string GetUserId(string memberNumber)
         {
-            return UserManager.FindByNameAsync(memberNumber).GetAwaiter().GetResult().Id;
+            return UserManager.Users.Where(u => u.MemberNumber == memberNumber).FirstOrDefault().Id;
         }
 
         private bool IsValidDate(DateTime value, out string errorMessage)
@@ -175,10 +176,13 @@ namespace CBS.Pages
                 return false;
             }
 
-            if (value.Date == DateTime.Now.Date)
+            if (!User.IsInRole("ProShop"))
             {
-                errorMessage = "Cannot reserve tee time for today";
-                return false;
+                if (value.Date == DateTime.Now.Date)
+                {
+                    errorMessage = "Cannot reserve tee time for today";
+                    return false;
+                } 
             }
 
             if ((DateTime.Now.AddDays(7) - value).TotalDays <= 0)
@@ -187,7 +191,7 @@ namespace CBS.Pages
                 return false;
             }
 
-            if ((DateTime.Now - value).TotalDays > 0)
+            if ((int)(DateTime.Now - value).TotalDays > 0)
             {
                 errorMessage = "Selected day cannot be in the past";
                 return false;

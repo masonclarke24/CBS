@@ -56,7 +56,8 @@
                                     <th>
                                         Avaliability
                                     </th>
-                                    @if ((DateTime.Now - Model.Date).TotalDays < 0 && (DateTime.Now.AddDays(7) - Model.Date).TotalDays >= 0)
+                                    @if (((DateTime.Now - Model.Date).TotalDays < 0 || User.IsInRole("ProShop") && (int)(DateTime.Now - Model.Date).TotalDays <= 0)
+                                        && (DateTime.Now.AddDays(7) - Model.Date).TotalDays >= 0)
                                     {
                                         <th>
                                             Action
@@ -75,7 +76,6 @@
                                         <td class="text-@(Model.DailyTeeSheet.TeeTimes[i].Golfers is null ? "success" : "warning")">@(Model.DailyTeeSheet.TeeTimes[i].Golfers is null ? "Avaliable" : "Reserved")</td>
 
                                         @if (TempData.Peek<IEnumerable<DateTime>>("PermissableTimes").Contains(Model.DailyTeeSheet.TeeTimes[i].Datetime))
-
                                         {
                                             <td>
                                                 <input type="radio" required style="display:none;" name="teeTime" value="@Model.DailyTeeSheet.TeeTimes[i].Datetime.ToShortTimeString()" />
@@ -130,22 +130,30 @@
             </div>
             @if (Model.Request.Query.ContainsKey("teeTime"))
             {
-                <div id="teeTimeDetails">
-                    <div class="form-group">
-                        <label>Phone</label>
-                        <input class="form-control" name="Phone" asp-for="Phone" value="@Model.UserManager.FindByNameAsync(User.Identity.Name).GetAwaiter().GetResult().PhoneNumber" />
-                        <span asp-validation-for="@Model.Phone" class="text-danger"></span>
-                    </div>
-                    <div class="form-group">
-                        <label>Number of carts</label>
-                        <input class="form-control" name="NumberOfCarts" asp-for="NumberOfCarts" value="1" />
-                        <span asp-validation-for="@Model.NumberOfCarts" class="text-danger"></span>
-                    </div>
-                    <div class="form-group">
-                        <input type="button" class="btn btn-secondary" value="Add Golfer" onclick="addGolfer(this)" />
-                        <input type="button" class="btn btn-secondary" value="Remove Golfer" onclick="removeGolfer(this)" />
-                    </div>
-                </div>
+<div id="teeTimeDetails">
+    <div class="form-group">
+        <label>Phone</label>
+        <input class="form-control" name="Phone" asp-for="Phone" value="@Model.UserManager.FindByNameAsync(User.Identity.Name).GetAwaiter().GetResult().PhoneNumber" />
+        <span asp-validation-for="@Model.Phone" class="text-danger"></span>
+    </div>
+    <div class="form-group">
+        <label>Number of carts</label>
+        <input class="form-control" name="NumberOfCarts" asp-for="NumberOfCarts" value="1" />
+        <span asp-validation-for="@Model.NumberOfCarts" class="text-danger"></span>
+    </div>
+    @if (!User.IsInRole("Golfer"))
+    {
+        <div class="form-group">
+            <label>Member Number</label>
+            <input class="form-control" name="Golfers[0]" />
+            <span class="text-danger"></span>
+        </div>
+    }
+    <div class="form-group">
+        <input type="button" class="btn btn-secondary" value="Add Golfer" onclick="addGolfer(this)" />
+        <input type="button" class="btn btn-secondary" value="Remove Golfer" onclick="removeGolfer(this)" />
+    </div>
+</div>
             }
         </form>
 

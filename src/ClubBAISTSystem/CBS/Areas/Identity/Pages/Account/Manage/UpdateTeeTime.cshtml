@@ -26,7 +26,7 @@
     </div>
     <div class="form-group">
         <label>Number of carts</label>
-        <input class="form-control" name="Number of Carts" value="@(TempData.Peek<TeeTime>("TeeTimeToUpdate").NumberOfCarts)" asp-for="@Model.NumberOfCarts" />
+        <input class="form-control" name="NumberOfCarts" value="@(TempData.Peek<TeeTime>("TeeTimeToUpdate").NumberOfCarts)" asp-for="@Model.NumberOfCarts" />
         <span asp-validation-for="@Model.NumberOfCarts" class="text-danger"></span>
     </div>
 

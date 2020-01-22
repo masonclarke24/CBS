@@ -107,7 +107,7 @@ namespace CBS
 
             //var golfProfessional = new ApplicationUser() { Email = "golfProfessional@cbg.ca", UserName = "golfProfessional@cbg.ca" };
             //var newUser = userManager.CreateAsync(golfProfessional, "Baist123$").GetAwaiter().GetResult();
-            //roleManager.CreateAsync(new IdentityRole("ProShop")).GetAwaiter().GetResult();
+            roleManager.CreateAsync(new IdentityRole("Golfer")).GetAwaiter().GetResult();
             //userManager.AddToRoleAsync(golfProfessional, "Shareholder").GetAwaiter().GetResult();
             //result.Wait();
 

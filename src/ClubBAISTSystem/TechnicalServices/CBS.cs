@@ -15,6 +15,11 @@ namespace Domain
             this.connectionString = connectionString;
         }
 
+        public CBS(string connectionString)
+        {
+            this.connectionString = connectionString;
+        }
+
         public string MemberNumber { get; private set; }
 
         public DailyTeeSheet ViewDailyTeeSheet(DateTime date)
@@ -23,6 +28,11 @@ namespace Domain
             return teeSheetManager.FindDailyTeeSheet(date);
         }
 
+        public IEnumerable<TeeTime> FilterDailyTeeSheet(DateTime date, IEnumerable<TeeTime> teeTimes)
+        {
+            DailyTeeSheets teeSheetManager = new DailyTeeSheets(MemberNumber, connectionString);
+            return teeSheetManager.FilterDailyTeeSheet(date, MemberNumber, teeTimes);
+        }
         public bool ReserveTeeTime(TeeTime requestedTeeTime, out string message)
         {
             bool confirmation;

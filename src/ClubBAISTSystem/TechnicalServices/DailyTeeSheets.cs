@@ -9,14 +9,14 @@ namespace TechnicalServices
 {
     public class DailyTeeSheets
     {
-        public string MemberNumber { get; private set; }
+        private string userId;
 
         private Stack<TeeTime> teeTimes = new Stack<TeeTime>();
         private readonly string connectionString;
 
         public DailyTeeSheets(string memberNumber, string connectionString)
         {
-            MemberNumber = memberNumber;
+            userId = memberNumber;
             this.connectionString = connectionString;
         }
 
@@ -52,8 +52,6 @@ namespace TechnicalServices
                     }
 
                 }
-
-                GetPermittedTeeTimes(connection, date);
             }
             return new DailyTeeSheet() { Date = date, TeeTimes = teeTimes.Reverse().ToList() };
         }
@@ -65,7 +63,7 @@ namespace TechnicalServices
             {
                 using(SqlCommand findReservedTeeTimes = new SqlCommand("FindReservedTeeTimes", connection) { CommandType = CommandType.StoredProcedure })
                 {
-                    findReservedTeeTimes.Parameters.AddWithValue("@userID", MemberNumber);
+                    findReservedTeeTimes.Parameters.AddWithValue("@userID", userId);
 
                     connection.Open();
 
@@ -110,7 +108,7 @@ namespace TechnicalServices
                 {
                     cancelTeeTime.Parameters.AddWithValue("@date", teeTimeTime.ToShortDateString());
                     cancelTeeTime.Parameters.AddWithValue("@time", teeTimeTime.ToLongTimeString());
-                    cancelTeeTime.Parameters.AddWithValue("@userID", MemberNumber);
+                    cancelTeeTime.Parameters.AddWithValue("@userID", userId);
 
                     cancelTeeTime.Parameters.Add(new SqlParameter("@ReturnCode", -1) { Direction = ParameterDirection.ReturnValue });
 
@@ -216,31 +214,36 @@ namespace TechnicalServices
             return confirmation;
         }
 
-
-        private void GetPermittedTeeTimes(SqlConnection connection, DateTime date)
+        public IEnumerable<TeeTime> FilterDailyTeeSheet(DateTime date, string userId, IEnumerable<TeeTime> teeTimes)
         {
-            using (SqlCommand getPermittedTeeTimes = new SqlCommand("GetPermittedTeeTimes", connection) { CommandType = System.Data.CommandType.StoredProcedure })
+            using (SqlConnection connection = new SqlConnection(connectionString))
             {
-                getPermittedTeeTimes.Parameters.AddWithValue("@memberNumber", MemberNumber);
-                getPermittedTeeTimes.Parameters.AddWithValue("@dayOfWeek", (int)date.DayOfWeek + 1);
-                SortedList<string, object> permissableTimes = new SortedList<string,object>();
-                using (SqlDataReader reader = getPermittedTeeTimes.ExecuteReader())
+                using (SqlCommand getPermittedTeeTimes = new SqlCommand("GetPermittedTeeTimes", connection) { CommandType = System.Data.CommandType.StoredProcedure })
                 {
-                    if (reader.HasRows)
+                    getPermittedTeeTimes.Parameters.AddWithValue("@memberNumber", userId);
+                    getPermittedTeeTimes.Parameters.AddWithValue("@dayOfWeek", (int)date.DayOfWeek + 1);
+                    SortedList<string, object> permissableTimes = new SortedList<string, object>();
+                    connection.Open();
+                    using (SqlDataReader reader = getPermittedTeeTimes.ExecuteReader())
                     {
-                        while (reader.Read())
+                        if (reader.HasRows)
                         {
-                            permissableTimes.Add(reader["Time"].ToString(), null);
+                            while (reader.Read())
+                            {
+                                permissableTimes.Add(reader["Time"].ToString(), null);
+                            }
                         }
                     }
-                }
-                foreach (var item in teeTimes)
-                {
-                    if (!permissableTimes.ContainsKey(item.Datetime.ToString("HH:mm:ss")))
-                        item.Reservable = false;
-                }
+                    foreach (var item in teeTimes)
+                    {
+                        if (!permissableTimes.ContainsKey(item.Datetime.ToString("HH:mm:ss")))
+                            item.Reservable = false;
+                    }
 
+                } 
             }
+
+            return teeTimes;
         }
 
         private static TeeTime CreateTeeTimeFromReader(DateTime date, SqlDataReader reader)

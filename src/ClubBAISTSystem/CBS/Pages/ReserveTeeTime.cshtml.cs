@@ -17,13 +17,13 @@ namespace CBS.Pages
     {
         public UserManager<ApplicationUser> UserManager { get; private set; }
         private readonly ApplicationDbContext dbContext;
-        private string memberNumber = null;
+ 
+
         public ReserveTeeTimeModel(UserManager<ApplicationUser> userManager, ApplicationDbContext dbContext)
         {
             UserManager = userManager;
             this.dbContext = dbContext;
-            if (User is null) return;
-            GetMemberNumber();
+
         }
 
         public List<string> ErrorMessages { get; set; } = new List<string>();
@@ -76,21 +76,30 @@ namespace CBS.Pages
                 
             }
             Confirmation = false;
-                if (memberNumber is null)
-                    GetMemberNumber();
-                Domain.CBS requestDirector = new Domain.CBS(memberNumber, Startup.ConnectionString);
-                DailyTeeSheet = requestDirector.ViewDailyTeeSheet(Date);
+            
+            Domain.CBS requestDirector = null;
+            if (!User.IsInRole("Golfer"))
+                requestDirector = new Domain.CBS(Startup.ConnectionString);
+            else
+                requestDirector = new Domain.CBS(GetUserId(), Startup.ConnectionString);
+            DailyTeeSheet = requestDirector.ViewDailyTeeSheet(Date);
+
+            if (User.IsInRole("Golfer"))
+                DailyTeeSheet.TeeTimes = requestDirector.FilterDailyTeeSheet(Date, DailyTeeSheet.TeeTimes).ToList();
+
 
             TempData.Put("PermissableTimes", from time in DailyTeeSheet.TeeTimes where time.Golfers is null && 
                 time.Reservable && IsValidDate(time.Datetime, out string _) select time.Datetime);
 
-            TempData.Put("reservedTeeTimes", requestDirector.FindReservedTeeTimes());
+            if (User.IsInRole("Golfer"))
+            {
+                TempData.Put("reservedTeeTimes", requestDirector.FindReservedTeeTimes()); 
+            }
             return Page();
         }
 
         public IActionResult OnPostReserve(string[] golfers)
         {
-            var memberNumbers = golfers.Where(s => !(string.IsNullOrWhiteSpace(s)));
             if (!ModelState.IsValid)
             {
                 foreach (var e in from err in ModelState.Values where err.Errors.Count > 0 select err)
@@ -100,20 +109,26 @@ namespace CBS.Pages
                 TempData.Put(nameof(ErrorMessages), ErrorMessages);
                 return Redirect(Request.Headers["Referer"].ToString());
             }
-            if (memberNumber is null) GetMemberNumber();
             Confirmation = false;
-            Domain.CBS requestDirector = new Domain.CBS(memberNumber, Startup.ConnectionString);
 
-            var validMembers = dbContext.Users.Where(u => memberNumbers.Contains(u.MemberNumber));
-            if (validMembers.Count() != memberNumbers.Count())
+            string userId = "";
+            if (User.IsInRole("Golfer"))
             {
-                ErrorMessages.Add("One or more provided member numbers do not exist");
-                TempData.Put(nameof(ErrorMessages), ErrorMessages);
-                return Redirect(Request.Headers["Referer"].ToString());
+                userId = GetUserId();
+            }
+            else
+            {
+                userId = GetUserId(golfers.First());
             }
 
-            if (!requestDirector.ReserveTeeTime(new TeeTime() { Golfers = validMembers.Select(M => M.Id).ToList().Append(memberNumber).ToList(), Datetime = (DateTime)TempData.Peek(nameof(Date)), NumberOfCarts = NumberOfCarts, Phone = Phone }, out string error))
+            Domain.CBS requestDirector = new Domain.CBS(userId, Startup.ConnectionString);
+
+            var validMembers = dbContext.Users.Where(u => golfers.Contains(u.MemberNumber));
+
+            if (!requestDirector.ReserveTeeTime(new TeeTime() { Golfers = validMembers.Select(M => M.Id).ToList().Append(userId).ToList(), 
+                Datetime = (DateTime)TempData.Peek(nameof(Date)), NumberOfCarts = NumberOfCarts, Phone = Phone }, out string error))
             {
+                error = error.Contains("PRIMARY KEY") ? "Cannot insert duplicate member" : error;
                 ErrorMessages.Add(error);
                 Confirmation = false;
                 TempData.Put(nameof(ErrorMessages), ErrorMessages);
@@ -129,8 +144,7 @@ namespace CBS.Pages
 
         public IActionResult OnPostCancel(string teeTime)
         {
-            string memberNumber = UserManager.FindByNameAsync(User.Identity.Name).GetAwaiter().GetResult().Id;
-            Domain.CBS requestDirector = new Domain.CBS(memberNumber, Startup.ConnectionString);
+            Domain.CBS requestDirector = new Domain.CBS(GetUserId(), Startup.ConnectionString);
 
             bool confirmation = requestDirector.CancelTeeTime(new DateTime(long.Parse(teeTime)));
 
@@ -142,10 +156,14 @@ namespace CBS.Pages
 
         }
 
-        private void GetMemberNumber()
+        private string GetUserId()
         {
-            var s = UserManager.FindByNameAsync(User.Identity.Name).GetAwaiter().GetResult();
-            memberNumber = s.Id;
+            return UserManager.FindByNameAsync(User.Identity.Name).GetAwaiter().GetResult().Id;
+        }
+
+        private string GetUserId(string memberNumber)
+        {
+            return UserManager.FindByNameAsync(memberNumber).GetAwaiter().GetResult().Id;
         }
 
         private bool IsValidDate(DateTime value, out string errorMessage)

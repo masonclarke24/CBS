@@ -1,6 +1,8 @@
 USE [CBS]
 GO
 
+SELECT * FROM AspNetUsers
+INSERT INTO AspNetUserRoles(RoleId, UserId) VALUES('568f130a-7a01-4f3b-b674-f17b445467e9', '3d955313-54a1-4229-aa78-3ac017eb0772')
 INSERT [dbo].[MembershipLevels] ([MembershipLevel]) VALUES (N'Bronze')
 GO
 INSERT [dbo].[MembershipLevels] ([MembershipLevel]) VALUES (N'Gold  ')

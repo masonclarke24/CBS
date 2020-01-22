@@ -36,115 +36,118 @@
             var errors = TempData.Peek<List<string>>("ErrorMessages");
             @foreach (var error in errors)
             {
-                <ul>
-                    <li>@error</li>
-                </ul>
-            }
-            TempData.Remove("ErrorMessages");
-        }
-    </div>
-    <div class="form-group">
-        @if (Request.Method == "POST" && !(Model.DailyTeeSheet is null))
-        {
-            <div style="height: 50vh; overflow: auto">
-                <table class="table table-hover" style="table-layout: fixed;">
-                    <thead>
-                        <tr>
-                            <th>
-                                Time
-                            </th>
-                            <th>
-                                Avaliability
-                            </th>
-                            @if ((DateTime.Now - Model.Date).TotalDays < 0 && (DateTime.Now.AddDays(7) - Model.Date).TotalDays >= 0)
-                            {
-                                <th>
-                                    Action
-                                </th>
-                            }
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @for (int i = 0; i < Model.DailyTeeSheet.TeeTimes.Count; i++)
-                        {
-                            <tr style="background-color: @(!Model.DailyTeeSheet.TeeTimes[i].Reservable ? "#CCC" : "")" onclick="rowClicked(this)" class="d-sm-table-row">
-                                <td>
-                                    @Model.DailyTeeSheet.TeeTimes[i].Datetime.ToShortTimeString()
-                                </td>
-                                <td class="text-@(Model.DailyTeeSheet.TeeTimes[i].Golfers is null ? "success" : "warning")">@(Model.DailyTeeSheet.TeeTimes[i].Golfers is null ? "Avaliable" : "Reserved")</td>
-
-                                @if (TempData.Peek<IEnumerable<DateTime>>("PermissableTimes").Contains(Model.DailyTeeSheet.TeeTimes[i].Datetime))
-                                {
-                                    <td>
-                                        <input type="radio" required style="display:none;" name="teeTime" value="@Model.DailyTeeSheet.TeeTimes[i].Datetime.ToShortTimeString()" />
-                                        <button type="submit" class="btn btn-outline-primary" asp-page-handler="Select">Select Tee Time</button>
-                                    </td>
-
-                                }
-
-                                @if (TempData.Peek<IEnumerable<TechnicalServices.TeeTime>>("reservedTeeTimes")
-                                    .Where(t=> t.Datetime == Model.DailyTeeSheet.TeeTimes[i].Datetime).FirstOrDefault() != null)
-                                {
-                                    <td class="form-group">
-                                        <input type="radio" required style="display:none;" name="teeTime" value="@Model.DailyTeeSheet.TeeTimes[i].Datetime.Ticks" />
-                                        <a class="btn btn-outline-warning" href="Identity/Account/Manage/UpdateTeeTime?teeTimeTime=@Model.DailyTeeSheet.TeeTimes[i].Datetime.Ticks">Update</a>
-                                        <button type="submit" class="btn btn-outline-danger" asp-page-handler="Cancel">Cancel</button>
-                                    </td>
-                                }
-                            </tr>
-                            @if (Model.DailyTeeSheet.TeeTimes[i].Golfers?.Any() ?? false)
-                            {
-                                <tr style="display: none">
-                                    <td colspan="3">
-                                        <table class="table table-sm">
-                                            <thead>
-                                                <tr>
-                                                    <td class="font-weight-bold">
-                                                        Member Name
-                                                    </td>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                @foreach (var member in Model.DailyTeeSheet.TeeTimes[i].Golfers)
-                                                {
-                                                    <tr>
-                                                        <td>
-                                                            @member
-                                                        </td>
-                                                    </tr>
-                                                }
-                                            </tbody>
-                                        </table>
-                                    </td>
+                    <ul class="text-danger">
+                        <li>@error</li>
+                    </ul>
+                    }
+                    TempData.Remove("ErrorMessages");
+                    }
+            </div>
+            <div class="form-group">
+                @if (Request.Method == "POST" && !(Model.DailyTeeSheet is null))
+                {
+                    <div style="height: 50vh; overflow: auto">
+                        <table class="table table-hover" style="table-layout: fixed;">
+                            <thead>
+                                <tr>
+                                    <th>
+                                        Time
+                                    </th>
+                                    <th>
+                                        Avaliability
+                                    </th>
+                                    @if ((DateTime.Now - Model.Date).TotalDays < 0 && (DateTime.Now.AddDays(7) - Model.Date).TotalDays >= 0)
+                                    {
+                                        <th>
+                                            Action
+                                        </th>
+                                    }
                                 </tr>
-                            }
+                            </thead>
+                            <tbody>
+                                @for (int i = 0; i < Model.DailyTeeSheet.TeeTimes.Count; i++)
+                                {
+                                    <tr style="background-color: @(!Model.DailyTeeSheet.TeeTimes[i].Reservable ? "#CCC" : "")" onclick="rowClicked(this)" class="d-sm-table-row">
 
-                        }
-                    </tbody>
-                </table>
+                                        <td>
+                                            @Model.DailyTeeSheet.TeeTimes[i].Datetime.ToShortTimeString()
+                                        </td>
+                                        <td class="text-@(Model.DailyTeeSheet.TeeTimes[i].Golfers is null ? "success" : "warning")">@(Model.DailyTeeSheet.TeeTimes[i].Golfers is null ? "Avaliable" : "Reserved")</td>
+
+                                        @if (TempData.Peek<IEnumerable<DateTime>>("PermissableTimes").Contains(Model.DailyTeeSheet.TeeTimes[i].Datetime))
+
+                                        {
+                                            <td>
+                                                <input type="radio" required style="display:none;" name="teeTime" value="@Model.DailyTeeSheet.TeeTimes[i].Datetime.ToShortTimeString()" />
+                                                <button type="submit" class="btn btn-outline-primary" asp-page-handler="Select">Select Tee Time</button>
+                                            </td>
+
+                                        }
+
+                                        @if (TempData.Peek<IEnumerable<TechnicalServices.TeeTime>>("reservedTeeTimes")
+
+                                          .Where(t => t.Datetime == Model.DailyTeeSheet.TeeTimes[i].Datetime).FirstOrDefault() != null)
+                                        {
+                                            <td class="form-group">
+                                                <input type="radio" required style="display:none;" name="teeTime" value="@Model.DailyTeeSheet.TeeTimes[i].Datetime.Ticks" />
+                                                <a class="btn btn-outline-warning" href="Identity/Account/Manage/UpdateTeeTime?teeTimeTime=@Model.DailyTeeSheet.TeeTimes[i].Datetime.Ticks">Update</a>
+                                                <button type="submit" class="btn btn-outline-danger" asp-page-handler="Cancel">Cancel</button>
+                                            </td>
+                                        }
+                                    </tr>
+                                    @if (Model.DailyTeeSheet.TeeTimes[i].Golfers?.Any() ?? false)
+                                    {
+                                        <tr style="display: none">
+                                            <td colspan="3">
+                                                <table class="table table-sm">
+                                                    <thead>
+                                                        <tr>
+                                                            <td class="font-weight-bold">
+                                                                Member Name
+                                                            </td>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        @foreach (var member in Model.DailyTeeSheet.TeeTimes[i].Golfers)
+                                                        {
+                                                            <tr>
+                                                                <td>
+                                                                    @member
+                                                                </td>
+                                                            </tr>
+                                                        }
+                                                    </tbody>
+                                                </table>
+                                            </td>
+                                        </tr>
+                                    }
+
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
             </div>
-        }
-    </div>
-    @if (Model.Request.Query.ContainsKey("teeTime"))
-    {
-        <div id="teeTimeDetails">
-            <div class="form-group">
-                <label>Phone</label>
-                <input class="form-control" name="Phone" asp-for="Phone" value="@Model.UserManager.FindByNameAsync(User.Identity.Name).GetAwaiter().GetResult().PhoneNumber" />
-                <span asp-validation-for="@Model.Phone" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label>Number of carts</label>
-                <input class="form-control" name="NumberOfCarts" asp-for="NumberOfCarts" value="1" />
-                <span asp-validation-for="@Model.NumberOfCarts" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <input type="button" class="btn btn-secondary" value="Add Golfer" onclick="addGolfer(this)" />
-                <input type="button" class="btn btn-secondary" value="Remove Golfer" onclick="removeGolfer(this)" />
-            </div>
-        </div>
-    }
-</form>
+            @if (Model.Request.Query.ContainsKey("teeTime"))
+            {
+                <div id="teeTimeDetails">
+                    <div class="form-group">
+                        <label>Phone</label>
+                        <input class="form-control" name="Phone" asp-for="Phone" value="@Model.UserManager.FindByNameAsync(User.Identity.Name).GetAwaiter().GetResult().PhoneNumber" />
+                        <span asp-validation-for="@Model.Phone" class="text-danger"></span>
+                    </div>
+                    <div class="form-group">
+                        <label>Number of carts</label>
+                        <input class="form-control" name="NumberOfCarts" asp-for="NumberOfCarts" value="1" />
+                        <span asp-validation-for="@Model.NumberOfCarts" class="text-danger"></span>
+                    </div>
+                    <div class="form-group">
+                        <input type="button" class="btn btn-secondary" value="Add Golfer" onclick="addGolfer(this)" />
+                        <input type="button" class="btn btn-secondary" value="Remove Golfer" onclick="removeGolfer(this)" />
+                    </div>
+                </div>
+            }
+        </form>
 
 
 

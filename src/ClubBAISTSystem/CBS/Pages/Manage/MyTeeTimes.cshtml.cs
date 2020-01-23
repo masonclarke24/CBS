@@ -24,10 +24,11 @@ namespace CBS.Areas.Identity.Pages.Account.Manage
 
         public void OnGet()
         {
-            Domain.CBS requestDirector = new Domain.CBS(userManager.FindByNameAsync(User.Identity.Name).GetAwaiter().GetResult().Id, 
-                Startup.ConnectionString);
-            reservedTeeTimes = requestDirector.FindReservedTeeTimes();
-            TempData.Put(nameof(reservedTeeTimes), reservedTeeTimes);
+            if (User.IsInRole("Golfer"))
+            {
+                string userId = userManager.FindByNameAsync(User.Identity.Name).GetAwaiter().GetResult().Id;
+                GetReservedTeeTimes(userId);
+            }
         }
 
         public IActionResult OnPostCancel(string teeTime)
@@ -43,6 +44,19 @@ namespace CBS.Areas.Identity.Pages.Account.Manage
                 HttpContext.Session.SetString("danger", "Tee time could not be canceled");
             return Redirect(Request.Headers["referer"]);
 
+        }
+
+        public void OnPostProvideMemberNumber(string memberNumber)
+        {
+            GetReservedTeeTimes(userManager.Users.Where(u => u.MemberNumber == memberNumber).FirstOrDefault().Id);
+        }
+
+        private void GetReservedTeeTimes(string userId)
+        {
+            Domain.CBS requestDirector = new Domain.CBS(userId,
+                                    Startup.ConnectionString);
+            reservedTeeTimes = requestDirector.FindReservedTeeTimes();
+            TempData.Put(nameof(reservedTeeTimes), reservedTeeTimes);
         }
     }
 }

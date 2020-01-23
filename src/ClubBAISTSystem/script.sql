@@ -82,7 +82,8 @@ CREATE TABLE TeeTimes
 	[Time] TIME CONSTRAINT FK_TeeTimes_Time FOREIGN KEY REFERENCES PermissableTeeTimes([Time]),
 	Phone VARCHAR(14) NOT NULL,
 	NumberOfCarts TINYINT NOT NULL,
-	CheckedIn BIT NOT NULL,
+	CheckedIn BIT DEFAULT(0),
+	ReservedBy NVARCHAR(450) CONSTRAINT FK_TeeTimes_ReservedBy REFERENCES AspNetUsers(Id),
 	CONSTRAINT PK_TeeTimes_DateTime PRIMARY KEY ([Date],[Time])
 )
 GO
@@ -91,9 +92,9 @@ CREATE TABLE TeeTimeGolfers
 (
 	[Date] DATE NOT NULL,
 	[Time] Time NOT NULL,
-	MemberNumber NVARCHAR(450) NOT NULL CONSTRAINT FK_TeeTimeGolfers_MemberNumber FOREIGN KEY REFERENCES AspNetUsers(Id),
+	UserId NVARCHAR(450) NOT NULL CONSTRAINT FK_TeeTimeGolfers_UserId FOREIGN KEY REFERENCES AspNetUsers(Id),
 	CONSTRAINT FK_TeeTimeGolfers_DateTime FOREIGN KEY ([Date],[Time]) REFERENCES TeeTimes([Date],[Time]),
-	CONSTRAINT PK_TeeTimeGolfers_DateTimeMemNumber PRIMARY KEY ([Date],[Time],MemberNumber)
+	CONSTRAINT PK_TeeTimeGolfers_DateTimeMemNumber PRIMARY KEY ([Date],[Time],UserId)
 )
 GO
 
@@ -112,8 +113,8 @@ GO
 CREATE TABLE StandingTeeTimeGolfers
 (
 	ID INT CONSTRAINT FK_STTGolfers_ID FOREIGN KEY REFERENCES StandingTeeTimeRequests(ID),
-	MemberNumber NVARCHAR(450) CONSTRAINT FK_STTGolfers_MemberNumber FOREIGN KEY REFERENCES AspNetUsers(Id),
-	PRIMARY KEY (ID,MemberNumber)
+	UserId NVARCHAR(450) CONSTRAINT FK_STTGolfers_UserId FOREIGN KEY REFERENCES AspNetUsers(Id),
+	PRIMARY KEY (ID,UserId)
 )
 GO
 
@@ -135,16 +136,18 @@ GO
 
 CREATE TYPE GolferList AS TABLE
 (
-	MemberNumber NVARCHAR(450) NOT NULL
+	UserId NVARCHAR(450) NOT NULL
 )
 GO
 
-ALTER PROCEDURE FindDailyTeeSheet(@date DATE)
+CREATE PROCEDURE FindDailyTeeSheet(@date DATE)
 AS
 	SELECT DISTINCT
 		LEFT(CONVERT(NVARCHAR,PermissableTeeTimes.Time, 24),5) [Time],
 		Date,
-		(SELECT TOP 1 MemberName FROM AspNetUsers WHERE TeeTimeGolfers.MemberNumber = AspNetUsers.Id) [Member Name],
+		(SELECT TOP 1 MemberName FROM AspNetUsers WHERE TeeTimeGolfers.UserId = AspNetUsers.Id) [Member Name],
+		TeeTimeGolfers.UserId,
+		(SELECT ReservedBy FROM TeeTimes WHERE TeeTimes.[Date] = TeeTimeGolfers.[Date] AND TeeTimes.[Time] = TeeTimeGolfers.[Time]) [ReservedBy],
 		(SELECT Phone FROM TeeTimes WHERE TeeTimes.[Date] = TeeTimeGolfers.[Date] AND TeeTimes.[Time] = TeeTimeGolfers.[Time]) [Phone],
 		(SELECT NumberOfCarts FROM TeeTimes WHERE TeeTimes.[Date] = TeeTimeGolfers.[Date] AND TeeTimes.[Time] = TeeTimeGolfers.[Time]) NumberofCarts,
 		(SELECT CheckedIn FROM TeeTimes WHERE TeeTimes.[Date] = TeeTimeGolfers.[Date] AND TeeTimes.[Time] = TeeTimeGolfers.[Time]) [Checked In]
@@ -153,18 +156,18 @@ AS
 GO
 
 
-CREATE PROCEDURE [dbo].[GetPermittedTeeTimes](@memberNumber NVARCHAR(450), @dayOfWeek INT)
+CREATE PROCEDURE [dbo].[GetPermittedTeeTimes](@userId NVARCHAR(450), @dayOfWeek INT)
 AS
 	SELECT
 		[Time]
 	FROM
 		TeeTimesForMembershipLevel
 	WHERE
-		MembershipLevel = (SELECT TOP 1 MembershipLevel FROM AspNetUsers WHERE Id = @memberNumber) AND [DayOfWeek] = @dayOfWeek
+		MembershipLevel = (SELECT TOP 1 MembershipLevel FROM AspNetUsers WHERE Id = @userId) AND [DayOfWeek] = @dayOfWeek
 GO
 
 
-CREATE PROCEDURE [dbo].[RequestStandingTeeTime](@startDate DATE, @endDate DATE, @requestedTime TIME, @message VARCHAR(512) out, @memberNumbers AS GolferList READONLY)
+CREATE PROCEDURE [dbo].[RequestStandingTeeTime](@startDate DATE, @endDate DATE, @requestedTime TIME, @message VARCHAR(512) out, @userIds AS GolferList READONLY)
 AS
 BEGIN
 	BEGIN TRANSACTION
@@ -180,11 +183,11 @@ BEGIN
 		RETURN 1
 	END
 	declare @id int = @@IDENTITY
-	INSERT INTO StandingTeeTimeGolfers(ID, MemberNumber)
+	INSERT INTO StandingTeeTimeGolfers(ID, UserId)
 		SELECT
-			@id, MemberNumber
+			@id, UserId
 		FROM
-			@memberNumbers
+			@userIds
 		IF @@ERROR <> 0
 		BEGIN
 		SET @message = 'Unable to add golfers to standing tee time on start date ' + CAST(@startDate AS NVARCHAR(24))
@@ -199,14 +202,16 @@ BEGIN
 	END
 GO
 
-CREATE PROCEDURE [dbo].[ReserveTeeTime]
+
+
+ALTER PROCEDURE [dbo].[ReserveTeeTime]
 @date DATE, @time TIME, @numberOfCarts INT, @phone VARCHAR(14), @golfers AS dbo.GolferList READONLY, @message VARCHAR(1024) OUT
 AS
 BEGIN
 	DECLARE @returnCode AS INT = 0
 
 	BEGIN TRANSACTION
-	INSERT INTO TeeTimes(Date,Time,NumberOfCarts, Phone) VALUES(@date,@time,@numberOfCarts, @phone)
+	INSERT INTO TeeTimes(Date,Time,NumberOfCarts, Phone, ReservedBy) VALUES(@date,@time,@numberOfCarts, @phone, (SELECT TOP 1 UserId FROM @golfers))
 
 	IF @@ERROR <> 0
 	BEGIN
@@ -216,11 +221,11 @@ BEGIN
 		RETURN 1
 	END
 
-	INSERT INTO TeeTimeGolfers(Date, Time, MemberNumber)
+	INSERT INTO TeeTimeGolfers(Date, Time, UserId)
 		SELECT
 			@date,
 			@time,
-			MemberNumber
+			UserId
 		FROM
 			@golfers
 
@@ -246,14 +251,14 @@ AS
 		StandingTeeTimeRequests.StartDate [Start Date],
 		StandingTeeTimeRequests.EndDate [End Date],
 		[DayOfWeek] [Day of Week],
-		(SELECT TOP 1 MemberName FROM AspNetUsers WHERE StandingTeeTimeGolfers.MemberNumber = AspNetUsers.Id) [Member Name]
+		(SELECT TOP 1 MemberName FROM AspNetUsers WHERE StandingTeeTimeGolfers.UserId = AspNetUsers.Id) [Member Name]
 	FROM
 		PermissableTeeTimes LEFT OUTER JOIN StandingTeeTimeRequests ON
 		PermissableTeeTimes.Time = StandingTeeTimeRequests.RequestedTime AND (StandingTeeTimeRequests.StartDate BETWEEN @startDate AND @endDate) AND StandingTeeTimeRequests.DayOfWeek = @dayOfWeek
 		LEFT OUTER JOIN StandingTeeTimeGolfers ON StandingTeeTimeRequests.ID = StandingTeeTimeGolfers.ID
 GO
 
-CREATE PROCEDURE FindReservedTeeTimes(@userID VARCHAR(450))
+ALTER PROCEDURE FindReservedTeeTimes(@userID VARCHAR(450))
 AS
 	DECLARE cursorReservedTeeTimes CURSOR FOR
 	SELECT
@@ -262,7 +267,7 @@ AS
 	FROM 
 		TeeTimes INNER JOIN TeeTimeGolfers ON TeeTimes.Date = TeeTimeGolfers.Date AND TeeTimes.Time = TeeTimeGolfers.Time
 	WHERE 
-		TeeTimeGolfers.MemberNumber = @userID
+		TeeTimeGolfers.UserId = @userID
 
 	DECLARE @date Date
 	DECLARE @time Time
@@ -278,7 +283,9 @@ AS
 		TeeTimes.[Time],
 		NumberOfCarts,
 		Phone,
-		(SELECT TOP 1 MemberName FROM AspNetUsers WHERE TeeTimeGolfers.MemberNumber = AspNetUsers.Id) [Member Name]
+		TeeTimeGolfers.UserId,
+		(SELECT TOP 1 MemberName FROM AspNetUsers WHERE TeeTimeGolfers.UserId = AspNetUsers.Id) [Member Name],
+		ReservedBy
 	FROM
 		TeeTimes INNER JOIN TeeTimeGolfers ON TeeTimes.Date = TeeTimeGolfers.Date AND TeeTimes.Time = TeeTimeGolfers.Time
 	WHERE
@@ -295,7 +302,7 @@ CREATE PROCEDURE CancelTeeTime(@date DATE, @time TIME, @userID VARCHAR(450))
 AS
 	BEGIN TRANSACTION
 	
-	DELETE TeeTimeGolfers WHERE [Date] = @date AND [Time] = @time AND MemberNumber = @userID
+	DELETE TeeTimeGolfers WHERE [Date] = @date AND [Time] = @time AND UserId = @userID
 	DECLARE @rowCount INT = @@ROWCOUNT
 
 	IF @@ERROR <> 0
@@ -312,7 +319,7 @@ AS
 	END
 	ELSE
 	BEGIN
-		UPDATE TeeTimes SET Phone = (SELECT TOP 1 PhoneNumber FROM AspNetUsers WHERE Id = (SELECT TOP 1 MemberNumber FROM TeeTimeGolfers WHERE [Date] = @date AND [Time] = @time AND MemberNumber <> @userID))
+		UPDATE TeeTimes SET Phone = (SELECT TOP 1 PhoneNumber FROM AspNetUsers WHERE Id = (SELECT TOP 1 UserId FROM TeeTimeGolfers WHERE [Date] = @date AND [Time] = @time AND UserId <> @userID))
 			WHERE
 				[Date] = @date AND [Time] = @time 
 	END
@@ -347,9 +354,9 @@ AS
 		RETURN 1
 	END
 
-	INSERT INTO TeeTimeGolfers([Date],[Time], MemberNumber)
+	INSERT INTO TeeTimeGolfers([Date],[Time], UserId)
 		SELECT
-			@date, @time, MemberNumber
+			@date, @time, UserId
 		FROM @newGolfers
 
 	IF @@ERROR <> 0

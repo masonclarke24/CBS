@@ -53,16 +53,19 @@ namespace CBS.Areas.Identity.Pages.Account.Manage
         public IActionResult OnPost(string[] golfers, bool checkedIn)
         {
             if (!ModelState.IsValid) return Page();
-            Domain.CBS requestDirector = new Domain.CBS(userManager.FindByNameAsync(User.Identity.Name).GetAwaiter().GetResult().Id, Startup.ConnectionString);
+            Domain.CBS requestDirector = new Domain.CBS(Startup.ConnectionString);
 
             TeeTimeToUpdate = TempData.Peek<TeeTime>(nameof(TeeTimeToUpdate));
 
             List<string> updatedGolfers = golfers.Length > 4 - TeeTimeToUpdate.Golfers.Count ? golfers.ToList()
                 .GetRange(0, 4 - TeeTimeToUpdate.Golfers.Count) : golfers.ToList();
 
+            updatedGolfers = (from user in userManager.Users where updatedGolfers.Contains(user.MemberNumber) select user.Id).ToList();
+
             if (!requestDirector.UpdateTeeTime(TeeTimeToUpdate.Datetime, Phone, NumberOfCarts, 
                 updatedGolfers, out string message))
             {
+                message = message.Contains("PRIMARY KEY") ? "Cannot add duplicate golfer" : message.Contains("FOREIGN KEY") ? "One or more member numbers do not exist" : message;
                 TempData.Put("errorMessage", message);
 
                 return Page();
@@ -70,7 +73,7 @@ namespace CBS.Areas.Identity.Pages.Account.Manage
 
             HttpContext.Session.SetString("success", "Tee time updated successfully");
 
-            return RedirectToPage("MyTeeTimes");
+            return Redirect("./Index");
         }
     }
 }

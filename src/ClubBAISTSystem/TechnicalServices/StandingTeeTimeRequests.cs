@@ -71,7 +71,7 @@ namespace TechnicalServices
                     {
                         memberNumbers.Rows.Add(item);
                     }
-                    requestStandingTeeTime.Parameters.AddWithValue("@memberNumbers", memberNumbers);
+                    requestStandingTeeTime.Parameters.AddWithValue("@UserIds", memberNumbers);
                     SqlParameter parameterMessage = new SqlParameter("@message", SqlDbType.VarChar) { Size = 512, Direction = ParameterDirection.Output };
                     requestStandingTeeTime.Parameters.Add(parameterMessage);
                     SqlParameter returnCode = new SqlParameter("@returnCode", SqlDbType.Bit) { Direction = ParameterDirection.ReturnValue };

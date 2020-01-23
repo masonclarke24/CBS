@@ -106,7 +106,7 @@
                                     {
                                         <td class="form-group">
                                             <input type="radio" required style="display:none;" name="teeTime" value="@teeTime.Datetime.Ticks" />
-                                            <a class="btn btn-outline-warning" href="Identity/Account/Manage/UpdateTeeTime?teeTimeTime=@teeTime.Datetime.Ticks">Update</a>
+                                            <a class="btn btn-outline-warning" href="/Manage/UpdateTeeTime?teeTimeTime=@teeTime.Datetime.Ticks">Update</a>
                                             <button type="submit" class="btn btn-outline-danger" asp-page-handler="Cancel">Cancel</button>
                                         </td>
                                     }
@@ -136,7 +136,7 @@
                                                         {
                                                             <tr>
                                                                 <td>
-                                                                    @member
+                                                                    @member.Name
                                                                 </td>
                                                             </tr>
                                                         }

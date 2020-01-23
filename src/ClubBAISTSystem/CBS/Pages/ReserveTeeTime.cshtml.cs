@@ -92,8 +92,8 @@ namespace CBS.Pages
             {
                 TempData.Put("AllTeeTimes", DailyTeeSheet.TeeTimes);
             }
-            TempData.Put("PermissableTimes", from time in DailyTeeSheet.TeeTimes where time.Golfers is null && 
-                time.Reservable && IsValidDate(time.Datetime, out string _) select time.Datetime);
+            TempData.Put("PermissableTimes", from time in DailyTeeSheet.TeeTimes where (time.Golfers is null || time.Golfers.Count == 4) && 
+                time.Reservable select time.Datetime);
 
             if (User.IsInRole("Golfer"))
                 TempData.Put("reservedTeeTimes", requestDirector.FindReservedTeeTimes().Where(t =>  (t.Datetime.Date - DateTime.Today).TotalDays > 0));
@@ -142,10 +142,11 @@ namespace CBS.Pages
 
             requestDirector = new Domain.CBS(userId, Startup.ConnectionString);
 
-            var validMembers = dbContext.Users.Where(u => golfers.Contains(u.MemberNumber));
+            dynamic validMembers = dbContext.Users.Where(u => golfers.Contains(u.MemberNumber));
 
-            validMembers = from member in validMembers where member.Id != userId select member;
-            if (!requestDirector.ReserveTeeTime(new TeeTime() { Golfers = validMembers.Select(M => M.Id).ToList().Append(userId).ToList(), 
+            validMembers = from member in (IQueryable<ApplicationUser>)validMembers where member.Id == userId select new { member.MemberName, member.Id };
+
+            if (!requestDirector.ReserveTeeTime(new TeeTime() { Golfers = GenerateGolfers(validMembers).Append((userId, UserManager.FindByIdAsync(userId).GetAwaiter().GetResult().MemberName)), 
                 Datetime = (DateTime)TempData.Peek(nameof(Date)), NumberOfCarts = NumberOfCarts, Phone = Phone }, out string error))
             {
                 error = error.Contains("PRIMARY KEY") ? "Cannot insert duplicate member" : error;
@@ -160,6 +161,18 @@ namespace CBS.Pages
                 HttpContext.Session.SetString("success", "Tee time reserved successfully");
             }
             return Page();
+        }
+
+        private List<(string Name, string UserId)> GenerateGolfers(dynamic validMembers)
+        {
+            List<(string Name, string UserId)> result = new List<(string Name, string UserId)>();
+
+            foreach(var item in validMembers)
+            {
+                result.Add((item.MemberName, item.Id));
+            }
+
+            return result;
         }
 
         public IActionResult OnPostCancel(string teeTime)

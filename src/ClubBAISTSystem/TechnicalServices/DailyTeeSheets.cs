@@ -38,7 +38,7 @@ namespace TechnicalServices
                                 {
                                     if (DateTime.Parse($"{date.ToLongDateString()} {reader["Time"]}") == teeTimes.Peek().Datetime)
                                     {
-                                        teeTimes.Peek().Golfers.Add(reader["Member Name"].ToString());
+                                        teeTimes.Peek().Golfers.Add((reader["Member Name"].ToString(), reader["UserId"].ToString()));
                                         continue;
                                     }
                                 }
@@ -80,7 +80,7 @@ namespace TechnicalServices
                                         if (DateTime.Parse($"{reader["Date"]}").Add(DateTime.Parse($"{reader["Time"]}").TimeOfDay)
                                                                     == golferTeeTimes.Peek().Datetime)
                                         {
-                                            golferTeeTimes.Peek().Golfers.Add(reader["Member Name"].ToString());
+                                            golferTeeTimes.Peek().Golfers.Add((reader["Member Name"].ToString(), reader["UserId"].ToString()));
                                             continue;
                                         }
                                     }
@@ -143,7 +143,7 @@ namespace TechnicalServices
                     updateTeeTime.Parameters.AddWithValue("@numberOfCarts", newNumberOfCarts);
 
                     DataTable golfers = new DataTable("@newGolfers");
-                    golfers.Columns.Add("MemberNumber");
+                    golfers.Columns.Add("UserId");
                     foreach (string golfer in newGolfers)
                     {
                         golfers.Rows.Add(golfer);
@@ -183,10 +183,10 @@ namespace TechnicalServices
                     reserveTeeTime.Parameters.AddWithValue("@numberOfCarts", requestedTeeTime.NumberOfCarts);
                     reserveTeeTime.Parameters.AddWithValue("@phone", requestedTeeTime.Phone);
                     var golfers = new DataTable("@golfers");
-                    golfers.Columns.Add("MemberNumber");
+                    golfers.Columns.Add("UserId");
                     foreach (var item in requestedTeeTime.Golfers.ToArray())
                     {
-                        golfers.Rows.Add(item);
+                        golfers.Rows.Add(item.UserId);
                     }
                     
                     reserveTeeTime.Parameters.AddWithValue("@golfers", golfers);
@@ -220,7 +220,7 @@ namespace TechnicalServices
             {
                 using (SqlCommand getPermittedTeeTimes = new SqlCommand("GetPermittedTeeTimes", connection) { CommandType = System.Data.CommandType.StoredProcedure })
                 {
-                    getPermittedTeeTimes.Parameters.AddWithValue("@memberNumber", userId);
+                    getPermittedTeeTimes.Parameters.AddWithValue("@userId", userId);
                     getPermittedTeeTimes.Parameters.AddWithValue("@dayOfWeek", (int)date.DayOfWeek + 1);
                     SortedList<string, object> permissableTimes = new SortedList<string, object>();
                     connection.Open();
@@ -253,8 +253,9 @@ namespace TechnicalServices
                 Datetime = DateTime.Parse($"{date.Date.ToLongDateString()} {reader["Time"]}"),
                 NumberOfCarts = reader["NumberOfCarts"] is DBNull ? default : int.Parse($"{reader["NumberOfCarts"]}"),
                 Phone = reader["Phone"] is DBNull ? default : $"{reader["Phone"]}",
-                Golfers = reader["Member Name"] is DBNull ? default : new List<string> { $"{reader["Member Name"]}" },
-                Reservable = true
+                Golfers = reader["Member Name"] is DBNull ? default : new List<(string, string)> { { (reader["Member Name"].ToString(), reader["UserId"].ToString()) } },
+                Reservable = true,
+                ReservedBy = reader["ReservedBy"] is DBNull ? null : reader["ReservedBy"].ToString()
             };
         }
     }

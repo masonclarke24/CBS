@@ -56,8 +56,21 @@
                                     <th>
                                         Avaliability
                                     </th>
+
+                                    @if (!User.IsInRole("Golfer"))
+                                    {
+                                        <th>
+                                            Phone
+                                        </th>
+                                        <th>
+                                            Number of Carts
+                                        </th>
+                                        <th>
+                                            Checked In
+                                        </th>
+                                    }
                                     @if (((DateTime.Now - Model.Date).TotalDays < 0 || User.IsInRole("ProShop") && (int)(DateTime.Now - Model.Date).TotalDays <= 0)
-                                        && (DateTime.Now.AddDays(7) - Model.Date).TotalDays >= 0)
+                                       && (DateTime.Now.AddDays(7) - Model.Date).TotalDays >= 0)
                                     {
                                         <th>
                                             Action
@@ -66,36 +79,47 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @for (int i = 0; i < Model.DailyTeeSheet.TeeTimes.Count; i++)
+                                @foreach (var teeTime in Model.DailyTeeSheet.TeeTimes)
                                 {
-                                    <tr style="background-color: @(!Model.DailyTeeSheet.TeeTimes[i].Reservable ? "#CCC" : "")" onclick="rowClicked(this)" class="d-sm-table-row">
+                                <tr style="background-color: @(!teeTime.Reservable ? "#CCC" : "")" onclick="rowClicked(this)" class="d-sm-table-row">
 
+                                    <td>
+                                        @teeTime.Datetime.ToShortTimeString()
+                                    </td>
+                                    <td class="text-@(teeTime.Golfers is null ? "success" : "warning")">@(teeTime.Golfers is null ? "Avaliable" : "Reserved")</td>
+
+                                    @if (!User.IsInRole("Golfer"))
+                                    {
                                         <td>
-                                            @Model.DailyTeeSheet.TeeTimes[i].Datetime.ToShortTimeString()
+                                            @(teeTime.Golfers is null ? "-" : teeTime.Phone)
                                         </td>
-                                        <td class="text-@(Model.DailyTeeSheet.TeeTimes[i].Golfers is null ? "success" : "warning")">@(Model.DailyTeeSheet.TeeTimes[i].Golfers is null ? "Avaliable" : "Reserved")</td>
+                                        <td>
+                                            @(teeTime.Golfers is null ? "-" : teeTime.NumberOfCarts.ToString())
+                                        </td>
+                                        <td>
+                                            @(teeTime.Golfers is null ? "-" : teeTime.CheckedIn.ToString())
+                                        </td>
+                                    }
 
-                                        @if (TempData.Peek<IEnumerable<DateTime>>("PermissableTimes").Contains(Model.DailyTeeSheet.TeeTimes[i].Datetime))
-                                        {
-                                            <td>
-                                                <input type="radio" required style="display:none;" name="teeTime" value="@Model.DailyTeeSheet.TeeTimes[i].Datetime.ToShortTimeString()" />
-                                                <button type="submit" class="btn btn-outline-primary" asp-page-handler="Select">Select Tee Time</button>
-                                            </td>
+                                    @if (TempData.Peek<IEnumerable<TechnicalServices.TeeTime>>("reservedTeeTimes")
+                                    .Where(t => t.Datetime == teeTime.Datetime).FirstOrDefault() != null)
+                                    {
+                                        <td class="form-group">
+                                            <input type="radio" required style="display:none;" name="teeTime" value="@teeTime.Datetime.Ticks" />
+                                            <a class="btn btn-outline-warning" href="Identity/Account/Manage/UpdateTeeTime?teeTimeTime=@teeTime.Datetime.Ticks">Update</a>
+                                            <button type="submit" class="btn btn-outline-danger" asp-page-handler="Cancel">Cancel</button>
+                                        </td>
+                                    }
+                                    @if (TempData.Peek<IEnumerable<DateTime>>("PermissableTimes").Contains(teeTime.Datetime))
+                                    {
+                                        <td>
+                                            <input type="radio" required style="display:none;" name="teeTime" value="@teeTime.Datetime.ToShortTimeString()" />
+                                            <button type="submit" class="btn btn-outline-primary" asp-page-handler="Select">Select Tee Time</button>
+                                        </td>
 
-                                        }
-
-                                        @if (TempData.Peek<IEnumerable<TechnicalServices.TeeTime>>("reservedTeeTimes")
-
-                                          .Where(t => t.Datetime == Model.DailyTeeSheet.TeeTimes[i].Datetime).FirstOrDefault() != null)
-                                        {
-                                            <td class="form-group">
-                                                <input type="radio" required style="display:none;" name="teeTime" value="@Model.DailyTeeSheet.TeeTimes[i].Datetime.Ticks" />
-                                                <a class="btn btn-outline-warning" href="Identity/Account/Manage/UpdateTeeTime?teeTimeTime=@Model.DailyTeeSheet.TeeTimes[i].Datetime.Ticks">Update</a>
-                                                <button type="submit" class="btn btn-outline-danger" asp-page-handler="Cancel">Cancel</button>
-                                            </td>
-                                        }
-                                    </tr>
-                                    @if (Model.DailyTeeSheet.TeeTimes[i].Golfers?.Any() ?? false)
+                                    }
+                                </tr>
+                                    @if (teeTime.Golfers?.Any() ?? false)
                                     {
                                         <tr style="display: none">
                                             <td colspan="3">
@@ -108,7 +132,7 @@
                                                         </tr>
                                                     </thead>
                                                     <tbody>
-                                                        @foreach (var member in Model.DailyTeeSheet.TeeTimes[i].Golfers)
+                                                        @foreach (var member in teeTime.Golfers)
                                                         {
                                                             <tr>
                                                                 <td>

@@ -85,16 +85,21 @@ namespace CBS.Pages
             DailyTeeSheet = requestDirector.ViewDailyTeeSheet(Date);
 
             if (User.IsInRole("Golfer"))
+            {
                 DailyTeeSheet.TeeTimes = requestDirector.FilterDailyTeeSheet(Date, DailyTeeSheet.TeeTimes).ToList();
-
-
+            }
+            else
+            {
+                TempData.Put("AllTeeTimes", DailyTeeSheet.TeeTimes);
+            }
             TempData.Put("PermissableTimes", from time in DailyTeeSheet.TeeTimes where time.Golfers is null && 
                 time.Reservable && IsValidDate(time.Datetime, out string _) select time.Datetime);
 
             if (User.IsInRole("Golfer"))
-                TempData.Put("reservedTeeTimes", requestDirector.FindReservedTeeTimes());
+                TempData.Put("reservedTeeTimes", requestDirector.FindReservedTeeTimes().Where(t =>  (t.Datetime.Date - DateTime.Today).TotalDays > 0));
             else
-                TempData.Put("reservedTeeTimes", from teeTime in DailyTeeSheet.TeeTimes where !(teeTime.Golfers is null) select teeTime);
+                TempData.Put("reservedTeeTimes", from teeTime in DailyTeeSheet.TeeTimes where !(teeTime.Golfers is null) 
+                                                 && (teeTime.Datetime.Date - DateTime.Today).TotalDays > 0 select teeTime);
             return Page();
         }
 
@@ -111,6 +116,8 @@ namespace CBS.Pages
             }
             Confirmation = false;
 
+            Domain.CBS requestDirector = null;
+
             string userId = "";
             if (User.IsInRole("Golfer"))
             {
@@ -119,9 +126,21 @@ namespace CBS.Pages
             else
             {
                 userId = GetUserId(golfers.FirstOrDefault());
+
+                requestDirector = new Domain.CBS(userId, Startup.ConnectionString);
+                var filteredTeeTimes = requestDirector.FilterDailyTeeSheet((DateTime)TempData.Peek(nameof(Date)), 
+                    TempData.Peek<IEnumerable<TeeTime>>("ReservedTeeTimes"));
+
+                if(filteredTeeTimes.Where(t => t.Datetime == (DateTime)TempData.Peek(nameof(Date))).FirstOrDefault() is null)
+                {
+                    ErrorMessages.Add($"Cannot reserve tee time from member {golfers.FirstOrDefault()} due to membership level conflict.");
+                    Confirmation = false;
+                    TempData.Put(nameof(ErrorMessages), ErrorMessages);
+                    return Redirect(Request.Headers["Referer"].ToString());
+                }
             }
 
-            Domain.CBS requestDirector = new Domain.CBS(userId, Startup.ConnectionString);
+            requestDirector = new Domain.CBS(userId, Startup.ConnectionString);
 
             var validMembers = dbContext.Users.Where(u => golfers.Contains(u.MemberNumber));
 
@@ -176,24 +195,29 @@ namespace CBS.Pages
                 return false;
             }
 
-            if (!User.IsInRole("ProShop"))
-            {
-                if (value.Date == DateTime.Now.Date)
-                {
-                    errorMessage = "Cannot reserve tee time for today";
-                    return false;
-                } 
-            }
-
             if ((DateTime.Now.AddDays(7) - value).TotalDays <= 0)
             {
                 errorMessage = $"Selected day must not be beyond {DateTime.Today.AddDays(7).ToLongDateString()}";
                 return false;
             }
 
-            if ((int)(DateTime.Now - value).TotalDays > 0)
+            if ((DateTime.Today - value).TotalDays > 0)
             {
                 errorMessage = "Selected day cannot be in the past";
+                return false;
+            }
+
+            if (!User.IsInRole("ProShop"))
+            {
+                if (value.Date == DateTime.Now.Date)
+                {
+                    errorMessage = "Cannot reserve tee time for today";
+                    return false;
+                }
+            }
+            else if ((value.Date == DateTime.Now.Date) && 
+                (DateTime.Parse("January 22, 2020 15:30").TimeOfDay - value.TimeOfDay).TotalMinutes > 0)
+            {
                 return false;
             }
 

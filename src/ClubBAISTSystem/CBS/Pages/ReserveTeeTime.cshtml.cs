@@ -131,9 +131,9 @@ namespace CBS.Pages
                 var filteredTeeTimes = requestDirector.FilterDailyTeeSheet((DateTime)TempData.Peek(nameof(Date)), 
                     TempData.Peek<IEnumerable<TeeTime>>("ReservedTeeTimes"));
 
-                if(filteredTeeTimes.Where(t => t.Datetime == (DateTime)TempData.Peek(nameof(Date))).FirstOrDefault() is null)
+                if(filteredTeeTimes.Where(t => !t.Reservable) is null)
                 {
-                    ErrorMessages.Add($"Cannot reserve tee time from member {golfers.FirstOrDefault()} due to membership level conflict.");
+                    ErrorMessages.Add($"Cannot reserve tee time for member {golfers.FirstOrDefault()} due to membership level conflict.");
                     Confirmation = false;
                     TempData.Put(nameof(ErrorMessages), ErrorMessages);
                     return Redirect(Request.Headers["Referer"].ToString());
@@ -216,7 +216,7 @@ namespace CBS.Pages
                 }
             }
             else if ((value.Date == DateTime.Now.Date) && 
-                (DateTime.Parse("January 22, 2020 15:30").TimeOfDay - value.TimeOfDay).TotalMinutes > 0)
+                (DateTime.Now.TimeOfDay - value.TimeOfDay).TotalMinutes > 0)
             {
                 return false;
             }

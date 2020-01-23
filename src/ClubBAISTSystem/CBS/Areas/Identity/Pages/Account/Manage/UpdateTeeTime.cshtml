@@ -15,7 +15,11 @@
         <p>@(TempData.Peek<TeeTime>("TeeTimeToUpdate").Datetime.ToString("dddd MMMM dd, yyyy"))</p>
         @if (User.IsInRole("ProShop"))
         {
-            <input class="form-control" name="CheckedIn" value="@(TempData.Peek<TeeTime>("TeeTimeToUpdate").CheckedIn)" />
+            <div class="form-group d-flex">
+                <label>Checked In</label>
+                <input class="form-control-sm ml-1" name="checkedIn" type="checkbox" value="@(TempData.Peek<TeeTime>("TeeTimeToUpdate").CheckedIn)" />
+            </div>
+
         }
         <button type="submit" class="btn btn-outline-warning">Update Tee Time</button>
     </div>

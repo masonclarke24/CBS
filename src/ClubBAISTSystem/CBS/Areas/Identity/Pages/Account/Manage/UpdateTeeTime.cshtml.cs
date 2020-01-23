@@ -31,12 +31,11 @@ namespace CBS.Areas.Identity.Pages.Account.Manage
 
         public IActionResult OnGet()
         {
-            //TODO Fix getallteetimes
             if(Request.Query.TryGetValue("teeTimeTime", out Microsoft.Extensions.Primitives.StringValues teeTimeTime))
             {
                 if(long.TryParse(teeTimeTime.ToString(), out long teeTimeTicks))
                 {
-                    TeeTimeToUpdate = TempData.Peek<IEnumerable<TeeTime>>("reservedTeeTimes")
+                    TeeTimeToUpdate = TempData.Peek<IEnumerable<TeeTime>>("reservedTeeTimes")?
                         .Where(t => t.Datetime.Ticks == teeTimeTicks).FirstOrDefault();
                 }
                 if (TeeTimeToUpdate is null)
@@ -51,7 +50,7 @@ namespace CBS.Areas.Identity.Pages.Account.Manage
             }
         }
 
-        public IActionResult OnPost(string[] golfers)
+        public IActionResult OnPost(string[] golfers, bool checkedIn)
         {
             if (!ModelState.IsValid) return Page();
             Domain.CBS requestDirector = new Domain.CBS(userManager.FindByNameAsync(User.Identity.Name).GetAwaiter().GetResult().Id, Startup.ConnectionString);

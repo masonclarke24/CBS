@@ -105,10 +105,10 @@ namespace CBS
                 endpoints.MapControllerRoute("default", "{controller=Home}/{action=Index}/{id?}");
             });
 
-            //var golfProfessional = new ApplicationUser() { Email = "golfProfessional@cbg.ca", UserName = "golfProfessional@cbg.ca" };
-            //var newUser = userManager.CreateAsync(golfProfessional, "Baist123$").GetAwaiter().GetResult();
-            roleManager.CreateAsync(new IdentityRole("Golfer")).GetAwaiter().GetResult();
-            //userManager.AddToRoleAsync(golfProfessional, "Shareholder").GetAwaiter().GetResult();
+            var clerk = new ApplicationUser() { Email = "clerk@cbg.ca", UserName = "clerk@cbg.ca" };
+            var newUser = userManager.CreateAsync(clerk, "Baist123$").GetAwaiter().GetResult();
+            roleManager.CreateAsync(new IdentityRole("Clerk")).GetAwaiter().GetResult();
+            userManager.AddToRoleAsync(clerk, "Clerk").GetAwaiter().GetResult();
             //result.Wait();
 
             //shareholder = userManager.FindByEmailAsync("shareholder1@test.com").GetAwaiter().GetResult();

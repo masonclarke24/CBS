@@ -1,6 +1,7 @@
 USE [CBS]
 GO
 
+exec GetPermittedTeeTimes @memberNumber=N'9d13c967-8c80-460b-bb13-22d8666b3de7',@dayOfWeek=5
 --SELECT * FROM AspNetUsers
 SELECT * FROM AspNetUserRoles WHERE UserId = '9d13c967-8c80-460b-bb13-22d8666b3de7'
 --INSERT INTO AspNetUserRoles(RoleId, UserId) VALUES('71418078-54a3-48d3-bc30-2a4010cb3d56', '9d13c967-8c80-460b-bb13-22d8666b3de7'), ('71418078-54a3-48d3-bc30-2a4010cb3d56', '52f66411-7e4e-4773-916c-354da9a05ee7')

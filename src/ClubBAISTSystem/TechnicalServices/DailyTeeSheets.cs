@@ -129,7 +129,7 @@ namespace TechnicalServices
             return confirmation;
         }
 
-        public bool UpdateTeeTime(DateTime teeTimeTime, string newPhone, int newNumberOfCarts, List<string> newGolfers, out string message)
+        public bool UpdateTeeTime(DateTime teeTimeTime, string newPhone, int? newNumberOfCarts, List<string> newGolfers, out string message)
         {
             bool confirmation = false;
             message = "";
@@ -182,11 +182,13 @@ namespace TechnicalServices
                     reserveTeeTime.Parameters.AddWithValue("@time", requestedTeeTime.Datetime);
                     reserveTeeTime.Parameters.AddWithValue("@numberOfCarts", requestedTeeTime.NumberOfCarts);
                     reserveTeeTime.Parameters.AddWithValue("@phone", requestedTeeTime.Phone);
+                    reserveTeeTime.Parameters.AddWithValue("@reservedBy", requestedTeeTime.ReservedBy);
                     var golfers = new DataTable("@golfers");
                     golfers.Columns.Add("UserId");
-                    foreach (var item in requestedTeeTime.Golfers.ToArray())
+
+                    foreach (var (Name, UserId) in requestedTeeTime.Golfers.ToArray())
                     {
-                        golfers.Rows.Add(item.UserId);
+                        golfers.Rows.Add(UserId);
                     }
                     
                     reserveTeeTime.Parameters.AddWithValue("@golfers", golfers);

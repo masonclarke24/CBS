@@ -65,7 +65,7 @@ namespace Domain
             return teeSheetManager.CancelTeeTime(teeTimeTime);
         }
 
-        public bool UpdateTeeTime(DateTime teeTimeTime, string newPhone, int newNumberOfCarts, List<string> newGolfers, out string message)
+        public bool UpdateTeeTime(DateTime teeTimeTime, string newPhone, int? newNumberOfCarts, List<string> newGolfers, out string message)
         {
             DailyTeeSheets teeSheetManager = new DailyTeeSheets(MemberNumber, connectionString);
             return teeSheetManager.UpdateTeeTime(teeTimeTime, newPhone, newNumberOfCarts, newGolfers, out message);

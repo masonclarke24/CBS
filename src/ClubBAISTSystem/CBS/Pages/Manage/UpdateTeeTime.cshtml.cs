@@ -38,7 +38,7 @@ namespace CBS.Areas.Identity.Pages.Account.Manage
                     TeeTimeToUpdate = TempData.Peek<IEnumerable<TeeTime>>("reservedTeeTimes")?
                         .Where(t => t.Datetime.Ticks == teeTimeTicks).FirstOrDefault();
                 }
-                if (TeeTimeToUpdate is null)
+                if ((TeeTimeToUpdate is null) || User.IsInRole("Golfer") && TeeTimeToUpdate.ReservedBy != userManager.GetUserId(User))
                     return NotFound();
 
                 TempData.Put(nameof(TeeTimeToUpdate), TeeTimeToUpdate);

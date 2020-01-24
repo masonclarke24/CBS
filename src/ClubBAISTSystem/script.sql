@@ -1,6 +1,6 @@
 USE CBS
 GO
-
+SELECT * FROM TeeTimes
 
 IF EXISTS(SELECT * FROM SYS.TABLES WHERE [name] LIKE 'GolferMembershipLevels')
 	DROP TABLE GolferMembershipLevels
@@ -79,21 +79,20 @@ GO
 CREATE TABLE TeeTimes
 (
 	[Date] DATE NOT NULL,
-	[Time] TIME CONSTRAINT FK_TeeTimes_Time FOREIGN KEY REFERENCES PermissableTeeTimes([Time]),
+	[Time] TIME CONSTRAINT FK_TeeTimes_Time FOREIGN KEY REFERENCES PermissableTeeTimes([Time]) ON DELETE CASCADE ON UPDATE CASCADE,
 	Phone VARCHAR(14) NOT NULL,
 	NumberOfCarts TINYINT NOT NULL,
 	CheckedIn BIT DEFAULT(0),
-	ReservedBy NVARCHAR(450) CONSTRAINT FK_TeeTimes_ReservedBy REFERENCES AspNetUsers(Id),
+	ReservedBy NVARCHAR(450) CONSTRAINT FK_TeeTimes_ReservedBy REFERENCES AspNetUsers(Id) ON DELETE CASCADE ON UPDATE CASCADE,
 	CONSTRAINT PK_TeeTimes_DateTime PRIMARY KEY ([Date],[Time])
 )
 GO
-
 CREATE TABLE TeeTimeGolfers
 (
 	[Date] DATE NOT NULL,
 	[Time] Time NOT NULL,
 	UserId NVARCHAR(450) NOT NULL CONSTRAINT FK_TeeTimeGolfers_UserId FOREIGN KEY REFERENCES AspNetUsers(Id),
-	CONSTRAINT FK_TeeTimeGolfers_DateTime FOREIGN KEY ([Date],[Time]) REFERENCES TeeTimes([Date],[Time]),
+	CONSTRAINT FK_TeeTimeGolfers_DateTime FOREIGN KEY ([Date],[Time]) REFERENCES TeeTimes([Date],[Time]) ON DELETE CASCADE ON UPDATE CASCADE,
 	CONSTRAINT PK_TeeTimeGolfers_DateTimeMemNumber PRIMARY KEY ([Date],[Time],UserId)
 )
 GO
@@ -204,14 +203,14 @@ GO
 
 
 
-ALTER PROCEDURE [dbo].[ReserveTeeTime]
-@date DATE, @time TIME, @numberOfCarts INT, @phone VARCHAR(14), @golfers AS dbo.GolferList READONLY, @message VARCHAR(1024) OUT
+CREATE PROCEDURE [dbo].[ReserveTeeTime]
+@date DATE, @time TIME, @numberOfCarts INT, @phone VARCHAR(14), @reservedBy VARCHAR(450), @golfers AS dbo.GolferList READONLY, @message VARCHAR(1024) OUT
 AS
 BEGIN
 	DECLARE @returnCode AS INT = 0
 
 	BEGIN TRANSACTION
-	INSERT INTO TeeTimes(Date,Time,NumberOfCarts, Phone, ReservedBy) VALUES(@date,@time,@numberOfCarts, @phone, (SELECT TOP 1 UserId FROM @golfers))
+	INSERT INTO TeeTimes(Date,Time,NumberOfCarts, Phone, ReservedBy) VALUES(@date,@time,@numberOfCarts, @phone, @reservedBy)
 
 	IF @@ERROR <> 0
 	BEGIN
@@ -258,7 +257,7 @@ AS
 		LEFT OUTER JOIN StandingTeeTimeGolfers ON StandingTeeTimeRequests.ID = StandingTeeTimeGolfers.ID
 GO
 
-ALTER PROCEDURE FindReservedTeeTimes(@userID VARCHAR(450))
+CREATE PROCEDURE FindReservedTeeTimes(@userID VARCHAR(450))
 AS
 	DECLARE cursorReservedTeeTimes CURSOR FOR
 	SELECT
@@ -297,13 +296,20 @@ AS
 	CLOSE cursorReservedTeeTimes
 	DEALLOCATE cursorReservedTeeTimes
 GO
-
 CREATE PROCEDURE CancelTeeTime(@date DATE, @time TIME, @userID VARCHAR(450))
 AS
 	BEGIN TRANSACTION
-	
+
+	DELETE TeeTimes WHERE Date = @date AND Time = @time AND ReservedBy = @userID
+
+	IF @@ERROR <> 0
+	BEGIN
+		ROLLBACK TRANSACTION
+		RAISERROR('Unable to cancel tee time',16,1)
+		RETURN 1
+	END
+
 	DELETE TeeTimeGolfers WHERE [Date] = @date AND [Time] = @time AND UserId = @userID
-	DECLARE @rowCount INT = @@ROWCOUNT
 
 	IF @@ERROR <> 0
 	BEGIN
@@ -311,40 +317,19 @@ AS
 		RAISERROR('Unable to remove golfer from tee time',16,1)
 		RETURN 1
 	END
-
-	DECLARE @numGolfers INT = (SELECT COUNT(*) FROM TeeTimeGolfers WHERE [Date] = @date AND [Time] = @time)
-	IF @numGolfers = 0
-	BEGIN
-		DELETE TeeTimes WHERE [Date] = @date AND [Time] = @time
-	END
-	ELSE
-	BEGIN
-		UPDATE TeeTimes SET Phone = (SELECT TOP 1 PhoneNumber FROM AspNetUsers WHERE Id = (SELECT TOP 1 UserId FROM TeeTimeGolfers WHERE [Date] = @date AND [Time] = @time AND UserId <> @userID))
-			WHERE
-				[Date] = @date AND [Time] = @time 
-	END
-
-	IF @@ERROR <> 0
-	BEGIN
-		ROLLBACK TRANSACTION
-		RAISERROR('Unable to cancel from tee time',16,1)
-		RETURN 1
-	END
-
 	COMMIT TRANSACTION
 
-	IF @rowCount <> 0
-		RETURN 0
-	RETURN 1
+	RETURN 0
 GO
 
-CREATE PROCEDURE UpdateTeeTime (@date DATE, @time TIME, @numberOfCarts INT, @phone VARCHAR(14), @newGolfers AS dbo.GolferList READONLY)
+CREATE PROCEDURE UpdateTeeTime (@date DATE, @time TIME, @numberOfCarts INT = NULL, @phone VARCHAR(14) = NULL, @checkedIn BIT = NULL, @newGolfers AS dbo.GolferList READONLY)
 AS
 	BEGIN TRANSACTION
 
 	UPDATE TeeTimes
-		SET NumberOfCarts = @numberOfCarts,
-			Phone = @phone
+		SET NumberOfCarts = COALESCE(@numberOfCarts, NumberOfCarts),
+			Phone = COALESCE(@phone, Phone),
+			CheckedIn = COALESCE(@checkedIn, CheckedIn)
 		WHERE [Date] = @date AND [Time] = @time
 
 	IF @@ERROR <> 0

@@ -56,7 +56,7 @@
 
                 @if (Model.HttpContext.Session.TryGetValue("danger", out message))
                 {
-                    <div class="alert alert-success" role="alert">@(new string((from c in message select (char)c).ToArray()))</div>
+                    <div class="alert alert-danger" role="alert">@(new string((from c in message select (char)c).ToArray()))</div>
 
                     Model.HttpContext.Session.Remove("danger");
                 }

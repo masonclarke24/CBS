@@ -17,7 +17,7 @@ namespace CBS.Pages
     {
         public UserManager<ApplicationUser> UserManager { get; private set; }
         private readonly ApplicationDbContext dbContext;
- 
+
 
         public ReserveTeeTimeModel(UserManager<ApplicationUser> userManager, ApplicationDbContext dbContext)
         {
@@ -34,7 +34,7 @@ namespace CBS.Pages
         public DateTime Date { get; set; }
         [BindProperty, Phone, Required]
         public string Phone { get; set; }
-        [BindProperty, Range(1,99),Required, Display(Name = "Number of Carts")]
+        [BindProperty, Range(1, 99), Required, Display(Name = "Number of Carts")]
         public int NumberOfCarts { get; set; }
         public List<int> MemberErrorIds { get; set; } = new List<int>();
 
@@ -43,12 +43,13 @@ namespace CBS.Pages
             Confirmation = false;
             if (Request.Query.TryGetValue("teeTime", out Microsoft.Extensions.Primitives.StringValues teeTime))
             {
-                if (DateTime.TryParse(System.Web.HttpUtility.UrlDecode(teeTime.ToString()), out DateTime result))
+                if (long.TryParse(System.Web.HttpUtility.UrlDecode(teeTime.ToString()), out long result))
                 {
-                    if(!TempData.Peek<IEnumerable<DateTime>>("PermissableTimes").Contains(result))
+                    DateTime selectedTime = new DateTime(result);
+                    if (!TempData.Peek<IEnumerable<DateTime>>("PermissableTimes").Contains(selectedTime))
                         return Redirect("/ReserveTeeTime");
-                    Date = result;
-                    TempData["Date"] = result;
+                    Date = selectedTime;
+                    TempData["Date"] = selectedTime;
                 }
                 else
                     return Redirect("/ReserveTeeTime");
@@ -60,7 +61,7 @@ namespace CBS.Pages
         {
             Confirmation = false;
             TempData["Date"] = Date;
-            return Redirect("/ReserveTeeTime?teeTime=" + System.Web.HttpUtility.UrlEncode($"{Date.ToShortDateString()} {teeTime}"));
+            return Redirect("/ReserveTeeTime?teeTime=" + teeTime);
         }
 
         public IActionResult OnPostView()
@@ -73,10 +74,10 @@ namespace CBS.Pages
                     TempData.Put(nameof(ErrorMessages), ErrorMessages);
                     return Redirect(Request.Headers["Referer"].ToString());
                 }
-                
+
             }
             Confirmation = false;
-            
+
             Domain.CBS requestDirector = null;
             if (!User.IsInRole("Golfer"))
                 requestDirector = new Domain.CBS(Startup.ConnectionString);
@@ -92,14 +93,21 @@ namespace CBS.Pages
             {
                 TempData.Put("AllTeeTimes", DailyTeeSheet.TeeTimes);
             }
-            TempData.Put("PermissableTimes", from time in DailyTeeSheet.TeeTimes where (time.Golfers is null || time.Golfers.Count == 4) && 
-                time.Reservable select time.Datetime);
 
+            IEnumerable<TeeTime> reservedTeeTimes = null;
             if (User.IsInRole("Golfer"))
-                TempData.Put("reservedTeeTimes", requestDirector.FindReservedTeeTimes().Where(t =>  (t.Datetime.Date - DateTime.Today).TotalDays > 0));
+                reservedTeeTimes = requestDirector.FindReservedTeeTimes().Where(t => (t.Datetime.Date - DateTime.Today).TotalDays > 0);
             else
-                TempData.Put("reservedTeeTimes", from teeTime in DailyTeeSheet.TeeTimes where !(teeTime.Golfers is null) 
-                                                 && (teeTime.Datetime.Date - DateTime.Today).TotalDays > 0 select teeTime);
+                reservedTeeTimes = from teeTime in DailyTeeSheet.TeeTimes
+                                   where !(teeTime.Golfers is null)
+          && (teeTime.Datetime.Date - DateTime.Today).TotalDays > 0
+                                   select teeTime;
+
+            TempData.Put(nameof(reservedTeeTimes), reservedTeeTimes);
+
+            TempData.Put("PermissableTimes", (from teeTime in DailyTeeSheet.TeeTimes
+                where (teeTime.Golfers is null || teeTime.Golfers.Count != 4) && teeTime.Reservable && IsValidDate(teeTime.Datetime)
+                    select teeTime.Datetime).Except(from time in reservedTeeTimes select time.Datetime));
             return Page();
         }
 
@@ -128,10 +136,10 @@ namespace CBS.Pages
                 userId = GetUserId(golfers.FirstOrDefault());
 
                 requestDirector = new Domain.CBS(userId, Startup.ConnectionString);
-                var filteredTeeTimes = requestDirector.FilterDailyTeeSheet((DateTime)TempData.Peek(nameof(Date)), 
+                var filteredTeeTimes = requestDirector.FilterDailyTeeSheet((DateTime)TempData.Peek(nameof(Date)),
                     TempData.Peek<IEnumerable<TeeTime>>("ReservedTeeTimes"));
 
-                if(filteredTeeTimes.Where(t => !t.Reservable) is null)
+                if (filteredTeeTimes.Where(t => !t.Reservable) is null)
                 {
                     ErrorMessages.Add($"Cannot reserve tee time for member {golfers.FirstOrDefault()} due to membership level conflict.");
                     Confirmation = false;
@@ -144,10 +152,19 @@ namespace CBS.Pages
 
             dynamic validMembers = dbContext.Users.Where(u => golfers.Contains(u.MemberNumber));
 
-            validMembers = from member in (IQueryable<ApplicationUser>)validMembers where member.Id == userId select new { member.MemberName, member.Id };
+            validMembers = from member in (IQueryable<ApplicationUser>)validMembers select new { member.MemberName, member.Id };
 
-            if (!requestDirector.ReserveTeeTime(new TeeTime() { Golfers = GenerateGolfers(validMembers).Append((userId, UserManager.FindByIdAsync(userId).GetAwaiter().GetResult().MemberName)), 
-                Datetime = (DateTime)TempData.Peek(nameof(Date)), NumberOfCarts = NumberOfCarts, Phone = Phone }, out string error))
+            var golfersToAdd = GenerateGolfers(validMembers);
+            golfersToAdd.Add((UserManager.FindByIdAsync(userId).GetAwaiter().GetResult().MemberName, userId));
+
+            if (!requestDirector.ReserveTeeTime(new TeeTime()
+            {
+                Golfers = golfersToAdd,
+                Datetime = (DateTime)TempData.Peek(nameof(Date)),
+                NumberOfCarts = NumberOfCarts,
+                Phone = Phone,
+                ReservedBy = userId
+            }, out string error))
             {
                 error = error.Contains("PRIMARY KEY") ? "Cannot insert duplicate member" : error;
                 ErrorMessages.Add(error);
@@ -163,11 +180,34 @@ namespace CBS.Pages
             return Page();
         }
 
+        public IActionResult OnPostJoin(string teeTime)
+        {
+            string message = null;
+            if (long.TryParse(teeTime, out long timeTicks))
+            {
+                DateTime time = new DateTime(timeTicks);
+
+                if (TempData.Peek<IEnumerable<DateTime>>("PermissableTimes").Contains(time))
+                {
+                    if (new Domain.CBS(Startup.ConnectionString)
+                        .UpdateTeeTime(time,
+                        null, null, new List<string> { UserManager.GetUserId(User) }, out message))
+                    {
+                        HttpContext.Session.SetString("success", "Tee time joined successfully");
+                        return Page();
+                    }
+                }
+            }
+
+            HttpContext.Session.SetString("danger", "Tee time could not be joined. " + message);
+            return Page();
+        }
+
         private List<(string Name, string UserId)> GenerateGolfers(dynamic validMembers)
         {
             List<(string Name, string UserId)> result = new List<(string Name, string UserId)>();
 
-            foreach(var item in validMembers)
+            foreach (var item in validMembers)
             {
                 result.Add((item.MemberName, item.Id));
             }
@@ -199,24 +239,20 @@ namespace CBS.Pages
             return UserManager.Users.Where(u => u.MemberNumber == memberNumber).FirstOrDefault().Id;
         }
 
-        private bool IsValidDate(DateTime value, out string errorMessage)
+        private bool IsValidDate(DateTime value)
         {
-            errorMessage = "";
             if (value.Ticks == 0)
             {
-                errorMessage = "Supplied date is invalid";
                 return false;
             }
 
             if ((DateTime.Now.AddDays(7) - value).TotalDays <= 0)
             {
-                errorMessage = $"Selected day must not be beyond {DateTime.Today.AddDays(7).ToLongDateString()}";
                 return false;
             }
 
             if ((DateTime.Today - value).TotalDays > 0)
             {
-                errorMessage = "Selected day cannot be in the past";
                 return false;
             }
 
@@ -224,11 +260,10 @@ namespace CBS.Pages
             {
                 if (value.Date == DateTime.Now.Date)
                 {
-                    errorMessage = "Cannot reserve tee time for today";
                     return false;
                 }
             }
-            else if ((value.Date == DateTime.Now.Date) && 
+            else if ((value.Date == DateTime.Now.Date) &&
                 (DateTime.Now.TimeOfDay - value.TimeOfDay).TotalMinutes > 0)
             {
                 return false;

@@ -14,7 +14,7 @@ namespace CBS.Areas.Identity.Pages.Account.Manage
     [Authorize]
     public class MyTeeTimesModel : PageModel
     {
-        private UserManager<ApplicationUser> userManager;
+        public readonly UserManager<ApplicationUser> userManager;
         public List<TechnicalServices.TeeTime> reservedTeeTimes;
 
         public MyTeeTimesModel(UserManager<ApplicationUser> userManager)
@@ -33,8 +33,8 @@ namespace CBS.Areas.Identity.Pages.Account.Manage
 
         public IActionResult OnPostCancel(string teeTime)
         {
-            string memberNumber = userManager.FindByNameAsync(User.Identity.Name).GetAwaiter().GetResult().Id;
-            Domain.CBS requestDirector = new Domain.CBS(memberNumber, Startup.ConnectionString);
+            string userId = userManager.GetUserId(User);
+            Domain.CBS requestDirector = new Domain.CBS(userId, Startup.ConnectionString);
 
             bool confirmation = requestDirector.CancelTeeTime(new DateTime(long.Parse(teeTime)));
 

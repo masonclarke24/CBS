@@ -12,7 +12,7 @@
     @Html.AntiForgeryToken()
     <div class="form-group">
         <strong>Date:</strong>
-        <p>@(TempData.Peek<TeeTime>("TeeTimeToUpdate").Datetime.ToString("dddd MMMM dd, yyyy"))</p>
+        <p>@(TempData.Peek<TeeTime>("TeeTimeToUpdate").Datetime.ToString("dddd MMMM dd, yyyy : HH:mm"))</p>
         @if (User.IsInRole("ProShop"))
         {
             <div class="form-group d-flex">

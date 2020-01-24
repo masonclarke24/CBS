@@ -107,23 +107,22 @@ namespace CBS
 
             //var clerk = new ApplicationUser() { Email = "clerk@cbg.ca", UserName = "clerk@cbg.ca" };
             //var newUser = userManager.CreateAsync(clerk, "Baist123$").GetAwaiter().GetResult();
-            roleManager.CreateAsync(new IdentityRole("Golfer")).GetAwaiter().GetResult();
-            userManager.AddToRoleAsync(userManager.Users.Where(u => u.MemberName == "SecondMember").FirstOrDefault(), "Golfer").GetAwaiter().GetResult();
-            //result.Wait();
+            //roleManager.CreateAsync(new IdentityRole("Clerk")).GetAwaiter().GetResult();
+            //userManager.AddToRoleAsync(clerk, "Clerk").GetAwaiter().GetResult();
 
-            //shareholder = userManager.FindByEmailAsync("shareholder1@test.com").GetAwaiter().GetResult();
-            //userManager.AddToRoleAsync(shareholder, "Shareholder").GetAwaiter().GetResult();
-            //shareholder.PhoneNumber = "(555) 555-5555";
-            //userManager.UpdateAsync(shareholder).GetAwaiter().GetResult();
-            //if (user.Result is null)
-            //{
-            //    var shareholder = new ApplicationUser() { Email = "shareholder@test.com", MemberNumber = "1", UserName = "shareholder@test.com", MemberName = "Nathan Smith" };
-            //    userManager.CreateAsync(shareholder, "Baist123$").GetAwaiter().GetResult();
+            var golfProfessional = new ApplicationUser() { Email = "golfProfessional@cbg.ca", UserName = "golfProfessional@cbg.ca" };
+            userManager.CreateAsync(golfProfessional, "Baist123$").GetAwaiter().GetResult();
 
+            userManager.RemoveFromRoleAsync(golfProfessional,"ProShop").GetAwaiter().GetResult();
+            //roleManager.CreateAsync(new IdentityRole("ProShop")).GetAwaiter().GetResult();
+            //userManager.AddToRoleAsync(golfProfessional, "ProShop").GetAwaiter().GetResult();
 
-            //}
+            
 
-
+            //var golfer = new ApplicationUser() { Email = "golfer@test.com", UserName = "golfer@test.com" , PhoneNumber = "(587) 116-8011", MemberName = "Silver Member", MemberNumber = "2", MembershipLevel = "Silver"};
+            //userManager.CreateAsync(golfer, "Baist123$").GetAwaiter().GetResult();
+            //roleManager.CreateAsync(new IdentityRole("Golfer")).GetAwaiter().GetResult();
+            //userManager.AddToRoleAsync(golfer, "Golfer").GetAwaiter().GetResult();
 
         }
     }

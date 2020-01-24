@@ -1,0 +1,98 @@
+﻿@page
+@model CBS.Areas.Identity.Pages.Account.Manage.MyTeeTimesModel
+
+@using CBS
+
+    <form class="form" method="post" action="/">
+        @Html.AntiForgeryToken()
+
+
+        @if (!User.IsInRole("Golfer"))
+        {
+            <label for="memberNumber">Member Number:</label>
+            <input class="form-control" name="memberNumber" />
+            <input type="submit" class="btn-outline-info" asp-page-handler="ProvideMemberNumber" value="View Tee Times For Member"/>
+        }
+
+        <div class="form-group">
+            @if (TempData.Peek<IEnumerable<TechnicalServices.TeeTime>>("reservedTeeTimes")?.Any() ?? false)
+            {
+                <table class="table table-hover" style="table-layout: fixed;">
+                    <thead>
+                        <tr>
+                            <th>
+                                Date / Time
+                            </th>
+                            <th>
+                                Phone
+                            </th>
+                            <th>
+                                Number of Carts
+                            </th>
+                            <th>
+                                Checked In
+                            </th>
+                            <th>
+                                Action
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var teeTime in TempData.Peek<IEnumerable<TechnicalServices.TeeTime>>("reservedTeeTimes"))
+                        {
+                            <tr onclick="rowClicked(this)" class="d-sm-table-row">
+                                <td>
+                                    @(teeTime.Datetime.ToString("dddd MMMM dd, yyyy HH:mm"))
+                                </td>
+                                <td>
+                                    @(teeTime.Phone)
+                                </td>
+                                <td>
+                                    @teeTime.NumberOfCarts
+                                </td>
+                                <td>
+                                    @teeTime.CheckedIn
+                                </td>
+                                <td class="form-group">
+                                    @if (!User.IsInRole("Golfer") || teeTime.ReservedBy == Model.userManager.GetUserId(User))
+                                    {
+                                        <a class="btn btn-outline-warning" href="/Manage/UpdateTeeTime?teeTimeTime=@teeTime.Datetime.Ticks">Update</a>
+                                    }
+                                    <button type="submit" class="btn btn-outline-danger" value="@teeTime.Datetime.Ticks" name="teeTime" asp-page-handler="Cancel">Cancel</button>
+                                </td>
+                            </tr>
+
+                            <tr style="display: none">
+                                <td colspan="3">
+                                    <table class="table table-sm">
+                                        <thead>
+                                            <tr>
+                                                <td class="font-weight-bold">
+                                                    Member Name
+                                                </td>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var member in teeTime.Golfers)
+                                            {
+                                                <tr>
+                                                    <td>
+                                                        @member.Name
+                                                    </td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </td>
+                            </tr>
+                        }
+
+                    </tbody>
+                </table>
+            }
+            else
+            {
+                <h3>@(User.IsInRole("Golfer") ? "You have no tee times" : "No tee times for the selected member"). <a class="btn btn-outline-info" asp-page="/ReserveTeeTime">Reserve Now</a></h3>
+            }
+        </div>
+    </form>

@@ -89,10 +89,10 @@ namespace CBS.Pages
             {
                 DailyTeeSheet.TeeTimes = requestDirector.FilterDailyTeeSheet(Date, DailyTeeSheet.TeeTimes).ToList();
             }
-            else
-            {
-                TempData.Put("AllTeeTimes", DailyTeeSheet.TeeTimes);
-            }
+            //else
+            //{
+            //    TempData.Put("AllTeeTimes", DailyTeeSheet.TeeTimes);
+            //}
 
             IEnumerable<TeeTime> reservedTeeTimes = null;
             if (User.IsInRole("Golfer"))
@@ -155,7 +155,8 @@ namespace CBS.Pages
             validMembers = from member in (IQueryable<ApplicationUser>)validMembers select new { member.MemberName, member.Id };
 
             var golfersToAdd = GenerateGolfers(validMembers);
-            golfersToAdd.Add((UserManager.FindByIdAsync(userId).GetAwaiter().GetResult().MemberName, userId));
+            if(User.IsInRole("Golfer"))
+                golfersToAdd.Add((UserManager.FindByIdAsync(userId).GetAwaiter().GetResult().MemberName, userId));
 
             if (!requestDirector.ReserveTeeTime(new TeeTime()
             {

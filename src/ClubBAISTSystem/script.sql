@@ -1,6 +1,6 @@
 USE CBS
+
 GO
-SELECT * FROM TeeTimes
 
 IF EXISTS(SELECT * FROM SYS.TABLES WHERE [name] LIKE 'GolferMembershipLevels')
 	DROP TABLE GolferMembershipLevels

@@ -12,7 +12,7 @@ using Microsoft.AspNetCore.Http;
 
 namespace CBS.Pages
 {
-    [Authorize]
+    [Authorize(Roles = "Golfer, ProShop, Clerk")]
     public class ReserveTeeTimeModel : PageModel
     {
         public UserManager<ApplicationUser> UserManager { get; private set; }
@@ -89,10 +89,8 @@ namespace CBS.Pages
             {
                 DailyTeeSheet.TeeTimes = requestDirector.FilterDailyTeeSheet(Date, DailyTeeSheet.TeeTimes).ToList();
             }
-            //else
-            //{
-            //    TempData.Put("AllTeeTimes", DailyTeeSheet.TeeTimes);
-            //}
+                HttpContext.Session.Put("AllTeeTimes", DailyTeeSheet.TeeTimes);
+            
 
             IEnumerable<TeeTime> reservedTeeTimes = null;
             if (User.IsInRole("Golfer"))
@@ -100,7 +98,7 @@ namespace CBS.Pages
             else
                 reservedTeeTimes = from teeTime in DailyTeeSheet.TeeTimes
                                    where !(teeTime.Golfers is null)
-          && (teeTime.Datetime.Date - DateTime.Today).TotalDays > 0
+          && (teeTime.Datetime - DateTime.Now).TotalDays > 0
                                    select teeTime;
 
             TempData.Put(nameof(reservedTeeTimes), reservedTeeTimes);
@@ -135,11 +133,18 @@ namespace CBS.Pages
             {
                 userId = GetUserId(golfers.FirstOrDefault());
 
+                if(userId is null)
+                {
+                    ErrorMessages.Add($"Supplied member Number {golfers.FirstOrDefault()} does not exist");
+                    Confirmation = false;
+                    TempData.Put(nameof(ErrorMessages), ErrorMessages);
+                    return Redirect(Request.Headers["Referer"].ToString());
+                }
                 requestDirector = new Domain.CBS(userId, Startup.ConnectionString);
                 var filteredTeeTimes = requestDirector.FilterDailyTeeSheet((DateTime)TempData.Peek(nameof(Date)),
-                    TempData.Peek<IEnumerable<TeeTime>>("ReservedTeeTimes"));
+                    HttpContext.Session.Get<IEnumerable<TeeTime>>("AllTeeTimes"));
 
-                if (filteredTeeTimes.Where(t => !t.Reservable) is null)
+                if (!filteredTeeTimes.FirstOrDefault(t => t.Datetime == (DateTime)TempData.Peek(nameof(Date)))?.Reservable ?? false)
                 {
                     ErrorMessages.Add($"Cannot reserve tee time for member {golfers.FirstOrDefault()} due to membership level conflict.");
                     Confirmation = false;
@@ -150,17 +155,30 @@ namespace CBS.Pages
 
             requestDirector = new Domain.CBS(userId, Startup.ConnectionString);
 
-            dynamic validMembers = dbContext.Users.Where(u => golfers.Contains(u.MemberNumber));
+            //Gather the names, UserId's and member number together. Need to see of the userId was not found, indicating an invalid entry
+            var golfersToAdd = from suppliedMember in golfers
+                               join user in UserManager.Users on suppliedMember equals user.MemberNumber into foundMembers
+                               from subMember in foundMembers.DefaultIfEmpty() where subMember?.Id != userId
+                               select (subMember?.MemberName, UserId: subMember?.Id, SuppliedNumber: suppliedMember);
 
-            validMembers = from member in (IQueryable<ApplicationUser>)validMembers select new { member.MemberName, member.Id };
+            //Check for invalid members
+            if(golfersToAdd.Any(g => g.UserId is null))
+            {
+                ErrorMessages.Add("One or more supplied members do not exist");
+                Confirmation = false;
+                TempData.Put(nameof(ErrorMessages), ErrorMessages);
+                return Redirect(Request.Headers["Referer"].ToString());
+            }
 
-            var golfersToAdd = GenerateGolfers(validMembers);
-            if(User.IsInRole("Golfer"))
-                golfersToAdd.Add((UserManager.FindByIdAsync(userId).GetAwaiter().GetResult().MemberName, userId));
+            //Ensure that signed in user is added to this tee time
+            
+            var teeTimeOwner = UserManager.FindByIdAsync(userId).GetAwaiter().GetResult();
+            golfersToAdd = golfersToAdd.Append((teeTimeOwner.MemberName, teeTimeOwner.Id, teeTimeOwner.MemberNumber));
+            
 
             if (!requestDirector.ReserveTeeTime(new TeeTime()
             {
-                Golfers = golfersToAdd,
+                Golfers = (from golfer in golfersToAdd select (golfer.MemberName, golfer.UserId ?? golfer.SuppliedNumber)).ToList(),
                 Datetime = (DateTime)TempData.Peek(nameof(Date)),
                 NumberOfCarts = NumberOfCarts,
                 Phone = Phone,
@@ -216,14 +234,23 @@ namespace CBS.Pages
             return result;
         }
 
-        public IActionResult OnPostCancel(string teeTime)
+        public IActionResult OnPostCancel(string teeTime, string userId)
         {
-            Domain.CBS requestDirector = new Domain.CBS(GetUserId(), Startup.ConnectionString);
+            var allTeeTimes = HttpContext.Session.Get<IEnumerable<TeeTime>>("AllTeeTimes");
+            bool confirmation = false;
 
-            bool confirmation = requestDirector.CancelTeeTime(new DateTime(long.Parse(teeTime)));
+            if (long.TryParse(teeTime, out long teeTimeTicks))
+            {
+                TeeTime teeTimeToCancel = allTeeTimes?.FirstOrDefault(t => t.Datetime.Ticks == teeTimeTicks);
+                Domain.CBS requestDirector = new Domain.CBS(userId, Startup.ConnectionString);
 
-            if (confirmation)
-                HttpContext.Session.SetString("success", "Tee time cancelled successfully");
+                if((User.IsInRole("Golfer") && teeTimeToCancel.Golfers.Exists(q => q.UserId == UserManager.GetUserId(User))) 
+                    ||teeTimeToCancel.Golfers.Exists(q => q.UserId == userId))
+                    confirmation = requestDirector.CancelTeeTime(new DateTime(teeTimeTicks));
+
+                if (confirmation)
+                    HttpContext.Session.SetString("success", $"{(teeTimeToCancel.ReservedBy == userId ? "Tee Time cancelled" : "Golfer removed ")} successfully");
+            }
             else
                 HttpContext.Session.SetString("danger", "Tee time could not be canceled");
             return Page();
@@ -237,7 +264,7 @@ namespace CBS.Pages
 
         private string GetUserId(string memberNumber)
         {
-            return UserManager.Users.Where(u => u.MemberNumber == memberNumber).FirstOrDefault().Id;
+            return UserManager.Users.Where(u => u.MemberNumber == memberNumber).FirstOrDefault()?.Id;
         }
 
         private bool IsValidDate(DateTime value)

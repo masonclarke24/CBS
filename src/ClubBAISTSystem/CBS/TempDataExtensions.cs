@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc.ViewFeatures;
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -27,6 +28,16 @@ namespace CBS
             if (tempData.ContainsKey(key))
                 o = tempData.Peek(key);
             return o == null ? null : JsonConvert.DeserializeObject<T>((string)o);
+        }
+
+        public static void Put<T>(this ISession session, string key, T value)
+        {
+            session.SetString(key, JsonConvert.SerializeObject(value));
+        }
+
+        public static T Get<T>(this ISession session, string key)
+        {
+            return JsonConvert.DeserializeObject<T>(session.GetString(key));
         }
     }
 

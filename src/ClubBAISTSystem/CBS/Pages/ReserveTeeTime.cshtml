@@ -43,124 +43,7 @@
             TempData.Remove("ErrorMessages");
         }
     </div>
-    <div class="form-group">
-        @if (Request.Method == "POST" && !(Model.DailyTeeSheet is null))
-        {
-            <div style="height: 50vh; overflow: auto">
-                <table class="table table-hover" style="table-layout: fixed;">
-                    <thead>
-                        <tr>
-                            <th>
-                                Time
-                            </th>
-                            <th>
-                                Avaliability
-                            </th>
 
-                            @if (!User.IsInRole("Golfer"))
-                            {
-                                <th>
-                                    Phone
-                                </th>
-                                <th>
-                                    Number of Carts
-                                </th>
-                                <th>
-                                    Checked In
-                                </th>
-                            }
-                            @if (((DateTime.Now - Model.Date).TotalDays < 0 || User.IsInRole("ProShop") && (int)(DateTime.Now - Model.Date).TotalDays <= 0)
-                             && (DateTime.Now.AddDays(7) - Model.Date).TotalDays >= 0)
-                            {
-                                <th>
-                                    Action
-                                </th>
-                            }
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var teeTime in Model.DailyTeeSheet.TeeTimes)
-                        {
-                            <tr style="background-color: @(!teeTime.Reservable ? "#CCC" : "")" onclick="rowClicked(this)" class="d-sm-table-row">
-
-                                <td>
-                                    @teeTime.Datetime.ToShortTimeString()
-                                </td>
-                                <td class="text-@(teeTime.Golfers is null ? "success" : "warning")">@(teeTime.Golfers is null ? "Avaliable" : "Reserved")</td>
-
-                                @if (!User.IsInRole("Golfer"))
-                                {
-                                    <td>
-                                        @(teeTime.Golfers is null ? "-" : teeTime.Phone)
-                                    </td>
-                                    <td>
-                                        @(teeTime.Golfers is null ? "-" : teeTime.NumberOfCarts.ToString())
-                                    </td>
-                                    <td>
-                                        @(teeTime.Golfers is null ? "-" : teeTime.CheckedIn.ToString())
-                                    </td>
-                                }
-
-                                @if (TempData.Peek<IEnumerable<TechnicalServices.TeeTime>>("reservedTeeTimes")
-                              .Where(t => t.Datetime == teeTime.Datetime).FirstOrDefault() != null)
-                                {
-                                    <td class="form-group">
-                                        @if (!User.IsInRole("Golfer") || teeTime.ReservedBy == Model.UserManager.GetUserId(User))
-                                        {
-                                            <a class="btn btn-outline-warning" href="/Manage/UpdateTeeTime?teeTimeTime=@teeTime.Datetime.Ticks">Update</a>
-                                        }
-                                        <button type="submit" class="btn btn-outline-danger" asp-page-handler="Cancel" name="teeTime" value="@teeTime.Datetime.Ticks">Cancel</button>
-                                    </td>
-                                }
-                                @if (TempData.Peek<IEnumerable<DateTime>>("PermissableTimes").Contains(teeTime.Datetime))
-                                {
-                                    <td>
-                                        @if (teeTime.Golfers?.Any() ?? false)
-                                        {
-                                            <button type="submit" class="btn btn-outline-info" asp-page-handler="Join" name="teeTime" value="@teeTime.Datetime.Ticks">Join Tee Time</button>
-                                        }
-                                        else
-                                        {
-                                            <button type="submit" class="btn btn-outline-primary" asp-page-handler="Select" name="teeTime" value="@teeTime.Datetime.Ticks">Select Tee Time</button>
-                                        }
-
-                                    </td>
-
-                                }
-                            </tr>
-                            @if (teeTime.Golfers?.Any() ?? false)
-                            {
-                                <tr style="display: none">
-                                    <td colspan="3">
-                                        <table class="table table-sm">
-                                            <thead>
-                                                <tr>
-                                                    <td class="font-weight-bold">
-                                                        Member Name
-                                                    </td>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                @foreach (var member in teeTime.Golfers)
-                                                {
-                                                    <tr>
-                                                        <td>
-                                                            @member.Name
-                                                        </td>
-                                                    </tr>
-                                                }
-                                            </tbody>
-                                        </table>
-                                    </td>
-                                </tr>
-                            }
-
-                        }
-                    </tbody>
-                </table>
-            </div>
-        }
-    </div>
     @if (Model.Request.Query.ContainsKey("teeTime"))
     {
         <div id="teeTimeDetails">
@@ -189,6 +72,152 @@
         </div>
     }
 </form>
+<div class="form-group">
+    @if (Request.Method == "POST" && !(Model.DailyTeeSheet is null))
+    {
+        <div style="height: 50vh; overflow: auto">
+            <table class="table table-hover" style="table-layout: fixed;">
+                <thead>
+                    <tr>
+                        <th>
+                            Time
+                        </th>
+                        <th>
+                            Avaliability
+                        </th>
+
+                        @if (!User.IsInRole("Golfer"))
+                        {
+                            <th>
+                                Phone
+                            </th>
+                            <th>
+                                Number of Carts
+                            </th>
+                            <th>
+                                Checked In
+                            </th>
+                        }
+                        @if (((DateTime.Now - Model.Date).TotalDays < 0 || User.IsInRole("ProShop") && (int)(DateTime.Now - Model.Date).TotalDays <= 0)
+                      && (DateTime.Now.AddDays(7) - Model.Date).TotalDays >= 0)
+                        {
+                            <th>
+                                Action
+                            </th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var teeTime in Model.DailyTeeSheet.TeeTimes)
+                    {
+                        <tr onclick="rowClicked(this)" class="d-sm-table-row">
+
+                            <td>
+                                @teeTime.Datetime.ToShortTimeString()
+                            </td>
+                            <td class="text-@(teeTime.Golfers is null ? "success" : "warning")">@(teeTime.Golfers is null ? "Avaliable" : "Reserved")</td>
+
+                            @if (!User.IsInRole("Golfer"))
+                            {
+                                <td>
+                                    @(teeTime.Golfers is null ? "-" : teeTime.Phone)
+                                </td>
+                                <td>
+                                    @(teeTime.Golfers is null ? "-" : teeTime.NumberOfCarts.ToString())
+                                </td>
+                                <td>
+                                    @(teeTime.Golfers is null ? "-" : teeTime.CheckedIn.ToString())
+                                </td>
+                            }
+
+                            @if (TempData.Peek<IEnumerable<TechnicalServices.TeeTime>>("reservedTeeTimes")
+                       .Where(t => t.Datetime == teeTime.Datetime).FirstOrDefault() != null)
+                            {
+                                <td>
+                                    <form method="POST">
+                                        <div class="form-group">
+                                            @if (!User.IsInRole("Golfer") || teeTime.ReservedBy == Model.UserManager.GetUserId(User))
+                                            {
+                                                <a class="btn btn-outline-warning" href="/Manage/UpdateTeeTime?teeTimeTime=@teeTime.Datetime.Ticks">Update</a>
+                                            }
+                                            <button type="submit" class="btn btn-outline-danger" asp-page-handler="Cancel">Cancel</button>
+                                            <input type="hidden" name="userId" value="@teeTime.ReservedBy" />
+                                        </div>
+                                    </form>
+                                </td>
+                            }
+                            @if (TempData.Peek<IEnumerable<DateTime>>("PermissableTimes").Contains(teeTime.Datetime))
+                            {
+                                <td>
+                                    <form method="POST">
+                                        <div class="form-group">
+                                            @if (teeTime.Golfers?.Any() ?? false)
+                                            {
+                                                <button type="submit" class="btn btn-outline-info" asp-page-handler="Join">Join Tee Time</button>
+                                            }
+                                            else
+                                            {
+                                                <button type="submit" class="btn btn-outline-primary" asp-page-handler="Select">Select Tee Time</button>
+                                            }
+                                            <input type="hidden" name="teeTime" value="@teeTime.Datetime.Ticks" />
+                                        </div>
+                                    </form>
+                                </td>
+
+                            }
+                        </tr>
+                        @if (teeTime.Golfers?.Any() ?? false)
+                        {
+                            <tr style="display: none">
+                                <td colspan="3">
+                                    <table class="table table-sm">
+                                        <thead>
+                                            <tr>
+                                                <th>
+                                                    Member Name
+                                                </th>
+                                                @if (teeTime.Golfers.Exists(q => q.UserId == Model.UserManager.GetUserId(User)) || !User.IsInRole("Golfer"))
+                                                {
+                                                    <th>
+                                                        Action
+                                                    </th>
+                                                }
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var member in teeTime.Golfers)
+                                            {
+                                                <tr>
+                                                    <td>
+                                                        @member.Name
+                                                    </td>
+
+                                                    @if ((!User.IsInRole("Golfer") || teeTime.ReservedBy == Model.UserManager.GetUserId(User)) && member.UserId != teeTime.ReservedBy)
+                                                    {
+                                                        <td>
+                                                            <form method="POST">
+                                                                <div class="form-group">
+                                                                    <input type="submit" class="btn btn-outline-danger" asp-page-handler="Cancel" value="Remove" />
+                                                                    <input type="hidden" name="teeTime" value="@teeTime.Datetime.Ticks" />
+                                                                    <input type="hidden" name="userId" value="@teeTime.ReservedBy" />
+                                                                </div>
+                                                            </form>
+                                                        </td>
+                                                    }
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </td>
+                            </tr>
+                        }
+
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
 
 
 

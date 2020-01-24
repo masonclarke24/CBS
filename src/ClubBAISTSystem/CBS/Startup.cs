@@ -110,19 +110,18 @@ namespace CBS
             //roleManager.CreateAsync(new IdentityRole("Clerk")).GetAwaiter().GetResult();
             //userManager.AddToRoleAsync(clerk, "Clerk").GetAwaiter().GetResult();
 
-            var golfProfessional = new ApplicationUser() { Email = "golfProfessional@cbg.ca", UserName = "golfProfessional@cbg.ca" };
-            userManager.CreateAsync(golfProfessional, "Baist123$").GetAwaiter().GetResult();
+            //var golfProfessional = new ApplicationUser() { Email = "golfProfessional@cbg.ca", UserName = "golfProfessional@cbg.ca" };
+            //userManager.CreateAsync(golfProfessional, "Baist123$").GetAwaiter().GetResult();
 
-            userManager.RemoveFromRoleAsync(golfProfessional,"ProShop").GetAwaiter().GetResult();
             //roleManager.CreateAsync(new IdentityRole("ProShop")).GetAwaiter().GetResult();
-            //userManager.AddToRoleAsync(golfProfessional, "ProShop").GetAwaiter().GetResult();
+            //userManager.AddToRoleAsync(userManager.FindByIdAsync("ffb114b9-a4ec-4aac-be5a-63e84e9d0719").GetAwaiter().GetResult(), "ProShop").GetAwaiter().GetResult();
 
             
 
-            //var golfer = new ApplicationUser() { Email = "golfer@test.com", UserName = "golfer@test.com" , PhoneNumber = "(587) 116-8011", MemberName = "Silver Member", MemberNumber = "2", MembershipLevel = "Silver"};
-            //userManager.CreateAsync(golfer, "Baist123$").GetAwaiter().GetResult();
+            var golfer = new ApplicationUser() { Email = "golfer3@test.com", UserName = "golfer3@test.com" , PhoneNumber = "(587) 158-9432", MemberName = "Gold Member", MemberNumber = "2", MembershipLevel = "Gold"};
+            userManager.CreateAsync(golfer, "Baist123$").GetAwaiter().GetResult();
             //roleManager.CreateAsync(new IdentityRole("Golfer")).GetAwaiter().GetResult();
-            //userManager.AddToRoleAsync(golfer, "Golfer").GetAwaiter().GetResult();
+            userManager.AddToRoleAsync(golfer, "Golfer").GetAwaiter().GetResult();
 
         }
     }

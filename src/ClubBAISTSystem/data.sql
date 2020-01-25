@@ -1,7 +1,7 @@
 USE [CBS]
 GO
 
-DELETE TeeTimes WHERE Date = '2020-01-26' AND Time = '07:07'
+exec FindReservedTeeTimes @userID=N'edce9747-1766-4f90-8f39-62e1aa339bcb'
 --SELECT * FROM TeeTimes INNER JOIN AspNetUsers ON TeeTimes.ReservedBy = AspNetUsers.Id
 --INSERT INTO AspNetUserRoles(RoleId, UserId) VALUES('71418078-54a3-48d3-bc30-2a4010cb3d56', '9d13c967-8c80-460b-bb13-22d8666b3de7'), ('71418078-54a3-48d3-bc30-2a4010cb3d56', '52f66411-7e4e-4773-916c-354da9a05ee7')
 INSERT [dbo].[MembershipLevels] ([MembershipLevel]) VALUES (N'Bronze')

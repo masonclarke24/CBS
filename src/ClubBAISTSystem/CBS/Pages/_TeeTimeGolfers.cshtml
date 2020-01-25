@@ -1,0 +1,44 @@
+﻿@model (TechnicalServices.TeeTime TeeTime, UserManager<ApplicationUser> UserManager)
+    <tr style="display: none">
+        <td colspan="3">
+            <table class="table table-sm">
+                <thead>
+                    <tr>
+                        <th>
+                            Member Name
+                        </th>
+                        @if (Model.TeeTime.Golfers.Count != 1 || Model.UserManager.GetUserId(User) == Model.TeeTime.ReservedBy || !User.IsInRole("Golfer"))
+                        {
+                            <th>
+                                Action
+                            </th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var member in Model.TeeTime.Golfers)
+                    {
+                        <tr>
+                            <td>
+                                @member.Name
+                            </td>
+
+                            @if ((!User.IsInRole("Golfer") && member.UserId != Model.TeeTime.ReservedBy || 
+                                Model.UserManager.GetUserId(User) == Model.TeeTime.ReservedBy && Model.UserManager.GetUserId(User) != member.UserId))
+                            {
+                                <td>
+                                    <form method="POST">
+                                        <div class="form-group">
+                                            <input type="submit" class="btn btn-outline-danger" asp-page-handler="Cancel" value="Remove" />
+                                            <input type="hidden" name="teeTime" value="@Model.TeeTime.Datetime.Ticks" />
+                                            <input type="hidden" name="userId" value="@member.UserId" />
+                                        </div>
+                                    </form>
+                                </td>
+                            }
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </td>
+    </tr>

@@ -37,7 +37,10 @@ namespace CBS
 
         public static T Get<T>(this ISession session, string key)
         {
-            return JsonConvert.DeserializeObject<T>(session.GetString(key));
+            string o = session.GetString(key);
+            if (string.IsNullOrEmpty(o))
+                return default;
+            return JsonConvert.DeserializeObject<T>(o);
         }
     }
 

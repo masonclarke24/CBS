@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Authorization;
+using CBS.Pages;
 
 namespace CBS.Areas.Identity.Pages.Account.Manage
 {
@@ -26,22 +27,15 @@ namespace CBS.Areas.Identity.Pages.Account.Manage
         {
             if (User.IsInRole("Golfer"))
             {
-                string userId = userManager.FindByNameAsync(User.Identity.Name).GetAwaiter().GetResult().Id;
-                GetReservedTeeTimes(userId);
+                GetReservedTeeTimes(userManager.GetUserId(User));
             }
         }
 
-        public IActionResult OnPostCancel(string teeTime)
+        public IActionResult OnPostCancel(string teeTime, string userId)
         {
-            string userId = userManager.GetUserId(User);
-            Domain.CBS requestDirector = new Domain.CBS(userId, Startup.ConnectionString);
-
-            bool confirmation = requestDirector.CancelTeeTime(new DateTime(long.Parse(teeTime)));
-
-            if (confirmation)
-                HttpContext.Session.SetString("success", "Tee time cancelled successfully");
-            else
-                HttpContext.Session.SetString("danger", "Tee time could not be canceled");
+            new Helpers().CancelTeeTimeHandler(teeTime, userId, HttpContext.Session, nameof(reservedTeeTimes), 
+                userManager, User);
+            GetReservedTeeTimes(userId);
             return Redirect(Request.Headers["referer"]);
 
         }
@@ -56,7 +50,7 @@ namespace CBS.Areas.Identity.Pages.Account.Manage
             Domain.CBS requestDirector = new Domain.CBS(userId,
                                     Startup.ConnectionString);
             reservedTeeTimes = requestDirector.FindReservedTeeTimes();
-            TempData.Put(nameof(reservedTeeTimes), reservedTeeTimes);
+            HttpContext.Session.Put(nameof(reservedTeeTimes), reservedTeeTimes);
         }
     }
 }

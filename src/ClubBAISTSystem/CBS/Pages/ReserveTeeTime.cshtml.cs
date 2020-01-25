@@ -236,25 +236,8 @@ namespace CBS.Pages
 
         public IActionResult OnPostCancel(string teeTime, string userId)
         {
-            var allTeeTimes = HttpContext.Session.Get<IEnumerable<TeeTime>>("AllTeeTimes");
-            bool confirmation = false;
-
-            if (long.TryParse(teeTime, out long teeTimeTicks))
-            {
-                TeeTime teeTimeToCancel = allTeeTimes?.FirstOrDefault(t => t.Datetime.Ticks == teeTimeTicks);
-                Domain.CBS requestDirector = new Domain.CBS(userId, Startup.ConnectionString);
-
-                if((User.IsInRole("Golfer") && teeTimeToCancel.Golfers.Exists(q => q.UserId == UserManager.GetUserId(User))) 
-                    ||teeTimeToCancel.Golfers.Exists(q => q.UserId == userId))
-                    confirmation = requestDirector.CancelTeeTime(new DateTime(teeTimeTicks));
-
-                if (confirmation)
-                    HttpContext.Session.SetString("success", $"{(teeTimeToCancel.ReservedBy == userId ? "Tee Time cancelled" : "Golfer removed ")} successfully");
-            }
-            else
-                HttpContext.Session.SetString("danger", "Tee time could not be canceled");
+            new Helpers().CancelTeeTimeHandler(teeTime, userId, HttpContext.Session, "AllTeeTimes", UserManager, User);
             return Page();
-
         }
 
         private string GetUserId()

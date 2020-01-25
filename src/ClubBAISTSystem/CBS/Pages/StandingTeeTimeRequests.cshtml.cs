@@ -54,6 +54,11 @@ namespace CBS.Pages
         }
         public IActionResult OnPostSelect(string selectedTime)
         {
+
+            Domain.CBS requestDirector = new Domain.CBS(Startup.ConnectionString);
+            if (requestDirector.FindStandingTeeTimeRequest(userManager.GetUserId(User)) != null)
+                return Redirect("/MaxStandingTeeTimeRequest");
+
             Confirmation = false;
             TempData["selectedTime"] = selectedTime;
             return Redirect($"/StandingTeeTimeRequests?selectedTime={System.Web.HttpUtility.UrlEncode(selectedTime)}");
@@ -88,47 +93,12 @@ namespace CBS.Pages
 
         }
 
-        public IActionResult OnPostChangeDate()
-        {
-            byte[] buffer = new byte[1000];
-            Request.Body.ReadAsync(buffer).GetAwaiter().GetResult();
-
-            string requestBody = new string(buffer.TakeWhile(b => b != '\0').Select(b => (char)b).ToArray());
-
-            System.Text.StringBuilder selectBox = new System.Text.StringBuilder();
-
-            selectBox.Append("<select name='EndDate' class='text-danger'><option value=''>Please enter a valid date</option>");
-            if (DateTime.TryParse(requestBody, out DateTime startDate))
-            {
-                selectBox.Clear();
-
-                if((DateTime.Today.AddDays(8) - startDate).Days > 0)
-                {
-                    selectBox.Append($"<select name='EndDate' class='text-danger' onchange='dateChanged()'><option value=''>Start Date must be beyond {DateTime.Today.AddDays(7).ToLongDateString()}</option>");
-                }
-                else
-                {
-                    TempData[nameof(StartDate)] = startDate;
-                    DateTime endDate = startDate.AddDays(7);
-
-                    selectBox.Append("<select name='EndDate'><option>Select End Date</option>");
-
-                    for (int i = 0; i < 52; i++)
-                    {
-                        selectBox.Append($"<option value='{endDate}'>{endDate.ToLongDateString()}</option>");
-                        endDate = endDate.AddDays(7);
-                    }
-
-                    selectBox.Append("</select>"); 
-                }
-            }
-            return new JsonResult(selectBox.ToString());
-
-        }
-
         public IActionResult OnPostSubmit()
         {
-            
+            Domain.CBS requestDirector = new Domain.CBS(Startup.ConnectionString);
+            if (requestDirector.FindStandingTeeTimeRequest(userManager.GetUserId(User)) != null)
+                return Redirect("/MaxStandingTeeTimeRequest");
+
             ErrorMessages.Clear();
             bool isError = false;
             var errors = from error in ModelState
@@ -142,7 +112,7 @@ namespace CBS.Pages
             }
 
             var signedInMember = userManager.FindByNameAsync(User.Identity.Name).GetAwaiter().GetResult();
-            Domain.CBS requestDirector = new Domain.CBS(signedInMember.Id, Startup.ConnectionString);
+            requestDirector = new Domain.CBS(signedInMember.Id, Startup.ConnectionString);
 
             StartDate = (DateTime)TempData.Peek(nameof(StartDate));
             EndDate = (DateTime)TempData.Peek(nameof(EndDate));

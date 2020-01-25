@@ -52,28 +52,28 @@ function selectAvaliableTime() {
     }
 }
 
-function startDateEntered(date, callback, callbackArgs) {
-    $.ajax({
-        type: "POST",
-        url: "/StandingTeeTimeRequests?handler=ChangeDate",
-        contentType: "text/plain",
-        beforeSend: function (xhr) {
-            xhr.setRequestHeader("RequestVerificationToken",
-                $('input:hidden[name="__RequestVerificationToken"]').val());
-        },
-        data: date,
-        success: function (response) {
-            $("select[name='EndDate']").replaceWith(response);
-            $("select[name='EndDate']").parents("form").attr("action", "/StandingTeeTimeRequests?handler=View")
-            $("select[name='EndDate']").on("change", dateChanged);
-            if (typeof callback != 'undefined')
-                callback(callbackArgs);
-        },
-        failure: function (response) {
-            console.log(response);
-        }
-    });
-}
+//function startDateEntered(date, callback, callbackArgs) {
+//    $.ajax({
+//        type: "POST",
+//        url: "/StandingTeeTimeRequests?handler=ChangeDate",
+//        contentType: "text/plain",
+//        beforeSend: function (xhr) {
+//            xhr.setRequestHeader("RequestVerificationToken",
+//                $('input:hidden[name="__RequestVerificationToken"]').val());
+//        },
+//        data: date,
+//        success: function (response) {
+//            $("select[name='EndDate']").replaceWith(response);
+//            $("select[name='EndDate']").parents("form").attr("action", "/StandingTeeTimeRequests?handler=View")
+//            $("select[name='EndDate']").on("change", dateChanged);
+//            if (typeof callback != 'undefined')
+//                callback(callbackArgs);
+//        },
+//        failure: function (response) {
+//            console.log(response);
+//        }
+//    });
+//}
 function selectEndDate(endDate) {
     $("option[value='" + endDate.toString() + "']").attr("selected", true);
 }

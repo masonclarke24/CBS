@@ -368,15 +368,6 @@ GO
 
 CREATE PROCEDURE FindSTTR(@userID NVARCHAR(450))
 AS
-	DECLARE @standingTeeTimeId AS INT
-
-	SELECT
-		@standingTeeTimeId = ID
-	FROM
-		StandingTeeTimeGolfers
-	WHERE
-		UserId = @userID
-
 	SELECT
 		LEFT(CONVERT(NVARCHAR,RequestedTime,24),5) [Requested Time],
 		StandingTeeTimeRequests.StartDate [Start Date],
@@ -387,7 +378,7 @@ AS
 	FROM
 		StandingTeeTimeRequests INNER JOIN StandingTeeTimeGolfers ON StandingTeeTimeRequests.ID = StandingTeeTimeGolfers.ID
 	WHERE
-		StandingTeeTimeRequests.ID = @standingTeeTimeId
+		StandingTeeTimeRequests.SubmittedBy = @userId
 GO
 
 CREATE PROCEDURE CancelSTTR(@startDate DATE, @endDate Date, @requestedTime TIME)

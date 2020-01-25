@@ -51,6 +51,29 @@
                     </td>
                 }
             </tr>
+            <tr>
+                <td colspan="4">
+                    <table class="table table-sm table-hover">
+                        <thead>
+                            <tr>
+                                <th>
+                                    Member Name
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var member in Model.FoundStandingTeeTime.Members)
+                            {
+                                <tr>
+                                    <td>
+                                        @member
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </td>
+            </tr>
         </tbody>
     </table>
 }

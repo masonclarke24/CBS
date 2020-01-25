@@ -2,10 +2,9 @@ USE CBS
 
 GO
 
-exec FindDailyTeeSheet @date='2020-01-25 00:00:00'
-declare @p6 dbo.GolferList
+SELECT * FROM StandingTeeTimeGolfers
 
-exec UpdateTeeTime @date=N'25-Jan-20',@time=N'12:45:00',@phone=default,@numberOfCarts=default,@checkedIn=1,@newGolfers=@p6
+exec FindSTTR @userId=N'c109a5b2-d52c-46a5-95dd-afb34c17b39f'
 
 IF EXISTS(SELECT * FROM SYS.TABLES WHERE [name] LIKE 'GolferMembershipLevels')
 	DROP TABLE GolferMembershipLevels
@@ -71,6 +70,14 @@ IF EXISTS(SELECT * FROM SYSOBJECTS WHERE [name] LIKE 'UpdateTeeTime')
 	DROP PROCEDURE UpdateTeeTime
 GO
 
+IF EXISTS(SELECT * FROM SYSOBJECTS WHERE [name] LIKE 'FindSTTR')
+	DROP PROCEDURE FindSTTR
+GO
+
+IF EXISTS(SELECT * FROM SYSOBJECTS WHERE [name] LIKE 'CancelSTTR')
+	DROP PROCEDURE CancelSTTR
+GO
+
 IF EXISTS(SELECT * FROM SYS.TYPES WHERE [name] LIKE 'GolferList')
 	DROP TYPE GolferList
 GO
@@ -109,6 +116,7 @@ CREATE TABLE StandingTeeTimeRequests
 	EndDate DATE,
 	RequestedTime TIME CONSTRAINT FK_STTR_RequestedTime FOREIGN KEY REFERENCES PermissableTeeTimes([Time]),
 	[DayOfWeek] AS DATENAME(DW, StartDate),
+	SubmittedBy NVARCHAR(450) FOREIGN KEY REFERENCES AspNetUsers(Id) ON DELETE CASCADE ON UPDATE CASCADE,
 	CONSTRAINT CHK_STTR_StartDate CHECK (DATEPART(DW, StartDate) = DATEPART(DW, EndDate)),
 	CONSTRAINT CHK_STTR_EndDate CHECK (DATEDIFF(DAY, StartDate, EndDate) > 0)
 )
@@ -116,12 +124,11 @@ GO
 
 CREATE TABLE StandingTeeTimeGolfers
 (
-	ID INT CONSTRAINT FK_STTGolfers_ID FOREIGN KEY REFERENCES StandingTeeTimeRequests(ID),
+	ID INT CONSTRAINT FK_STTGolfers_ID FOREIGN KEY REFERENCES StandingTeeTimeRequests(ID) ON DELETE CASCADE ON UPDATE CASCADE,
 	UserId NVARCHAR(450) CONSTRAINT FK_STTGolfers_UserId FOREIGN KEY REFERENCES AspNetUsers(Id),
 	PRIMARY KEY (ID,UserId)
 )
 GO
-
 
 CREATE TABLE MembershipLevels
 (
@@ -171,13 +178,13 @@ AS
 GO
 
 
-CREATE PROCEDURE [dbo].[RequestStandingTeeTime](@startDate DATE, @endDate DATE, @requestedTime TIME, @message VARCHAR(512) out, @userIds AS GolferList READONLY)
+CREATE PROCEDURE [dbo].[RequestStandingTeeTime](@startDate DATE, @endDate DATE, @requestedTime TIME, @submittedBy VARCHAR(450), @message VARCHAR(512) out, @userIds AS GolferList READONLY)
 AS
 BEGIN
 	BEGIN TRANSACTION
 
-	INSERT INTO StandingTeeTimeRequests(StartDate,EndDate,RequestedTime)
-	VALUES(@startDate, @endDate,@requestedTime)
+	INSERT INTO StandingTeeTimeRequests(StartDate,EndDate,RequestedTime, SubmittedBy)
+	VALUES(@startDate, @endDate,@requestedTime, @submittedBy)
 
 	IF @@ERROR <> 0
 	BEGIN
@@ -205,8 +212,6 @@ BEGIN
 	RETURN 0
 	END
 GO
-
-
 
 CREATE PROCEDURE [dbo].[ReserveTeeTime]
 @date DATE, @time TIME, @numberOfCarts INT, @phone VARCHAR(14), @reservedBy VARCHAR(450), @golfers AS dbo.GolferList READONLY, @message VARCHAR(1024) OUT
@@ -361,8 +366,43 @@ AS
 	RETURN 0
 GO
 
---DECLARE @newGolfers AS GolferList
+CREATE PROCEDURE FindSTTR(@userID NVARCHAR(450))
+AS
+	DECLARE @standingTeeTimeId AS INT
 
---INSERT INTO @newGolfers VALUES('52f66411-7e4e-4773-916c-354da9a05ee7')
+	SELECT
+		@standingTeeTimeId = ID
+	FROM
+		StandingTeeTimeGolfers
+	WHERE
+		UserId = @userID
 
---EXEC UpdateTeeTime 'January 23, 2020', '07:00', 2, '(123) 456-7890', @newGolfers
+	SELECT
+		LEFT(CONVERT(NVARCHAR,RequestedTime,24),5) [Requested Time],
+		StandingTeeTimeRequests.StartDate [Start Date],
+		StandingTeeTimeRequests.EndDate [End Date],
+		[DayOfWeek] [Day of Week],
+		SubmittedBy [Submitted By],
+		(SELECT TOP 1 MemberName FROM AspNetUsers WHERE StandingTeeTimeGolfers.UserId = AspNetUsers.Id) [Member Name]
+	FROM
+		StandingTeeTimeRequests INNER JOIN StandingTeeTimeGolfers ON StandingTeeTimeRequests.ID = StandingTeeTimeGolfers.ID
+	WHERE
+		StandingTeeTimeRequests.ID = @standingTeeTimeId
+GO
+
+CREATE PROCEDURE CancelSTTR(@startDate DATE, @endDate Date, @requestedTime TIME)
+AS
+	BEGIN TRANSACTION
+
+	DELETE StandingTeeTimeRequests WHERE StartDate = @startDate AND EndDate = @endDate AND RequestedTime = @requestedTime
+
+	IF @@ERROR <> 0
+	BEGIN
+		ROLLBACK TRANSACTION
+		RAISERROR('Unable to cancel standing tee time request',16,1)
+		RETURN 1
+	END
+
+	COMMIT TRANSACTION
+	RETURN 0
+GO

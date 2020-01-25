@@ -70,5 +70,17 @@ namespace Domain
             DailyTeeSheets teeSheetManager = new DailyTeeSheets(MemberNumber, connectionString);
             return teeSheetManager.UpdateTeeTime(teeTimeTime, newPhone, newNumberOfCarts, newGolfers, checkedIn, out message);
         }
+
+        public StandingTeeTime FindStandingTeeTimeRequest(string userId)
+        {
+            StandingTeeTimeRequests standingTeeTimeManager = new StandingTeeTimeRequests(connectionString);
+            return standingTeeTimeManager.FindStandingTeeTimeRequest(userId);
+        }
+
+        public bool CancelStandingTeeTime(DateTime startDate, DateTime endDate, DateTime requestedTime)
+        {
+            StandingTeeTimeRequests standingTeeTimeManager = new StandingTeeTimeRequests(connectionString);
+            return standingTeeTimeManager.CancelStandingTeeTime(startDate, endDate, requestedTime);
+        }
     }
 }

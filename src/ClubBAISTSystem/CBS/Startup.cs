@@ -118,11 +118,11 @@ namespace CBS
 
             
 
-            var golfer = new ApplicationUser() { Email = "golfer3@test.com", UserName = "golfer3@test.com" , PhoneNumber = "(587) 158-9432", MemberName = "Gold Member", MemberNumber = "2", MembershipLevel = "Gold"};
+            var golfer = new ApplicationUser() { Email = "golfer4@test.com", UserName = "golfer4@test.com", PhoneNumber = "(780) 456 9335", MemberName = "Copper Member", MemberNumber = "4", MembershipLevel = "Bronze"};
             userManager.CreateAsync(golfer, "Baist123$").GetAwaiter().GetResult();
-            //roleManager.CreateAsync(new IdentityRole("Golfer")).GetAwaiter().GetResult();
+            //roleManager.CreateAsync(new IdentityRole("Shareholder")).GetAwaiter().GetResult();
             userManager.AddToRoleAsync(golfer, "Golfer").GetAwaiter().GetResult();
-
+            //userManager.AddToRoleAsync(golfer, "Shareholder").GetAwaiter().GetResult();
         }
     }
 }

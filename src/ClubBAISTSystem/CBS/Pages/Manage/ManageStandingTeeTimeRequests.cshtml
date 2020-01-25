@@ -1,0 +1,61 @@
+﻿@page
+@model CBS.ManageStandingTeeTimeRequestsModel
+@{
+    ViewData["Title"] = "ManageStandingTeeTimeRequests";
+    Layout = "~/Pages/Shared/_Layout.cshtml";
+}
+
+<h1>Manage Standing Tee Time Requests</h1>
+
+@if (HttpContext.Session.Get<TechnicalServices.StandingTeeTime>("FoundStandingTeeTime") != null)
+{
+    <table class="table table-hover" style="table-layout: fixed;">
+        <thead>
+            <tr>
+                <th>
+                    Start Date
+                </th>
+                <th>
+                    End Date
+                </th>
+                <th>
+                    Requested Time
+                </th>
+
+                @if (HttpContext.Session.Get<TechnicalServices.StandingTeeTime>("FoundStandingTeeTime")?.SubmittedBy == Model.userManager.GetUserId(User))
+                {
+                    <th>
+                        Action
+                    </th>
+                }
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>
+                    @(Model.FoundStandingTeeTime.StartDate.ToString("dddd MMMM dd"))
+                </td>
+                <td>
+                    @(Model.FoundStandingTeeTime.EndDate.ToString("dddd MMMM dd"))
+                </td>
+                <td>
+                    @(Model.FoundStandingTeeTime.RequestedTime.TimeOfDay.ToString())
+                </td>
+
+                @if (Model.FoundStandingTeeTime.SubmittedBy == Model.userManager.GetUserId(User))
+                {
+                    <td>
+                        <form method="POST" class="form">
+                            <button type="submit" asp-page-handler="Cancel" class="form-control btn btn-outline-danger">Cancel</button>
+                        </form>
+                    </td>
+                }
+            </tr>
+        </tbody>
+    </table>
+}
+else
+{
+        <h3>You have no standing tee times <a class="btn btn-outline-info" asp-page="/StandingTeeTimeRequests">Reserve Now</a></h3>
+}
+

@@ -7,8 +7,6 @@
 @if (!User.IsInRole("Golfer"))
 {
     <form class="form" method="POST">
-
-
         <label for="memberNumber">Member Number:</label>
         <input class="form-control" name="memberNumber" />
         <input type="submit" class="btn-outline-info" asp-page-handler="ProvideMemberNumber" value="View Tee Times For Member" />

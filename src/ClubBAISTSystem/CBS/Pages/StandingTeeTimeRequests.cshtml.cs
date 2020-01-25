@@ -151,7 +151,8 @@ namespace CBS.Pages
 
             for (int i = 0; i < SuppliedMemberNumbers.Length; i++)
                 SuppliedMemberNumbers[i] = SuppliedMemberNumbers[i].Trim();
-            var userIds = from user in dbContext.Users where SuppliedMemberNumbers.Contains(user.MemberNumber) select user.Id;
+            var userIds = (from user in dbContext.Users where SuppliedMemberNumbers.Contains(user.MemberNumber) select user.Id).ToList();
+
             if (userIds.Count() != SuppliedMemberNumbers.Count())
             {
                 ErrorMessages.Add("One or more supplied member numbers do not exist");
@@ -170,7 +171,9 @@ namespace CBS.Pages
                 isError = true;
             }
 
-            requestedStandingTeeTime.Members = userIds.ToList();
+            string currentUser = userManager.GetUserId(User);
+            requestedStandingTeeTime.Members = userIds.Append(currentUser).ToList();
+            requestedStandingTeeTime.SubmittedBy = userManager.GetUserId(User);
 
             if(isError)
             {

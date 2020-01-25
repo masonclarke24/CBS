@@ -8,23 +8,24 @@ namespace TechnicalServices
     {
         public DateTime RequestedTime { get; set; }
 
-        private DateTime? startDate;
+        private DateTime startDate;
 
-        public DateTime? StartDate
+        public DateTime StartDate
         {
-            get { return startDate?.Date; }
-            set { startDate = value?.Date; }
+            get { return startDate.Date; }
+            set { startDate = value.Date; }
         }
-        private DateTime? endDate;
+        private DateTime endDate;
 
-        public DateTime? EndDate
+        public DateTime EndDate
         {
-            get { return endDate?.Date; }
-            set { endDate = value?.Date; }
+            get { return endDate.Date; }
+            set { endDate = value.Date; }
         }
         public List<string> Members { get; set; }
 
-        public DayOfWeek? DayOfWeek { get { return startDate?.DayOfWeek; } }
+        public DayOfWeek DayOfWeek { get { return startDate.DayOfWeek; } }
 
+        public string SubmittedBy { get; set; }
     }
 }

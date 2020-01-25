@@ -17,7 +17,10 @@ namespace CBS.Areas.Identity.Pages.Account.Manage
     {
         public readonly UserManager<ApplicationUser> userManager;
         public List<TechnicalServices.TeeTime> reservedTeeTimes;
-
+        [TempData]
+        public string MemberName { get; set; }
+        [TempData]
+        public string MemberNumber { get; set; }
         public MyTeeTimesModel(UserManager<ApplicationUser> userManager)
         {
             this.userManager = userManager;
@@ -27,7 +30,13 @@ namespace CBS.Areas.Identity.Pages.Account.Manage
         {
             if (User.IsInRole("Golfer"))
             {
-                GetReservedTeeTimes(userManager.GetUserId(User));
+                var selectedMember = userManager.GetUserAsync(User).GetAwaiter().GetResult();
+                MemberName = selectedMember.MemberName;
+                GetReservedTeeTimes(selectedMember.Id);
+            }
+            else
+            {
+                GetReservedTeeTimes(userManager.Users.Where(u => u.MemberNumber == MemberNumber).FirstOrDefault()?.Id);
             }
         }
 
@@ -40,14 +49,21 @@ namespace CBS.Areas.Identity.Pages.Account.Manage
 
         }
 
+        public void OnPostCheckIn(string teeTime, string userId)
+        {
+            new Helpers().CheckInHelper(teeTime, userId, HttpContext.Session);
+        }
         public void OnPostProvideMemberNumber(string memberNumber)
         {
-            GetReservedTeeTimes(userManager.Users.Where(u => u.MemberNumber == memberNumber).FirstOrDefault().Id);
+            var selectedMember = userManager.Users.Where(u => u.MemberNumber == memberNumber).FirstOrDefault();
+            MemberName = selectedMember?.MemberName;
+            MemberNumber = memberNumber;
+            GetReservedTeeTimes(selectedMember?.Id);
         }
 
         private void GetReservedTeeTimes(string userId)
         {
-            Domain.CBS requestDirector = new Domain.CBS(userId,
+            Domain.CBS requestDirector = new Domain.CBS(userId ?? "",
                                     Startup.ConnectionString);
             reservedTeeTimes = requestDirector.FindReservedTeeTimes();
             HttpContext.Session.Put(nameof(reservedTeeTimes), reservedTeeTimes);

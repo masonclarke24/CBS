@@ -101,7 +101,7 @@ namespace CBS.Pages
           && (teeTime.Datetime - DateTime.Now).TotalDays > 0
                                    select teeTime;
 
-            TempData.Put(nameof(reservedTeeTimes), reservedTeeTimes);
+            HttpContext.Session.Put(nameof(reservedTeeTimes), reservedTeeTimes);
 
             TempData.Put("PermissableTimes", (from teeTime in DailyTeeSheet.TeeTimes
                 where (teeTime.Golfers is null || teeTime.Golfers.Count != 4) && teeTime.Reservable && IsValidDate(teeTime.Datetime)
@@ -210,7 +210,7 @@ namespace CBS.Pages
                 {
                     if (new Domain.CBS(Startup.ConnectionString)
                         .UpdateTeeTime(time,
-                        null, null, new List<string> { UserManager.GetUserId(User) }, out message))
+                        null, null, new List<string> { UserManager.GetUserId(User) }, null, out message))
                     {
                         HttpContext.Session.SetString("success", "Tee time joined successfully");
                         return Page();
@@ -239,6 +239,12 @@ namespace CBS.Pages
             new Helpers().CancelTeeTimeHandler(teeTime, userId, HttpContext.Session, "AllTeeTimes", UserManager, User);
             return Page();
         }
+
+        public void OnPostCheckIn(string teeTime, string userId)
+        {
+            new Helpers().CheckInHelper(teeTime, userId, HttpContext.Session);
+        }
+
 
         private string GetUserId()
         {

@@ -1,0 +1,27 @@
+﻿@model (bool, string)
+
+<div class="dropdown">
+    <a class="btn btn-outline-warning" style="width:inherit" href="@Model.Item2">Update</a>
+    @if (Model.Item1)
+    {
+        <div class="dropdown-content">
+            <button type="submit" class="btn btn-outline-warning" style="width:-webkit-fill-avaliable; width: -moz-avaliable;" asp-page-handler="CheckIn">Check In</button>
+        </div>
+    }
+</div>
+
+<style>
+
+    .dropdown-content {
+        display: none;
+        position: absolute;
+        box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+    }
+
+    .dropdown-content button {
+  color: black;
+  white-space:nowrap;
+}
+
+    .dropdown:hover .dropdown-content {display: block; width:-webkit-fill-avaliable; width: -moz-avaliable;}
+</style>

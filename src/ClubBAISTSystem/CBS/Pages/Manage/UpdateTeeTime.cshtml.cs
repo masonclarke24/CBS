@@ -4,6 +4,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
 using CBS.Data;
+using CBS.Pages;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
@@ -35,7 +36,7 @@ namespace CBS.Areas.Identity.Pages.Account.Manage
             {
                 if(long.TryParse(teeTimeTime.ToString(), out long teeTimeTicks))
                 {
-                    TeeTimeToUpdate = TempData.Peek<IEnumerable<TeeTime>>("reservedTeeTimes")?
+                    TeeTimeToUpdate = HttpContext.Session.Get<IEnumerable<TeeTime>>("reservedTeeTimes")?
                         .Where(t => t.Datetime.Ticks == teeTimeTicks).FirstOrDefault();
                 }
                 if ((TeeTimeToUpdate is null) || User.IsInRole("Golfer") && TeeTimeToUpdate.ReservedBy != userManager.GetUserId(User))
@@ -53,27 +54,33 @@ namespace CBS.Areas.Identity.Pages.Account.Manage
         public IActionResult OnPost(string[] golfers, bool checkedIn)
         {
             if (!ModelState.IsValid) return Page();
-            Domain.CBS requestDirector = new Domain.CBS(Startup.ConnectionString);
+            bool confirmation;
+            string message;
 
-            TeeTimeToUpdate = TempData.Peek<TeeTime>(nameof(TeeTimeToUpdate));
+            //Gather the names, UserId's and member number together. Need to see of the userId was not found, indicating an invalid entry
+            var golfersToAdd = from suppliedMember in golfers
+                               join user in userManager.Users on suppliedMember equals user.MemberNumber into foundMembers
+                               from subMember in foundMembers.DefaultIfEmpty()
+                               select (subMember?.MemberName, UserId: subMember?.Id, SuppliedNumber: suppliedMember);
+            if(golfersToAdd.Any(g => string.IsNullOrEmpty(g.UserId)))
+            {
+                TempData.Put("errorMessage", "One or more supplied members do not exist");
+                return Page();
+            }
+            new Helpers().UpdateTeeTimeHelper((from golfer in golfersToAdd select golfer.UserId).ToArray(), checkedIn, TempData.Peek<TeeTime>(nameof(TeeTimeToUpdate)), 
+                userManager, Phone, NumberOfCarts, out confirmation, out message);
 
-            List<string> updatedGolfers = golfers.Length > 4 - TeeTimeToUpdate.Golfers.Count ? golfers.ToList()
-                .GetRange(0, 4 - TeeTimeToUpdate.Golfers.Count) : golfers.ToList();
-
-            updatedGolfers = (from user in userManager.Users where updatedGolfers.Contains(user.MemberNumber) select user.Id).ToList();
-
-            if (!requestDirector.UpdateTeeTime(TeeTimeToUpdate.Datetime, Phone, NumberOfCarts, 
-                updatedGolfers, out string message))
+            if (!confirmation)
             {
                 message = message.Contains("PRIMARY KEY") ? "Cannot add duplicate golfer" : message.Contains("FOREIGN KEY") ? "One or more member numbers do not exist" : message;
                 TempData.Put("errorMessage", message);
-
                 return Page();
             }
 
             HttpContext.Session.SetString("success", "Tee time updated successfully");
 
-            return Redirect("./Index");
+            return Redirect("/Manage/MyTeeTimes");
         }
+
     }
 }

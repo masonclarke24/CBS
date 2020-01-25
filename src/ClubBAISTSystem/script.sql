@@ -2,6 +2,11 @@ USE CBS
 
 GO
 
+exec FindDailyTeeSheet @date='2020-01-25 00:00:00'
+declare @p6 dbo.GolferList
+
+exec UpdateTeeTime @date=N'25-Jan-20',@time=N'12:45:00',@phone=default,@numberOfCarts=default,@checkedIn=1,@newGolfers=@p6
+
 IF EXISTS(SELECT * FROM SYS.TABLES WHERE [name] LIKE 'GolferMembershipLevels')
 	DROP TABLE GolferMembershipLevels
 GO
@@ -284,7 +289,8 @@ AS
 		Phone,
 		TeeTimeGolfers.UserId,
 		(SELECT TOP 1 MemberName FROM AspNetUsers WHERE TeeTimeGolfers.UserId = AspNetUsers.Id) [Member Name],
-		ReservedBy
+		ReservedBy,
+		CheckedIn AS [Checked In]
 	FROM
 		TeeTimes INNER JOIN TeeTimeGolfers ON TeeTimes.Date = TeeTimeGolfers.Date AND TeeTimes.Time = TeeTimeGolfers.Time
 	WHERE

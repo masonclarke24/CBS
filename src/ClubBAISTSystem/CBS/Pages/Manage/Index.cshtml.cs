@@ -11,6 +11,7 @@ namespace CBS.Areas.Identity.Pages.Account.Manage
     {
         public void OnGet()
         {
+            TempData.Clear();
         }
     }
 }

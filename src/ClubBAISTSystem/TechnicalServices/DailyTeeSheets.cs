@@ -129,7 +129,7 @@ namespace TechnicalServices
             return confirmation;
         }
 
-        public bool UpdateTeeTime(DateTime teeTimeTime, string newPhone, int? newNumberOfCarts, List<string> newGolfers, out string message)
+        public bool UpdateTeeTime(DateTime teeTimeTime, string newPhone, int? newNumberOfCarts, List<string> newGolfers, bool? checkedIn, out string message)
         {
             bool confirmation = false;
             message = "";
@@ -141,6 +141,7 @@ namespace TechnicalServices
                     updateTeeTime.Parameters.AddWithValue("@time", teeTimeTime.ToLongTimeString());
                     updateTeeTime.Parameters.AddWithValue("phone", newPhone);
                     updateTeeTime.Parameters.AddWithValue("@numberOfCarts", newNumberOfCarts);
+                    updateTeeTime.Parameters.AddWithValue("@checkedIn", checkedIn);
 
                     DataTable golfers = new DataTable("@newGolfers");
                     golfers.Columns.Add("UserId");
@@ -257,7 +258,8 @@ namespace TechnicalServices
                 Phone = reader["Phone"] is DBNull ? default : $"{reader["Phone"]}",
                 Golfers = reader["Member Name"] is DBNull ? default : new List<(string, string)> { { (reader["Member Name"].ToString(), reader["UserId"].ToString()) } },
                 Reservable = true,
-                ReservedBy = reader["ReservedBy"] is DBNull ? null : reader["ReservedBy"].ToString()
+                ReservedBy = reader["ReservedBy"] is DBNull ? null : reader["ReservedBy"].ToString(),
+                CheckedIn = reader["Checked In"] is DBNull ? default : bool.Parse(reader["Checked In"].ToString())
             };
         }
     }

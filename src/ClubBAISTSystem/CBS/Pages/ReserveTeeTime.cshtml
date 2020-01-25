@@ -21,7 +21,7 @@
 <form method="POST">
     <div class="form-group">
         <label>Date</label>
-        <input class="form-control" name="Date" value="@(Model.Date.Ticks == 0 ? "" : Model.Date.ToLongDateString())" placeholder="@DateTime.Today.AddDays(1).ToLongDateString()" />
+        <input class="form-control" name="Date" autocomplete="off" value="@(Model.Date.Ticks == 0 ? "" : Model.Date.ToLongDateString())" placeholder="@DateTime.Today.AddDays(1).ToLongDateString()" />
     </div>
     <div class="form-group">
         <button type="submit" class="btn btn-primary" asp-page-handler="View">View Daily Tee Sheet</button>
@@ -129,15 +129,15 @@
                                 </td>
                             }
 
-                            @if (TempData.Peek<IEnumerable<TechnicalServices.TeeTime>>("reservedTeeTimes")
+                            @if (HttpContext.Session.Get<IEnumerable<TechnicalServices.TeeTime>>("reservedTeeTimes")
                        .Where(t => t.Datetime == teeTime.Datetime).FirstOrDefault() != null)
                             {
                                 <td>
                                     <form method="POST">
-                                        <div class="form-group">
+                                        <div class="form-group d-flex justify-content-between">
                                             @if (!User.IsInRole("Golfer") || teeTime.ReservedBy == Model.UserManager.GetUserId(User))
                                             {
-                                                <a class="btn btn-outline-warning" href="/Manage/UpdateTeeTime?teeTimeTime=@teeTime.Datetime.Ticks">Update</a>
+                                                <partial name="_UpdateBtn" model="@(User.IsInRole("ProShop"),$"/Manage/UpdateTeeTime?teeTimeTime={teeTime.Datetime.Ticks}")" />
                                             }
                                             <button type="submit" class="btn btn-outline-danger" asp-page-handler="Cancel">Cancel</button>
                                             <input type="hidden" name="userId" value="@teeTime.ReservedBy" />

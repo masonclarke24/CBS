@@ -1,0 +1,138 @@
+﻿@page
+@model CBS.Pages.StandingTeeTimeRequestsModel
+@using Microsoft.AspNetCore.Http;
+@{
+    ViewData["Title"] = "Standing Tee Time Request";
+    Layout = "~/Pages/Shared/_Layout.cshtml";
+}
+
+@section Scripts{
+    <script>
+        document.addEventListener("onload", startDateEntered("@TempData.Peek(nameof(Model.StartDate))",
+            selectEndDate, "@TempData.Peek(nameof(Model.EndDate))"));
+        document.addEventListener("onload", selectAvaliableTime());
+        window.addEventListener('load', () => {
+            $("input[name='StartDate']").datepicker({ dateFormat: "DD, MM dd, yy", minDate: 8 });
+            $("input[name='EndDate']").datepicker({
+                dateFormat: "DD, MM dd, yy", minDate: 15, beforeShowDay:
+                    (date) =>
+                    {
+                        let startDate = new Date($("input[name='StartDate']").val())
+                        if (isNaN(startDate) || startDate.getDay() != date.getDay())
+                            return [false, ""]
+                        return [true, ""]
+                    }
+            });
+        })
+    </script>
+}
+
+<h1>@ViewData["Title"]</h1>
+
+<h4>
+    @if (Model.ValidTimeSelected)
+    {
+        @($"{((DateTime)TempData.Peek(nameof(Model.StartDate))).DayOfWeek}s at {Request.Query["selectedTime"]}")
+    }
+</h4>
+
+<form method="post">
+    <div class="form-group">
+        <label>Start Date</label>
+        <input class="form-control" name="StartDate"
+               value="@(!TempData.ContainsKey(nameof(Model.StartDate))
+        ? "" : ((DateTime)TempData.Peek(nameof(Model.StartDate))).ToLongDateString())"
+               onkeyup="startDateEntered(this.value)" />
+        <span asp-validation-for="@Model.StartDate" class="text-danger"></span>
+    </div>
+    <div class="form-group">
+        <label>End Date</label>
+        <input class="form-control" name="EndDate" value="@(!TempData.ContainsKey(nameof(Model.EndDate))
+        ? "" : ((DateTime)TempData.Peek(nameof(Model.EndDate))).ToLongDateString())"/>
+    </div>
+    <div class="form-group">
+        <button type="submit" class="btn btn-primary" asp-page-handler="View">View Standing Tee Time Requests</button>
+        @if (Request.Method == "POST" && !(Model.STTRequests is null))
+        {
+            <button type="submit" class="btn btn-primary" asp-page-handler="Select">Select Tee Time</button>
+        }
+        @if (Model.ValidTimeSelected)
+        {
+            <button type="submit" class="btn btn-success" asp-page-handler="Submit">Submit Standing Tee Time Request</button>
+        }
+
+        <div class="text-@(Model.Confirmation ? "success" : "danger")">
+            @if (TempData.ContainsKey("ErrorMessages") && TempData.Peek<List<string>>("ErrorMessages").Any())
+            {
+                var errors = TempData.Peek<List<string>>("ErrorMessages");
+                @foreach (var error in errors)
+                {
+                    <ul>
+                        <li>@error</li>
+                    </ul>
+                }
+                TempData.Remove("ErrorMessages");
+            }
+            @(Model.Confirmation ? $"Standing Tee time request submitted successfully for " +
+                $"{((DateTime)TempData.Peek(nameof(Model.StartDate))).DayOfWeek}s at {TempData["selectedTime"]} between " +
+                $"{((DateTime)TempData[nameof(Model.StartDate)]).ToLongDateString()} and {((DateTime)TempData[nameof(Model.EndDate)]).ToLongDateString()}" : "")
+        </div>
+        @if (Model.ValidTimeSelected)
+        {
+            <div class="form-group">
+                <label>Member Name</label>
+                <input class="form-control" disabled value="@(Model.dbContext.Users.Where(u => u.UserName == User.Identity.Name).FirstOrDefault().MemberName)" />
+            </div>
+            <div class="form-group">
+                <label>Member Number 2</label>
+                <input class="form-control" name="SuppliedMemberNumbers[0]" asp-for="SuppliedMemberNumbers" />
+                <span asp-validation-for="@Model.SuppliedMemberNumbers" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label>Member Number 3</label>
+                <input class="form-control" name="SuppliedMemberNumbers[1]" asp-for="SuppliedMemberNumbers" />
+                <span asp-validation-for="@Model.SuppliedMemberNumbers" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label>Member Number 4</label>
+                <input class="form-control" name="SuppliedMemberNumbers[2]" asp-for="SuppliedMemberNumbers" />
+                <span asp-validation-for="@Model.SuppliedMemberNumbers" class="text-danger"></span>
+            </div>
+        }
+    </div>
+
+    @if (Model.STTRequests?.Any() ?? false)
+    {
+        <div style="height: 50vh; overflow: auto">
+            <table class="table table-hover" style="table-layout: fixed;">
+                <thead>
+                    <tr>
+                        <td>
+                            Time
+                        </td>
+                        <td>
+                            Avaliability
+                        </td>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var STTR in Model.STTRequests)
+                    {
+                        <tr onclick="rowClicked(this)" class="d-sm-table-row">
+                            <td>
+                                @STTR.RequestedTime.ToString("HH:mm")
+                                @if (STTR.Members is null)
+                                {
+                                    <input type="radio" required style="display:none;" name="selectedTime" value="@STTR.RequestedTime.ToString("HH:mm")" />
+                                }
+                            </td>
+                            <td class="text-@(STTR.Members is null ? "success" :"warning")">
+                                @(STTR.Members is null ? "Avaliable" : "Reserved")
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</form>

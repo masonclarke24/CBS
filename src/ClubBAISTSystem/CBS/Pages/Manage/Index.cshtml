@@ -1,0 +1,14 @@
+﻿@page
+@model CBS.Areas.Identity.Pages.Account.Manage.IndexModel
+
+<h1>My Account</h1>
+
+    <div class="form-group">
+        <a class="btn btn-outline-primary" asp-page="MyTeeTimes">Manage Tee Times</a>
+    </div>
+    @if (User.IsInRole("Shareholder"))
+    {
+        <div class="form-group">
+            <a class="btn btn-outline-primary" asp-page="ManageStandingTeeTimeRequests">Manage Standing Tee Time Requests</a>
+        </div>
+    }

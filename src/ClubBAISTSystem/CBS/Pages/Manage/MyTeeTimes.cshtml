@@ -1,0 +1,81 @@
+﻿@page
+@model CBS.Areas.Identity.Pages.Account.Manage.MyTeeTimesModel
+
+@using CBS
+
+<h3>@(Model.MemberName)</h3>
+@if (!User.IsInRole("Golfer"))
+{
+    <form class="form" method="POST">
+        <label for="memberNumber">Member Number:</label>
+        <input class="form-control" name="memberNumber" />
+        <input type="submit" class="btn-outline-info" asp-page-handler="ProvideMemberNumber" value="View Tee Times For Member" />
+
+    </form>
+}
+
+<div class="form-group">
+    @if (HttpContext.Session.Get<IEnumerable<TechnicalServices.TeeTime>>("reservedTeeTimes")?.Any() ?? false)
+    {
+        <table class="table table-hover" style="table-layout: fixed;">
+            <thead>
+                <tr>
+                    <th>
+                        Date / Time
+                    </th>
+                    <th>
+                        Phone
+                    </th>
+                    <th>
+                        Number of Carts
+                    </th>
+                    <th>
+                        Checked In
+                    </th>
+                    <th>
+                        Action
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var teeTime in HttpContext.Session.Get<IEnumerable<TechnicalServices.TeeTime>>("reservedTeeTimes"))
+                {
+                    <tr onclick="rowClicked(this)" class="d-sm-table-row">
+                        <td>
+                            @(teeTime.Datetime.ToString("dddd MMMM dd, yyyy HH:mm"))
+                        </td>
+                        <td>
+                            @(teeTime.Phone)
+                        </td>
+                        <td>
+                            @teeTime.NumberOfCarts
+                        </td>
+                        <td>
+                            @teeTime.CheckedIn
+                        </td>
+                        <td>
+                            <form method="POST">
+                                <div class="form-group d-flex justify-content-between">
+                                    @if (!User.IsInRole("Golfer") || teeTime.ReservedBy == Model.userManager.GetUserId(User))
+                                    {
+                                        <partial name="_UpdateBtn" model="@(User.IsInRole("ProShop"),$"/Manage/UpdateTeeTime?teeTimeTime={teeTime.Datetime.Ticks}")" />
+                                    }
+                                    <button type="submit" class="btn btn-outline-danger" asp-page-handler="Cancel">Cancel</button>
+                                    <input type="hidden" name="userId" value="@teeTime.ReservedBy" />
+                                    <input type="hidden" name="teeTime" value="@teeTime.Datetime.Ticks" />
+                                </div>
+                            </form>
+                        </td>
+                    </tr>
+
+                    <partial name="_TeeTimeGolfers" model="(teeTime, Model.userManager)" />
+                }
+
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <h3>@(User.IsInRole("Golfer") ? "You have no tee times" : "No tee times for the selected member"). <a class="btn btn-outline-info" asp-page="/ReserveTeeTime">Reserve Now</a></h3>
+    }
+</div>

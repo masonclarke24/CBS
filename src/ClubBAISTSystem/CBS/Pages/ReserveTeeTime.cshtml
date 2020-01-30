@@ -1,0 +1,184 @@
+﻿@page
+@model CBS.Pages.ReserveTeeTimeModel
+@{
+    ViewData["Title"] = $"View Tee Times";
+}
+
+@section Scripts
+{
+    <script>
+        window.addEventListener('load', selectAvaliableTime)
+        window.addEventListener('load', () => $("input[name='Date']").datepicker({ dateFormat: "DD, MM dd, yy", maxDate: 7 }))
+    </script>
+}
+<h1>
+    @ViewData["Title"]
+</h1>
+<h4>
+    @(Model.Request.Query.ContainsKey("teeTime") && TempData.ContainsKey("Date") ? $"{((DateTime)TempData.Peek("Date")).ToString("dddd MMMM dd, yyyy HH:mm")}" : "")
+</h4>
+
+<form method="POST">
+    <div class="form-group">
+        <label>Date</label>
+        <input class="form-control" name="Date" autocomplete="off" value="@(Model.Date.Ticks == 0 ? "" : Model.Date.ToLongDateString())" placeholder="@DateTime.Today.AddDays(1).ToLongDateString()" />
+    </div>
+    <div class="form-group">
+        <button type="submit" class="btn btn-primary" asp-page-handler="View">View Daily Tee Sheet</button>
+        @if (Request.Query.ContainsKey("teeTime"))
+        {
+            <button type="submit" class="btn btn-success" asp-page-handler="Reserve">Reserve Tee Time</button>
+        }
+
+        @if (TempData.ContainsKey("ErrorMessages") && TempData.Peek<List<string>>("ErrorMessages").Any())
+        {
+            var errors = TempData.Peek<List<string>>("ErrorMessages");
+            @foreach (var error in errors)
+            {
+                <ul class="text-danger">
+                    <li>@error</li>
+                </ul>
+            }
+            TempData.Remove("ErrorMessages");
+        }
+    </div>
+
+    @if (Model.Request.Query.ContainsKey("teeTime"))
+    {
+        <div id="teeTimeDetails">
+            <div class="form-group">
+                <label>Phone</label>
+                <input class="form-control" name="Phone" asp-for="Phone" value="@Model.UserManager.FindByNameAsync(User.Identity.Name).GetAwaiter().GetResult().PhoneNumber" />
+                <span asp-validation-for="@Model.Phone" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label>Number of carts</label>
+                <input class="form-control" name="NumberOfCarts" asp-for="NumberOfCarts" value="1" />
+                <span asp-validation-for="@Model.NumberOfCarts" class="text-danger"></span>
+            </div>
+            @if (!User.IsInRole("Golfer"))
+            {
+                <div class="form-group">
+                    <label>Member Number</label>
+                    <input class="form-control" name="Golfers[0]" />
+                    <span class="text-danger"></span>
+                </div>
+            }
+            <div class="form-group">
+                <input type="button" class="btn btn-secondary" value="Add Golfer" onclick="addGolfer(this)" />
+                <input type="button" class="btn btn-secondary" value="Remove Golfer" onclick="removeGolfer(this)" />
+            </div>
+        </div>
+    }
+</form>
+<div class="form-group">
+    @if (Request.Method == "POST" && !(Model.DailyTeeSheet is null))
+    {
+        <div style="height: 50vh; overflow: auto">
+            <table class="table table-hover" style="table-layout: fixed;">
+                <thead>
+                    <tr>
+                        <th>
+                            Time
+                        </th>
+                        <th>
+                            Avaliability
+                        </th>
+
+                        @if (!User.IsInRole("Golfer"))
+                        {
+                            <th>
+                                Phone
+                            </th>
+                            <th>
+                                Number of Carts
+                            </th>
+                            <th>
+                                Checked In
+                            </th>
+                        }
+                        @if (((DateTime.Now - Model.Date).TotalDays < 0 || User.IsInRole("ProShop") && (int)(DateTime.Now - Model.Date).TotalDays <= 0)
+                      && (DateTime.Now.AddDays(7) - Model.Date).TotalDays >= 0)
+                        {
+                            <th>
+                                Action
+                            </th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var teeTime in Model.DailyTeeSheet.TeeTimes)
+                    {
+                        <tr onclick="rowClicked(this)" class="d-sm-table-row">
+
+                            <td>
+                                @teeTime.Datetime.ToShortTimeString()
+                            </td>
+                            <td class="text-@(teeTime.Golfers is null ? "success" : "warning")">@(teeTime.Golfers is null ? "Avaliable" : "Reserved")</td>
+
+                            @if (!User.IsInRole("Golfer"))
+                            {
+                                <td>
+                                    @(teeTime.Golfers is null ? "-" : teeTime.Phone)
+                                </td>
+                                <td>
+                                    @(teeTime.Golfers is null ? "-" : teeTime.NumberOfCarts.ToString())
+                                </td>
+                                <td>
+                                    @(teeTime.Golfers is null ? "-" : teeTime.CheckedIn.ToString())
+                                </td>
+                            }
+
+                            @if (HttpContext.Session.Get<IEnumerable<TechnicalServices.TeeTime>>("reservedTeeTimes")
+                       .Where(t => t.Datetime == teeTime.Datetime).FirstOrDefault() != null)
+                            {
+                                <td>
+                                    <form method="POST">
+                                        <div class="form-group d-flex justify-content-between">
+                                            @if (!User.IsInRole("Golfer") || teeTime.ReservedBy == Model.UserManager.GetUserId(User))
+                                            {
+                                                <partial name="_UpdateBtn" model="@(User.IsInRole("ProShop"),$"/Manage/UpdateTeeTime?teeTimeTime={teeTime.Datetime.Ticks}")" />
+                                            }
+                                            <button type="submit" class="btn btn-outline-danger" asp-page-handler="Cancel">Cancel</button>
+                                            <input type="hidden" name="userId" value="@teeTime.ReservedBy" />
+                                            <input type="hidden" name="teeTime" value="@teeTime.Datetime.Ticks" />
+                                        </div>
+                                    </form>
+                                </td>
+                            }
+                            @if (TempData.Peek<IEnumerable<DateTime>>("PermissableTimes").Contains(teeTime.Datetime))
+                            {
+                                <td>
+                                    <form method="POST">
+                                        <div class="form-group">
+                                            @if (teeTime.Golfers?.Any() ?? false)
+                                            {
+                                                <button type="submit" class="btn btn-outline-info" asp-page-handler="Join">Join Tee Time</button>
+                                            }
+                                            else
+                                            {
+                                                <button type="submit" class="btn btn-outline-primary" asp-page-handler="Select">Select Tee Time</button>
+                                            }
+                                            <input type="hidden" name="teeTime" value="@teeTime.Datetime.Ticks" />
+                                        </div>
+                                    </form>
+                                </td>
+
+                            }
+                        </tr>
+                        @if (teeTime.Golfers?.Any() ?? false)
+                        {
+                            <partial name="_TeeTimeGolfers" model="(teeTime, Model.UserManager)" />
+                        }
+
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+
+
+
+

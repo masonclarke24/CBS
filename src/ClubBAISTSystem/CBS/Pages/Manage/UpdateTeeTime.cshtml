@@ -1,0 +1,48 @@
+﻿@page
+@model CBS.Areas.Identity.Pages.Account.Manage.UpdateTeeTimeModel
+@using CBS
+@using TechnicalServices
+@section Scripts
+{
+    <partial name="_ValidationScriptsPartial" />
+}
+<h1>Update Tee Time</h1>
+<div class="text-danger">@TempData["errorMessage"].ToString().Replace("\"", "")</div>
+<form method="post" class="form">
+    @Html.AntiForgeryToken()
+    <div class="form-group">
+        <strong>Date:</strong>
+        <p>@(TempData.Peek<TeeTime>("TeeTimeToUpdate").Datetime.ToString("dddd MMMM dd, yyyy : HH:mm"))</p>
+        @if (User.IsInRole("ProShop"))
+        {
+            <div class="form-group d-flex">
+                <label>Checked In</label>
+                <input class="form-control-sm ml-1" name="checkedIn" type="checkbox" value="@(TempData.Peek<TeeTime>("TeeTimeToUpdate").CheckedIn)" />
+            </div>
+
+        }
+        <button type="submit" class="btn btn-outline-warning">Update Tee Time</button>
+    </div>
+    <div class="form-group">
+        <label>Phone</label>
+        <input class="form-control" name="Phone" value="@(TempData.Peek<TeeTime>("TeeTimeToUpdate").Phone)" asp-for="@Model.Phone" />
+        <span asp-validation-for="@Model.Phone" class="text-danger"></span>
+    </div>
+    <div class="form-group">
+        <label>Number of carts</label>
+        <input class="form-control" name="NumberOfCarts" value="@(TempData.Peek<TeeTime>("TeeTimeToUpdate").NumberOfCarts)" asp-for="@Model.NumberOfCarts" />
+        <span asp-validation-for="@Model.NumberOfCarts" class="text-danger"></span>
+    </div>
+
+    @foreach (var golfer in TempData.Peek<TeeTime>("TeeTimeToUpdate").Golfers)
+    {
+        <div class="form-group">
+            <label>Member Name:</label>
+            <input class="form-control-sm" disabled value="@golfer.Name" />
+        </div>
+    }
+    <div class="form-group">
+        <input type="button" class="btn btn-secondary" value="Add Golfer" onclick="addGolfer(this, @(TempData.Peek<TeeTime>("TeeTimeToUpdate").Golfers.Count))" />
+        <input type="button" class="btn btn-secondary" value="Remove Golfer" onclick="removeGolfer(this)" />
+    </div>
+</form>

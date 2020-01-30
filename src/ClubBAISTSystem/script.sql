@@ -1,10 +1,5 @@
 USE CBS
-
 GO
-
-SELECT * FROM StandingTeeTimeGolfers
-
-exec FindSTTR @userId=N'c109a5b2-d52c-46a5-95dd-afb34c17b39f'
 
 IF EXISTS(SELECT * FROM SYS.TABLES WHERE [name] LIKE 'GolferMembershipLevels')
 	DROP TABLE GolferMembershipLevels
@@ -32,6 +27,10 @@ GO
 
 IF EXISTS(SELECT * FROM SYS.TABLES WHERE [name] LIKE 'TeeTimes')
 	DROP TABLE TeeTimes
+GO
+
+IF EXISTS(SELECT * FROM SYS.TABLES WHERE [name] LIKE 'MembershipApplication')
+	DROP TABLE MembershipApplication
 GO
 
 IF EXISTS(SELECT * FROM SYS.TABLES WHERE [name] LIKE 'PermissableTeeTimes')
@@ -142,6 +141,33 @@ CREATE TABLE TeeTimesForMembershipLevel
 	[DayOfWeek] INT CONSTRAINT CHK_TeeTimeForMemLevel_DayOfWeek CHECK ([DayOfWeek] IN(1,2,3,4,5,6,7)),
 	MembershipLevel CHAR(10) CONSTRAINT FK_TeeTimeForMemLevel_MemLevel FOREIGN KEY REFERENCES MembershipLevels(MembershipLevel),
 	PRIMARY KEY ([Time],[DayOfWeek],MembershipLevel)
+)
+GO
+
+CREATE TABLE MembershipApplication
+(
+	LastName VARCHAR(25) NOT NULL,
+	FirstName VARCHAR(25) NOT NULL,
+	ApplicantAddress VARCHAR(64) NOT NULL,
+	ApplicantCity VARCHAR(35) NOT NULL,
+	ApplicantPostalCode VARCHAR(7) NOT NULL CONSTRAINT CHK_MembershipApplication_AppPostalCode CHECK (ApplicantPostalCode LIKE '[A-Z][0-9][A-Z] [0-9][A-Z][0-9]'),
+	ApplicantPhone VARCHAR(10) NOT NULL CONSTRAINT CHK_MembershipApplication_AppPhone CHECK (ApplicantPhone LIKE '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]'),
+	ApplicantAlternatePhone VARCHAR(10) NOT NULL CONSTRAINT CHK_MembershipApplication_AltPhone CHECK (ApplicantAlternatePhone LIKE '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]'),
+	Email VARCHAR(48) NOT NULL CONSTRAINT CHK_MembershipApplication_Email CHECK (Email LIKE '%@%.%'),
+	DateOfBirth DATE NOT NULL CONSTRAINT CHK_MembershipApplication_DateOfBirth CHECK (DateOfBirth < GETDATE()),
+	MembershipType VARCHAR(15) NOT NULL,
+	Occupation VARCHAR(25) NOT NULL,
+	EmployerAddress VARCHAR(64) NOT NULL,
+	EmployerCity VARCHAR(35) NOT NULL,
+	EmployerPostalCode VARCHAR(7) NOT NULL CONSTRAINT CHK_MembershipApplication_EmployerPostalCode CHECK (EmployerPostalCode LIKE '[A-Z][0-9][A-Z] [0-9][A-Z][0-9]'),
+	EmployerPhone VARCHAR(10) NOT NULL CONSTRAINT CHK_MembershipApplication_EmployerPhone CHECK (EmployerPhone LIKE '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]'),
+	ProspectiveMemberCertification BIT NOT NULL,
+	ApplicationDate DATE NOT NULL,
+	SponsoringShareholder1 VARCHAR(25) NOT NULL,
+	Shareholder1SigningDate DATE NOT NULL CONSTRAINT CHK_MembershipApplication_Sh1Date CHECK (Shareholder1SigningDate <= GETDATE()),
+	SponsoringShareholder2 VARCHAR(25) NOT NULL,
+	Shareholder2SigningDate DATE NOT NULL CONSTRAINT CHK_MembershipApplication_Sh2Date CHECK (Shareholder2SigningDate <= GETDATE()),
+	ShareholderCertification BIT NOT NULL
 )
 GO
 

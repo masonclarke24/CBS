@@ -77,6 +77,10 @@ IF EXISTS(SELECT * FROM SYSOBJECTS WHERE [name] LIKE 'CancelSTTR')
 	DROP PROCEDURE CancelSTTR
 GO
 
+IF EXISTS(SELECT * FROM SYSOBJECTS WHERE [name] LIKE 'RecordMembershipApplication')
+	DROP PROCEDURE RecordMembershipApplication
+GO
+
 IF EXISTS(SELECT * FROM SYS.TYPES WHERE [name] LIKE 'GolferList')
 	DROP TYPE GolferList
 GO
@@ -144,6 +148,7 @@ CREATE TABLE TeeTimesForMembershipLevel
 )
 GO
 
+
 CREATE TABLE MembershipApplication
 (
 	LastName VARCHAR(25) NOT NULL,
@@ -155,21 +160,25 @@ CREATE TABLE MembershipApplication
 	ApplicantAlternatePhone VARCHAR(10) NOT NULL CONSTRAINT CHK_MembershipApplication_AltPhone CHECK (ApplicantAlternatePhone LIKE '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]'),
 	Email VARCHAR(48) NOT NULL CONSTRAINT CHK_MembershipApplication_Email CHECK (Email LIKE '%@%.%'),
 	DateOfBirth DATE NOT NULL CONSTRAINT CHK_MembershipApplication_DateOfBirth CHECK (DateOfBirth < GETDATE()),
-	MembershipType VARCHAR(15) NOT NULL,
+	MembershipType VARCHAR(15) NOT NULL CONSTRAINT CHK_MembershipApplication_MembershipType CHECK (MembershipType IN('Shareholder','Associate')),
 	Occupation VARCHAR(25) NOT NULL,
+	CompanyName VARCHAR(30) NOT NULL,
 	EmployerAddress VARCHAR(64) NOT NULL,
 	EmployerCity VARCHAR(35) NOT NULL,
 	EmployerPostalCode VARCHAR(7) NOT NULL CONSTRAINT CHK_MembershipApplication_EmployerPostalCode CHECK (EmployerPostalCode LIKE '[A-Z][0-9][A-Z] [0-9][A-Z][0-9]'),
 	EmployerPhone VARCHAR(10) NOT NULL CONSTRAINT CHK_MembershipApplication_EmployerPhone CHECK (EmployerPhone LIKE '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]'),
 	ProspectiveMemberCertification BIT NOT NULL,
-	ApplicationDate DATE NOT NULL,
+	ApplicationDate DATETIME NOT NULL,
 	SponsoringShareholder1 VARCHAR(25) NOT NULL,
 	Shareholder1SigningDate DATE NOT NULL CONSTRAINT CHK_MembershipApplication_Sh1Date CHECK (Shareholder1SigningDate <= GETDATE()),
 	SponsoringShareholder2 VARCHAR(25) NOT NULL,
 	Shareholder2SigningDate DATE NOT NULL CONSTRAINT CHK_MembershipApplication_Sh2Date CHECK (Shareholder2SigningDate <= GETDATE()),
-	ShareholderCertification BIT NOT NULL
+	ShareholderCertification BIT NOT NULL,
+	ApplicationStatus VARCHAR(10) NULL CONSTRAINT CHK_MembershipApplication_ApplicationStatus CHECK (ApplicationStatus IN('Accepted','Denied','On-hold', 'Waitlisted')),
+	CONSTRAINT PK_MembershipApplication PRIMARY KEY (LastName,FirstName,ApplicationDate)
 )
 GO
+
 
 CREATE TYPE GolferList AS TABLE
 (
@@ -423,3 +432,31 @@ AS
 	COMMIT TRANSACTION
 	RETURN 0
 GO
+
+CREATE PROCEDURE RecordMembershipApplication(@lastName VARCHAR(25), @firstName VARCHAR(25), @applicantAddress VARCHAR(64), @applicantCity VARCHAR(35),
+@applicantPostalCode VARCHAR(7), @applicantPhone VARCHAR(10), @applicantAlternatePhone VARCHAR(10), @email VARCHAR(48), @dateOfBirth DATE, @membershipType VARCHAR(25), @occupation VARCHAR(25),
+@companyName VARCHAR(30), @employerAddress VARCHAR(64), @employerCity VARCHAR(35), @employerPostalCode VARCHAR(7), @employerPhone VARCHAR(10), @prospectiveMemberCertification BIT, @sponsoringShareholder1 VARCHAR(25),
+@shareholder1SigningDate DATE, @sponsoringShareholder2 VARCHAR(25), @shareholder2SigningDate DATE, @shareholderCertification BIT)
+AS
+	BEGIN TRANSACTION
+
+	INSERT INTO MembershipApplication VALUES(@lastName, @firstName, @applicantAddress, @applicantCity, @applicantPostalCode, @applicantPhone, @applicantAlternatePhone, @email, @dateOfBirth,
+	@membershipType, @occupation, @companyName, @employerAddress, @employerCity, @employerPostalCode, @employerPhone, @prospectiveMemberCertification, GETDATE(), @sponsoringShareholder1, @shareholder1SigningDate,
+	@sponsoringShareholder2, @shareholder2SigningDate, @shareholderCertification, NULL)
+
+	IF @@ERROR <> 0
+	BEGIN
+		ROLLBACK TRANSACTION
+		RAISERROR('Unable to record membership application',16,1)
+		RETURN 1
+	END
+
+	COMMIT TRANSACTION
+	RETURN 0
+GO
+
+--EXEC RecordMembershipApplication 'Williams', 'Jane', '12345 67 St', 'Edmonton', 'T1T 1T1', '5875636574', '7804343625', 'jane.williams@gmail.com', 'April 22, 1996', 'Shareholder',
+--'Business Analyst', 'CGI', '12345 Jasper Ave', 'Edmonton', 'T2T 2T2', '7803253452', 1, 'John Doe', 'January 29, 2020', 'JohnathanSmith', 'January 29, 2020', 1
+
+--SELECT * FROM MembershipApplication
+

@@ -1,6 +1,8 @@
 ﻿<!DOCTYPE html>
 @using static Microsoft.AspNetCore.Http.SessionExtensions
 @using System.Linq
+@using Microsoft.AspNetCore.Authorization
+@inject IAuthorizationService AuthorizationService
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -33,6 +35,13 @@
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-area="" asp-page="/ReserveTeeTime">View Tee Times</a>
                         </li>
+                        @if ((await AuthorizationService.AuthorizeAsync(User, "ManageMemberships")).Succeeded)
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-area="" asp-page="/Memberships/RecordMembershipApplication">Record Membership Application</a>
+                            </li>
+                        }
+
                         @if (User.IsInRole("Shareholder"))
                         {
                             <li class="nav-item">

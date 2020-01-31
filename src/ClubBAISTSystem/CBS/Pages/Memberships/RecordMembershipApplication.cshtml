@@ -1,0 +1,197 @@
+﻿@page
+@model CBS.RecordMembershipApplicationModel
+@{
+    ViewData["Title"] = "RecordMembershipApplication";
+    Layout = "~/Pages/Shared/_Layout.cshtml";
+}
+
+@section Scripts
+{
+    @*<partial name="_ValidationScriptsPartial" />*@
+    <script>
+        window.addEventListener('load', () => {
+            $("input[name*='Date']").datepicker({ dateFormat: "dd-M-yy", maxDate: -1, changeYear: true, showButtonPanel: true, changeMonth: true, yearRange: "-100:+0" });
+        });
+    </script>
+}
+
+<h1>Record Membership Application</h1>
+<div asp-validation-summary="All" class="text-danger"></div>
+
+<form class="form" method="POST">
+    <h3>Personal Information</h3>
+    <hr />
+    <div class="container">
+        <div class="row">
+            <div class="form-group col-sm-6">
+                <label>Last Name:</label>
+                <input asp-for="@Model.LastName" class="form-control" />
+                <span class="text-danger" asp-validation-for="@Model.LastName"></span>
+            </div>
+            <div class="form-group col-sm-6">
+                <label>First Name:</label>
+                <input asp-for="@Model.FirstName" class="form-control" />
+                <span class="text-danger" asp-validation-for="@Model.FirstName"></span>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="form-group col-sm-9">
+                <label>Address:</label>
+                <input asp-for="@Model.ApplicantAddress" class="form-control" />
+                <span class="text-danger" asp-validation-for="@Model.ApplicantAddress"></span>
+            </div>
+            <div class="col-sm-3"></div>
+        </div>
+
+        <div class="row">
+            <div class="form-group col-sm-6">
+                <label>City:</label>
+                <input asp-for="@Model.ApplicantCity" class="form-control" />
+                <span class="text-danger" asp-validation-for="@Model.ApplicantCity"></span>
+            </div>
+            <div class="form-group col-sm-6">
+                <label>Postal Code:</label>
+                <input asp-for="@Model.ApplicantPostalCode" class="form-control" />
+                <span class="text-danger" asp-validation-for="@Model.ApplicantPostalCode"></span>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="form-group col-sm-6">
+                <label>Phone:</label>
+                <input asp-for="@Model.ApplicantPhone" class="form-control" />
+                <span class="text-danger" asp-validation-for="@Model.ApplicantPhone"></span>
+            </div>
+            <div class="form-group col-sm-6">
+                <label>Alternate Phone:</label>
+                <input asp-for="@Model.ApplicantAlternatePhone" class="form-control" />
+                <span class="text-danger" asp-validation-for="@Model.ApplicantAlternatePhone"></span>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="form-group col-sm-6">
+                <label>Email:</label>
+                <input asp-for="@Model.Email" class="form-control" />
+                <span class="text-danger" asp-validation-for="@Model.Email"></span>
+            </div>
+            <div class="form-group col-sm-6">
+                <label>Date of Birth</label>
+                <input asp-for="@Model.DateOfBirth" class="form-control" />
+                <span class="text-danger" asp-validation-for="@Model.DateOfBirth"></span>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="form-group col-sm-16">
+                <label class="ml-3">Membership Type:</label>
+                <select asp-for="@Model.MembershipType" class="form-control ml-3">
+                    <option value="@TechnicalServices.MembershipType.Shareholder" class="form-control">Shareholder</option>
+                    <option value="@TechnicalServices.MembershipType.Associate" class="form-control">Associate</option>
+                </select>
+                <span class="text-danger" asp-validation-for="@Model.MembershipType"></span>
+            </div>
+            <div class="col-sm-6"></div>
+        </div>
+
+    </div>
+
+    <h3>Employment Information</h3>
+    <hr />
+    <div class="container">
+        <div class="row">
+            <div class="form-group col-sm-6">
+                <label>Occupation:</label>
+                <input asp-for="@Model.Occupation" class="form-control" />
+                <span class="text-danger" asp-validation-for="@Model.Occupation"></span>
+            </div>
+            <div class="form-group col-sm-6">
+                <label>Company Name:</label>
+                <input asp-for="@Model.CompanyName" class="form-control" />
+                <span class="text-danger" asp-validation-for="@Model.CompanyName"></span>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="form-group col-sm-9">
+                <label>Address:</label>
+                <input asp-for="@Model.EmployerAddress" class="form-control" />
+                <span class="text-danger" asp-validation-for="@Model.EmployerAddress"></span>
+            </div>
+            <div class="col-sm-3"></div>
+        </div>
+
+        <div class="row">
+            <div class="form-group col-sm-6">
+                <label>City:</label>
+                <input asp-for="@Model.EmployerCity" class="form-control" />
+                <span class="text-danger" asp-validation-for="@Model.EmployerCity"></span>
+            </div>
+            <div class="form-group col-sm-6">
+                <label>Postal Code:</label>
+                <input asp-for="@Model.EmployerPostalCode" class="form-control" />
+                <span class="text-danger" asp-validation-for="@Model.EmployerPostalCode"></span>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="form-group col-sm-6">
+                <label>Phone:</label>
+                <input asp-for="@Model.EmployerPhone" class="form-control" />
+                <span class="text-danger" asp-validation-for="@Model.EmployerPhone"></span>
+            </div>
+        </div>
+    </div>
+
+    <h3>Sponsorship Details</h3>
+    <hr />
+    <div class="container">
+        <div class="row">
+            <div class="form-group col-sm-6">
+                <label>Shareholder Name:</label>
+                <input asp-for="@Model.Shareholder1" class="form-control" />
+                <span class="text-danger" asp-validation-for="@Model.Shareholder1"></span>
+            </div>
+            <div class="form-group col-sm-6">
+                <label>Shareholder Name:</label>
+                <input asp-for="@Model.Shareholder2" class="form-control" />
+                <span class="text-danger" asp-validation-for="@Model.Shareholder2"></span>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="form-group col-sm-6">
+                <label>Date:</label>
+                <input asp-for="@Model.Shareholder1SigningDate" class="form-control" />
+                <span class="text-danger" asp-validation-for="@Model.Shareholder1SigningDate"></span>
+            </div>
+            <div class="form-group col-sm-6">
+                <label>Date:</label>
+                <input asp-for="@Model.Shareholder2SigningDate" class="form-control" />
+                <span class="text-danger" asp-validation-for="@Model.Shareholder2SigningDate"></span>
+            </div>
+        </div>
+    </div>
+
+    <h3>Certifications</h3>
+    <hr />
+    <div class="container">
+        <div class="row">
+            <div class="form-group col-sm-6 d-flex flex-row-reverse" style="align-items: first-baseline">
+                <label>Prospective members aggrees to pay the annual dues and to be bound the the Memorandum and article of Accociation of Club BAIST, and the rules, regulations and by-laws of the Directors of club BAIST, and all amendments thereto.</label>
+                <input asp-for="@Model.ProspectiveMemberCertification" class="form-control-sm mr-1" />
+            </div>
+            <div class="form-group col-sm-6 d-flex flex-row-reverse" style="align-items: first-baseline">
+                <label>Shareholders certify that the above named applicant is deemed to be a sutiable person to be elected as a member of club BAIST.</label>
+                <input asp-for="@Model.ShareholderCertification" class="form-control-sm mr-1" />
+            </div>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <h5>Please review all information for accuracy, as it cannot be changed later.</h5>
+        <button type="submit" class="btn btn-outline-info" asp-page="RecordMembershipApplication">Record Membership Application</button>
+    </div>
+</form>
+

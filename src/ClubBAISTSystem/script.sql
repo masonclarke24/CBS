@@ -168,7 +168,7 @@ CREATE TABLE MembershipApplication
 	EmployerPostalCode VARCHAR(7) NOT NULL CONSTRAINT CHK_MembershipApplication_EmployerPostalCode CHECK (EmployerPostalCode LIKE '[A-Z][0-9][A-Z] [0-9][A-Z][0-9]'),
 	EmployerPhone VARCHAR(10) NOT NULL CONSTRAINT CHK_MembershipApplication_EmployerPhone CHECK (EmployerPhone LIKE '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]'),
 	ProspectiveMemberCertification BIT NOT NULL,
-	ApplicationDate DATETIME NOT NULL,
+	ApplicationDate DATE NOT NULL,
 	SponsoringShareholder1 VARCHAR(25) NOT NULL,
 	Shareholder1SigningDate DATE NOT NULL CONSTRAINT CHK_MembershipApplication_Sh1Date CHECK (Shareholder1SigningDate <= GETDATE()),
 	SponsoringShareholder2 VARCHAR(25) NOT NULL,

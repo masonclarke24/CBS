@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using TechnicalServices;
+using TechnicalServices.Memberships;
 
 namespace Domain
 {
@@ -81,6 +82,12 @@ namespace Domain
         {
             StandingTeeTimeRequests standingTeeTimeManager = new StandingTeeTimeRequests(connectionString);
             return standingTeeTimeManager.CancelStandingTeeTime(startDate, endDate, requestedTime);
+        }
+
+        public bool RecordMembershipApplication(MembershipApplication membershipApplication)
+        {
+            ClubMemberships membershipManager = new ClubMemberships(connectionString);
+            return membershipManager.RecordMembershipApplication(membershipApplication);
         }
     }
 }

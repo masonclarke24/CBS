@@ -7,11 +7,11 @@ namespace TechnicalServices
 {
     public enum ApplicationStatus
     {
+        New,
         Accepted,
         Denied,
         OnHold,
-        Waitlisted,
-        New
+        Waitlisted
     }
 
     public enum MembershipType
@@ -29,7 +29,7 @@ namespace TechnicalServices
         public string City { get; set; }
         public string PostalCode { get; set; }
         public string PrimaryPhone { get; set; }
-        public string SecondaryPhone { get; set; }
+        public string AlternatePhone { get; set; }
         public string Email { get; set; }
     }
 

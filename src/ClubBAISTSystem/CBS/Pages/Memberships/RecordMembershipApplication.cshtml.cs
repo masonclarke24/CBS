@@ -69,7 +69,7 @@ namespace CBS
                 return Page();
             Domain.CBS requestDirector = new Domain.CBS(Startup.ConnectionString);
             #region CreateMembershipApplication
-            MembershipApplication membershipApplication = new MembershipApplication();
+            MembershipApplication membershipApplication = new MembershipApplication(Startup.ConnectionString);
             membershipApplication.ProspectiveMemberContactInfo = new ContactInformation()
             {
                 LastName = LastName,
@@ -78,7 +78,7 @@ namespace CBS
                 City = ApplicantCity,
                 PostalCode = ApplicantPostalCode,
                 PrimaryPhone = ApplicantPhone,
-                SecondaryPhone = ApplicantAlternatePhone,
+                AlternatePhone = ApplicantAlternatePhone,
                 Email = Email
             };
             membershipApplication.DateOfBirth = DateOfBirth;

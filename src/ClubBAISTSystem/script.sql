@@ -1,6 +1,7 @@
 USE CBS
 GO
 
+
 IF EXISTS(SELECT * FROM SYS.TABLES WHERE [name] LIKE 'GolferMembershipLevels')
 	DROP TABLE GolferMembershipLevels
 GO
@@ -79,6 +80,18 @@ GO
 
 IF EXISTS(SELECT * FROM SYSOBJECTS WHERE [name] LIKE 'RecordMembershipApplication')
 	DROP PROCEDURE RecordMembershipApplication
+GO
+
+IF EXISTS(SELECT * FROM SYSOBJECTS WHERE [name] LIKE 'GetMembershipApplications')
+	DROP PROCEDURE GetMembershipApplications
+GO
+
+IF EXISTS(SELECT * FROM SYSOBJECTS WHERE [name] LIKE 'UpdateMembershipApplication')
+	DROP PROCEDURE UpdateMembershipApplication
+GO
+
+IF EXISTS(SELECT * FROM SYSOBJECTS WHERE [name] LIKE 'CreateMemberAccount')
+	DROP PROCEDURE CreateMemberAccount
 GO
 
 IF EXISTS(SELECT * FROM SYS.TYPES WHERE [name] LIKE 'GolferList')
@@ -174,7 +187,7 @@ CREATE TABLE MembershipApplication
 	SponsoringShareholder2 VARCHAR(25) NOT NULL,
 	Shareholder2SigningDate DATE NOT NULL CONSTRAINT CHK_MembershipApplication_Sh2Date CHECK (Shareholder2SigningDate <= GETDATE()),
 	ShareholderCertification BIT NOT NULL,
-	ApplicationStatus VARCHAR(10) NULL CONSTRAINT CHK_MembershipApplication_ApplicationStatus CHECK (ApplicationStatus IN('Accepted','Denied','On-hold', 'Waitlisted')),
+	ApplicationStatus VARCHAR(10) NULL CONSTRAINT CHK_MembershipApplication_ApplicationStatus CHECK (ApplicationStatus IN('Accepted','Denied','OnHold', 'Waitlisted')),
 	CONSTRAINT PK_MembershipApplication PRIMARY KEY (LastName,FirstName,ApplicationDate)
 )
 GO
@@ -455,8 +468,52 @@ AS
 	RETURN 0
 GO
 
---EXEC RecordMembershipApplication 'Williams', 'Jane', '12345 67 St', 'Edmonton', 'T1T 1T1', '5875636574', '7804343625', 'jane.williams@gmail.com', 'April 22, 1996', 'Shareholder',
---'Business Analyst', 'CGI', '12345 Jasper Ave', 'Edmonton', 'T2T 2T2', '7803253452', 1, 'John Doe', 'January 29, 2020', 'JohnathanSmith', 'January 29, 2020', 1
+CREATE PROCEDURE GetMembershipApplications(@startDate DATE, @endDate DATE)
+AS
+	SELECT * FROM MembershipApplication WHERE ApplicationDate BETWEEN @startDate AND @endDate
+GO
 
---SELECT * FROM MembershipApplication
+CREATE PROCEDURE UpdateMembershipApplication(@lastName VARCHAR(25), @firstName VARCHAR(25), @applicationDate DATE, @applicationStatus VARCHAR(10))
+AS
+	BEGIN TRANSACTION
+	UPDATE MembershipApplication SET ApplicationStatus = @applicationStatus WHERE LastName = @lastName AND FirstName = @firstName AND ApplicationDate = @applicationDate
+
+	IF @@ERROR <> 0
+	BEGIN
+		ROLLBACK TRANSACTION
+		RAISERROR('Unable to update membership application',16,1)
+		RETURN 1
+	END
+
+	COMMIT TRANSACTION
+	RETURN 0
+GO
+
+CREATE PROCEDURE CreateMemberAccount(@membershipType VARCHAR(15), @lastName VARCHAR(25), @firstName VARCHAR(25), @email VARCHAR(48), @phoneNumber VARCHAR(25), 
+@passwordHash VARCHAR(450), @securityStamp VARCHAR(450), @concurrencyStamp VARCHAR(450), @id VARCHAR(450))
+AS
+	BEGIN TRANSACTION
+	INSERT INTO AspNetUsers VALUES(@id, @email, UPPER(@email), @email, UPPER(@email), 0, @passwordHash, LOWER(@securityStamp), LOWER(@concurrencyStamp), @phoneNumber, 0, 0, NULL, 1, 0, CONCAT(@firstName,' ',@lastName),
+	(SELECT TOP 1 MemberNumber FROM AspNetUsers ORDER BY 1 DESC) + 1, 'Gold')
+
+	IF @@ERROR <> 0
+	BEGIN
+		ROLLBACK TRANSACTION
+		RAISERROR('Unable to add member',16,1)
+		RETURN 1
+	END
+
+	INSERT INTO AspNetUserRoles(UserId, RoleId) VALUES(@id, (SELECT Id FROM AspNetRoles WHERE [Name] = @membershipType))
+	INSERT INTO AspNetUserRoles(UserId, RoleId) VALUES(@id, (SELECT Id FROM AspNetRoles WHERE [Name] = 'Golfer'))
+
+	IF @@ROWCOUNT = 0 OR @@ERROR <> 0
+	BEGIN
+		ROLLBACK TRANSACTION
+		RAISERROR('Unable to add member to role ',16,1)
+		RETURN 1
+	END
+
+	COMMIT TRANSACTION
+	RETURN 0
+GO
 

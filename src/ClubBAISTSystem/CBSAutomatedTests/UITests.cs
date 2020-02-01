@@ -1,18 +1,17 @@
-using OpenQA.Selenium;
+﻿using OpenQA.Selenium;
 using OpenQA.Selenium.Firefox;
-using OpenQA.Selenium.Remote;
 using System;
 using System.Text;
 using Xunit;
 
 namespace CBSAutomatedTests
 {
-    public class AutomatedTests: IDisposable
+    public class UITests: IDisposable
     {
         private readonly IWebDriver driver;
         private readonly Random random;
 
-        public AutomatedTests()
+        public UITests()
         {
             FirefoxOptions options = new FirefoxOptions
             {
@@ -69,7 +68,7 @@ namespace CBSAutomatedTests
 
         public void Dispose()
         {
-            driver.Quit();
+            driver.Close();
             driver.Dispose();
         }
 
@@ -77,9 +76,9 @@ namespace CBSAutomatedTests
         {
             StringBuilder name = new StringBuilder();
 
-            name.Append((char)random.Next('A','Z' + 1));
+            name.Append((char)random.Next('A', 'Z' + 1));
 
-            for(int i = 0; i < length - 1; i++)
+            for (int i = 0; i < length - 1; i++)
             {
                 name.Append((char)random.Next('a', 'z' + 1));
             }

@@ -89,5 +89,17 @@ namespace Domain
             ClubMemberships membershipManager = new ClubMemberships(connectionString);
             return membershipManager.RecordMembershipApplication(membershipApplication);
         }
+
+        public List<MembershipApplication> GetMembershipApplications(DateTime startDate, DateTime endDate)
+        {
+            ClubMemberships membershipManager = new ClubMemberships(connectionString);
+            return membershipManager.GetMembershipApplications(startDate, endDate);
+        }
+
+        public List<MembershipApplication> FilterMembershipApplications(List<MembershipApplication> membershipApplications, ApplicationStatus applicationStatus)
+        {
+            ClubMemberships membershipManager = new ClubMemberships(connectionString);
+            return membershipManager.FilterMembershipApplications(membershipApplications, applicationStatus);
+        }
     }
 }

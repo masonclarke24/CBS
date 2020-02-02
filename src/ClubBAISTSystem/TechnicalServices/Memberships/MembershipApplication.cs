@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNet.Identity;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
@@ -32,10 +33,12 @@ namespace TechnicalServices.Memberships
             this.applicationDate = applicationDate;
         }
 
+        [JsonConstructor]
         public MembershipApplication(string connectionString)
         {
             this.connectionString = connectionString;
         }
+
 
         public bool UpdateMembershipApplication(ApplicationStatus newStatus, out string message)
         {

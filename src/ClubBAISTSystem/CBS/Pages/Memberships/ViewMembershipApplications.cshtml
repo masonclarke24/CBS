@@ -1,0 +1,51 @@
+﻿@page
+@model CBS.ViewMembershipApplicationsModel
+@{
+    ViewData["Title"] = "ViewMembershipApplications";
+    Layout = "~/Pages/Shared/_Layout.cshtml";
+}
+
+@section Scripts{ 
+<script>
+    function filterMembershipApplications() {
+        $.ajax({
+            type: "POST",
+            url: "ViewMembershipApplications?handler=Filter",
+            beforeSend: function (xhr) {
+                xhr.setRequestHeader("RequestVerificationToken",
+                    $('input:hidden[name="__RequestVerificationToken"]').val());
+            },
+            success: function (response) {
+                document.getElementById('grid').innerHTML = response;
+            },
+            data: {"applicationStatus" :$('#applicationStatus').children('option:selected').val()},
+        failure: function (response) {
+            console.log(response);
+        }
+        });
+    }
+</script>
+}
+<h1>View Membership Applications</h1>
+<hr />
+@Html.AntiForgeryToken()
+<div class="container">
+    <div class="row">
+        <div class="col-sm-2">Application Status</div>
+        <div class="col-sm-2">
+            <select id="applicationStatus">
+                <option value="-1">Select</option>
+                @foreach (var item in Enum.GetValues(typeof(TechnicalServices.ApplicationStatus)))
+                {
+                    <option value="@((int)item)">@item</option>
+                }
+            </select>
+        </div>
+        <div class="col-sm-2">
+            <button type="button" class="btn btn-outline-info" onclick="filterMembershipApplications()">Filter</button>
+        </div>
+    </div>
+</div>
+
+<div id="grid"><partial name="_MembershipApplicationsPartial" model="@Model.MembershipApplications" /></div>
+

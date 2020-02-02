@@ -121,8 +121,12 @@ namespace CBSAutomatedTests
             Assert.True(filteredMembershipApplications.Count(q => q.ApplicationStatus == ApplicationStatus.New) == 5);
         }
 
-        [Fact]
-        public void MembershipApplication_WhenUpdated_Persist()
+        [Theory]
+        [InlineData(ApplicationStatus.Accepted)]
+        [InlineData(ApplicationStatus.Denied)]
+        [InlineData(ApplicationStatus.OnHold)]
+        [InlineData(ApplicationStatus.Waitlisted)]
+        public void MembershipApplication_WhenUpdated_Persist(ApplicationStatus applicationStatus)
         {
             Domain.CBS requestDirector = new Domain.CBS(connectionString);
             var applicationToUpdate = requestDirector.GetMembershipApplications(DateTime.Today.AddDays(-29), DateTime.Today.AddDays(1)).FirstOrDefault();
@@ -130,12 +134,12 @@ namespace CBSAutomatedTests
             Assert.NotNull(applicationToUpdate);
             ApplicationStatus initialStatus = applicationToUpdate.ApplicationStatus;
 
-            bool confirmation = applicationToUpdate.UpdateMembershipApplication(ApplicationStatus.OnHold, out string message);
+            bool confirmation = applicationToUpdate.UpdateMembershipApplication(applicationStatus, out string message);
 
             Assert.True(confirmation);
 
             var retrievedApplication = requestDirector.GetMembershipApplications(DateTime.Today.AddDays(-29), DateTime.Today.AddDays(1)).Where(ma =>
-            ma.ApplicationStatus == ApplicationStatus.OnHold && ma.ProspectiveMemberContactInfo.FirstName == applicationToUpdate.ProspectiveMemberContactInfo.FirstName
+            ma.ApplicationStatus == applicationStatus && ma.ProspectiveMemberContactInfo.FirstName == applicationToUpdate.ProspectiveMemberContactInfo.FirstName
             && ma.ProspectiveMemberContactInfo.LastName == applicationToUpdate.ProspectiveMemberContactInfo.LastName).FirstOrDefault();
 
             Assert.NotNull(retrievedApplication);

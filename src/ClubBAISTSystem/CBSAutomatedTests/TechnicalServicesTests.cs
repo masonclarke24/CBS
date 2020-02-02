@@ -11,15 +11,15 @@ using Xunit;
 
 namespace CBSAutomatedTests
 {
-    public class TechnicalServicesTests
+    public class TechnicalServicesTests:IDisposable
     {
         
         private readonly Random random;
         private readonly string connectionString = "Server=(localdb)\\mssqllocaldb;Database=CBS;Integrated Security=True;";
-        private readonly MembershipApplication membershipApplication;
+        private MembershipApplication membershipApplication;
         public TechnicalServicesTests()
         {
-            random = new Random(55);
+            random = new Random();
             string firstName = RandomName();
             string lastName = RandomName();
             membershipApplication = new MembershipApplication(connectionString)
@@ -70,8 +70,6 @@ namespace CBSAutomatedTests
 
             Domain.CBS requestDirector = new Domain.CBS(connectionString);
             bool success = requestDirector.RecordMembershipApplication(membershipApplication);
-            RemoveMembershipApplication();
-
             Assert.True(success);
         }
 
@@ -81,7 +79,6 @@ namespace CBSAutomatedTests
             Domain.CBS requestDirector = new Domain.CBS(connectionString);
             requestDirector.RecordMembershipApplication(membershipApplication);
             var membershipApplications = requestDirector.GetMembershipApplications(DateTime.Today.AddDays(-29), DateTime.Today.AddDays(1));
-            RemoveMembershipApplication();
 
             Assert.True(membershipApplications.Exists(ma => ma.ProspectiveMemberContactInfo.LastName == membershipApplication.ProspectiveMemberContactInfo.LastName
             && ma.ProspectiveMemberContactInfo.FirstName == membershipApplication.ProspectiveMemberContactInfo.FirstName));
@@ -152,19 +149,20 @@ namespace CBSAutomatedTests
             Assert.False(new MembershipApplication(connectionString).UpdateMembershipApplication(ApplicationStatus.Denied, out string _));
         }
 
-        [Fact]
-        public void CreateAccount_AccountExistsAndMatchesApplicationInfo()
+        [Theory]
+        [InlineData(MembershipType.Associate)]
+        [InlineData(MembershipType.Shareholder)]
+        public void CreateAccount_AccountExistsAndMatchesApplicationInfo(MembershipType membershipType)
         {
+            membershipApplication = CreateAndRecordMembershipApplication(membershipType);
 
-            CBS requestDirector = new CBS(connectionString);
-            var foundApplication = requestDirector.GetMembershipApplications(DateTime.Today.AddDays(-29), DateTime.Today.AddDays(1)).FirstOrDefault();
-
-            Assert.NotNull(foundApplication);
+            Assert.NotNull(membershipApplication);
 
             using (SqlConnection connection = new SqlConnection(connectionString))
             {
-                using (SqlCommand command = new SqlCommand($"SELECT COUNT(*) FROM AspNetUsers WHERE MemberName = '{foundApplication.ProspectiveMemberContactInfo.FirstName} {foundApplication.ProspectiveMemberContactInfo.LastName}'" +
-                    $" AND Email = '{foundApplication.ProspectiveMemberContactInfo.Email}' AND PhoneNumber = '{foundApplication.ProspectiveMemberContactInfo.PrimaryPhone}'", connection))
+                using (SqlCommand command = new SqlCommand($"SELECT COUNT(*) FROM AspNetUsers WHERE MemberName = '{membershipApplication.ProspectiveMemberContactInfo.FirstName} {membershipApplication.ProspectiveMemberContactInfo.LastName}'" +
+                    $" AND Email = '{membershipApplication.ProspectiveMemberContactInfo.Email}' AND PhoneNumber = '{membershipApplication.ProspectiveMemberContactInfo.PrimaryPhone}' AND" +
+                    $" MembershipType = '{membershipType.ToString()}'", connection))
                 {
                     command.CommandType = System.Data.CommandType.Text;
                     connection.Open();
@@ -172,25 +170,28 @@ namespace CBSAutomatedTests
                 }
             }
 
-            bool confirmation = foundApplication.CreateMemberAccount(out string message);
+            bool confirmation = membershipApplication.CreateMemberAccount(out string message);
 
             Assert.True(confirmation);
 
-            using(SqlConnection connection = new SqlConnection(connectionString))
+            using (SqlConnection connection = new SqlConnection(connectionString))
             {
-                using(SqlCommand command = new SqlCommand($"SELECT COUNT(*) FROM AspNetUsers WHERE MemberName = '{foundApplication.ProspectiveMemberContactInfo.FirstName} {foundApplication.ProspectiveMemberContactInfo.LastName}'" +
-                    $" AND Email = '{foundApplication.ProspectiveMemberContactInfo.Email}' AND PhoneNumber = '{foundApplication.ProspectiveMemberContactInfo.PrimaryPhone}'", connection))
+                using (SqlCommand command = new SqlCommand($"SELECT COUNT(*) FROM AspNetUsers WHERE MemberName = '{membershipApplication.ProspectiveMemberContactInfo.FirstName} {membershipApplication.ProspectiveMemberContactInfo.LastName}'" +
+                    $" AND Email = '{membershipApplication.ProspectiveMemberContactInfo.Email}' AND PhoneNumber = '{membershipApplication.ProspectiveMemberContactInfo.PrimaryPhone}'", connection))
                 {
                     command.CommandType = System.Data.CommandType.Text;
                     connection.Open();
                     Assert.Equal("1", command.ExecuteScalar().ToString());
                 }
             }
+        }
 
+        private void RemoveMemberAccount()
+        {
             using (SqlConnection connection = new SqlConnection(connectionString))
             {
-                using (SqlCommand command = new SqlCommand($"DELETE AspNetUsers WHERE MemberName = '{foundApplication.ProspectiveMemberContactInfo.FirstName} {foundApplication.ProspectiveMemberContactInfo.LastName}'" +
-                    $"AND Email = '{foundApplication.ProspectiveMemberContactInfo.Email}' AND PhoneNumber = '{foundApplication.ProspectiveMemberContactInfo.PrimaryPhone}'", connection))
+                using (SqlCommand command = new SqlCommand($"DELETE AspNetUsers WHERE MemberName = '{membershipApplication.ProspectiveMemberContactInfo.FirstName} {membershipApplication.ProspectiveMemberContactInfo.LastName}'" +
+                    $"AND Email = '{membershipApplication.ProspectiveMemberContactInfo.Email}' AND PhoneNumber = '{membershipApplication.ProspectiveMemberContactInfo.PrimaryPhone}'", connection))
                 {
                     command.CommandType = System.Data.CommandType.Text;
                     connection.Open();
@@ -198,7 +199,46 @@ namespace CBSAutomatedTests
                 }
             }
         }
-        private string RandomName(int length = 5)
+
+        private MembershipApplication CreateAndRecordMembershipApplication(MembershipType membershipType)
+        {
+            Domain.CBS requestDirector = new Domain.CBS(connectionString);
+            membershipApplication.MembershipType = membershipType;
+            bool success = requestDirector.RecordMembershipApplication(membershipApplication);
+            var foundApplication = requestDirector.GetMembershipApplications(DateTime.Today.AddDays(-29), DateTime.Today.AddDays(1)).FirstOrDefault();
+            return foundApplication;
+        }
+
+        [Theory]
+        [InlineData(MembershipType.Associate, 4500)]
+        [InlineData(MembershipType.Shareholder, 3000)]
+        public void CreateAccount_CorrectFeesAssessed(MembershipType type, double membershipFee)
+        {
+            membershipApplication = CreateAndRecordMembershipApplication(type);
+            membershipApplication.CreateMemberAccount(out string message);
+
+            string userId = null;
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                using (SqlCommand command = new SqlCommand($"SELECT Id FROM AspNetUsers WHERE MemberName = '{membershipApplication.ProspectiveMemberContactInfo.FirstName} {membershipApplication.ProspectiveMemberContactInfo.LastName}'" +
+                    $" AND Email = '{membershipApplication.ProspectiveMemberContactInfo.Email}' AND PhoneNumber = '{membershipApplication.ProspectiveMemberContactInfo.PrimaryPhone}'", connection))
+                {
+                    command.CommandType = System.Data.CommandType.Text;
+                    connection.Open();
+                    userId = command.ExecuteScalar().ToString();
+                }
+            }
+
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                using(SqlCommand command = new SqlCommand($"SELECT Amount FROM AccountTransactions WHERE Description = 'Membership fee' AND UserId = '{userId}'", connection))
+                {
+                    connection.Open();
+                    Assert.Equal(membershipFee, double.Parse(command.ExecuteScalar().ToString()));
+                }
+            }
+        }
+        private string RandomName(int length = 10)
         {
             StringBuilder name = new StringBuilder();
 
@@ -221,6 +261,12 @@ namespace CBSAutomatedTests
                     command.ExecuteNonQuery();
                 }
             }
+        }
+
+        public void Dispose()
+        {
+            RemoveMemberAccount();
+            RemoveMembershipApplication();
         }
     }
 }

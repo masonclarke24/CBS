@@ -1,0 +1,49 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Text;
+
+namespace TechnicalServices.Memberships
+{
+    public class MembershipFees
+    {
+        public virtual DataTable FeeDetails { get; protected set; }
+    }
+
+    public class Shareholder : MembershipFees
+    {
+        private DataTable feeDetails;
+        public Shareholder()
+        {
+            feeDetails = new DataTable(null);
+            feeDetails.Columns.Add("Description");
+            feeDetails.Columns.Add("Amount");
+
+            feeDetails.Rows.Add("Share purchase price", 1000);
+            feeDetails.Rows.Add("Entrance fee", 10000);
+            feeDetails.Rows.Add("Membership fee", 3000);
+            feeDetails.Rows.Add("Food and beverage charge",500);
+        }
+
+        public override DataTable FeeDetails { get => feeDetails; protected set => base.FeeDetails = value; }
+
+    }
+
+    public class Associate : MembershipFees
+    {
+        private DataTable feeDetails;
+        public Associate()
+        {
+            feeDetails = new DataTable(null);            
+            feeDetails.Columns.Add("Description");
+            feeDetails.Columns.Add("Amount");
+
+            feeDetails.Rows.Add("Entrance fee", 10000);
+            feeDetails.Rows.Add("Membership fee", 4500);
+            feeDetails.Rows.Add("Food and beverage charge", 500);
+        }
+
+        public override DataTable FeeDetails { get => feeDetails; protected set => base.FeeDetails = value; }
+
+    }
+}

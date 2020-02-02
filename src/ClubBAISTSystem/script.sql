@@ -38,6 +38,10 @@ IF EXISTS(SELECT * FROM SYS.TABLES WHERE [name] LIKE 'PermissableTeeTimes')
 	DROP TABLE PermissableTeeTimes
 GO
 
+IF EXISTS(SELECT * FROM SYS.TABLES WHERE [name] LIKE 'AccountTransactions')
+	DROP TABLE AccountTransactions
+GO
+
 IF EXISTS(SELECT * FROM SYSOBJECTS WHERE [name] LIKE 'ViewStandingTeeTimeRequests')
 	DROP PROCEDURE ViewStandingTeeTimeRequests
 GO
@@ -94,8 +98,16 @@ IF EXISTS(SELECT * FROM SYSOBJECTS WHERE [name] LIKE 'CreateMemberAccount')
 	DROP PROCEDURE CreateMemberAccount
 GO
 
+IF EXISTS(SELECT * FROM SYSOBJECTS WHERE [name] LIKE 'AssessMembershipFees')
+	DROP PROCEDURE AssessMembershipFees
+GO
+
 IF EXISTS(SELECT * FROM SYS.TYPES WHERE [name] LIKE 'GolferList')
 	DROP TYPE GolferList
+GO
+
+IF EXISTS(SELECT * FROM SYS.TYPES WHERE [name] LIKE 'FeeDetails')
+	DROP TYPE FeeDetails
 GO
 
 CREATE TABLE PermissableTeeTimes
@@ -192,10 +204,26 @@ CREATE TABLE MembershipApplication
 )
 GO
 
+CREATE TABLE AccountTransactions
+(
+	UserId NVARCHAR(450) NOT NULL CONSTRAINT FK_AccountTransactions_UserId FOREIGN KEY REFERENCES AspNetUsers(Id) ON DELETE CASCADE,
+	TransactionDate DATETIME NOT NULL,
+	BookedDate DATETIME NULL,
+	Amount MONEY NOT NULL,
+	Description VARCHAR(40) NOT NULL,
+	CONSTRAINT PK_AccountTransactions PRIMARY KEY (UserId, TransactionDate, Description)
+)
 
 CREATE TYPE GolferList AS TABLE
 (
 	UserId NVARCHAR(450) NOT NULL
+)
+GO
+
+CREATE TYPE FeeDetails AS TABLE
+(
+	Description VARCHAR(35),
+	Amount MONEY
 )
 GO
 
@@ -489,12 +517,13 @@ AS
 	RETURN 0
 GO
 
+
 CREATE PROCEDURE CreateMemberAccount(@membershipType VARCHAR(15), @lastName VARCHAR(25), @firstName VARCHAR(25), @email VARCHAR(48), @phoneNumber VARCHAR(25), 
 @passwordHash VARCHAR(450), @securityStamp VARCHAR(450), @concurrencyStamp VARCHAR(450), @id VARCHAR(450))
 AS
 	BEGIN TRANSACTION
 	INSERT INTO AspNetUsers VALUES(@id, @email, UPPER(@email), @email, UPPER(@email), 0, @passwordHash, LOWER(@securityStamp), LOWER(@concurrencyStamp), @phoneNumber, 0, 0, NULL, 1, 0, CONCAT(@firstName,' ',@lastName),
-	(SELECT TOP 1 MemberNumber FROM AspNetUsers ORDER BY 1 DESC) + 1, 'Gold')
+	(SELECT TOP 1 MemberNumber FROM AspNetUsers ORDER BY 1 DESC) + 1, 'Gold', @membershipType)
 
 	IF @@ERROR <> 0
 	BEGIN
@@ -503,7 +532,6 @@ AS
 		RETURN 1
 	END
 
-	INSERT INTO AspNetUserRoles(UserId, RoleId) VALUES(@id, (SELECT Id FROM AspNetRoles WHERE [Name] = @membershipType))
 	INSERT INTO AspNetUserRoles(UserId, RoleId) VALUES(@id, (SELECT Id FROM AspNetRoles WHERE [Name] = 'Golfer'))
 
 	IF @@ROWCOUNT = 0 OR @@ERROR <> 0
@@ -517,3 +545,29 @@ AS
 	RETURN 0
 GO
 
+CREATE PROCEDURE AssessMembershipFees(@userId NVARCHAR(450), @feeDetails FeeDetails READONLY)
+AS
+	BEGIN TRANSACTION
+
+	INSERT INTO AccountTransactions
+	SELECT
+		@userId,
+		GETDATE(),
+		NULL,
+		Amount,
+		Description
+	FROM
+		@feeDetails
+
+	IF @@ERROR <> 0
+	BEGIN
+		ROLLBACK TRANSACTION
+		RAISERROR('Unable to add membership fees',16,1)
+		RETURN 1
+	END
+
+	COMMIT TRANSACTION
+	RETURN 0
+GO
+
+SELECT * FROM AspNetUsers

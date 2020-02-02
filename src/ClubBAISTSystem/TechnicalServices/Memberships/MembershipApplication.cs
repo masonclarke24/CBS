@@ -78,6 +78,7 @@ namespace TechnicalServices.Memberships
         {
             bool confirmation;
             message = "success";
+            Guid id = default;
             using(SqlConnection connection = new SqlConnection(connectionString))
             {
                 using (SqlCommand command = new SqlCommand("CreateMemberAccount", connection) { CommandType = System.Data.CommandType.StoredProcedure })
@@ -105,7 +106,8 @@ namespace TechnicalServices.Memberships
 
                     command.Parameters.AddWithValue("@securityStamp", securityStamp.ToString());
                     command.Parameters.AddWithValue("@concurrencyStamp", Guid.NewGuid());
-                    command.Parameters.AddWithValue("id", Guid.NewGuid());
+                    id = Guid.NewGuid();
+                    command.Parameters.AddWithValue("id", id);
                     command.Parameters.Add(new SqlParameter("@returnCode", -1) { Direction = System.Data.ParameterDirection.ReturnValue });
                     connection.Open();
 
@@ -118,6 +120,37 @@ namespace TechnicalServices.Memberships
                     {
                         confirmation = false;
                         message = ex.Message;
+                    }
+                }
+            }
+
+            confirmation = AssessMembsershipFees(id,out message);
+            return confirmation;
+        }
+
+        private bool AssessMembsershipFees(Guid id, out string message)
+        {
+            bool confirmation = false;
+            message = "Success";
+            using(SqlConnection connection = new SqlConnection(connectionString))
+            {
+                using(SqlCommand command = new SqlCommand("AssessMembershipFees", connection) { CommandType = System.Data.CommandType.StoredProcedure })
+                {
+                    MembershipFees fees = Activator.CreateInstance(typeof(MembershipFees).Assembly.ToString(), $"TechnicalServices.Memberships.{MembershipType.ToString()}").Unwrap() as MembershipFees;
+                    command.Parameters.AddWithValue("@feeDetails", fees.FeeDetails);
+                    command.Parameters.AddWithValue("@userId", id);
+                    command.Parameters.Add(new SqlParameter("@returnCode", -1) { Direction = System.Data.ParameterDirection.ReturnValue });
+                    connection.Open();
+
+                    try
+                    {
+                        command.ExecuteNonQuery();
+                        confirmation = command.Parameters[command.Parameters.Count - 1].Value.ToString() == "0";
+                    }
+                    catch (Exception ex)
+                    {
+                        message = ex.Message;
+                        confirmation = false;
                     }
                 }
             }

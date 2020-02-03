@@ -16,6 +16,9 @@
                 Membership Type
             </th>
             <th>
+                Application Date
+            </th>
+            <th>
                 Details
             </th>
         </tr>
@@ -47,7 +50,16 @@
                         @membershipApplication.MembershipType
                     </td>
                     <td>
-                        <button type="button" class="btn btn-outline-info">Details</button>
+                        @membershipApplication.ApplicationDate.GetValueOrDefault().ToString("dd-MMM-yyyy")
+                    </td>
+                    <td>
+                        <form class="form" method="POST">
+                            <div class="form-group">
+                                <input type="submit" value="Details" asp-page-handler="Details" class="btn btn-outline-info"/>
+                                <input type="hidden" name="email" value="@membershipApplication.ProspectiveMemberContactInfo.Email" />
+                                <input type="hidden" name="applicationDate" value="@membershipApplication.ApplicationDate.GetValueOrDefault().Ticks" />
+                            </div>
+                        </form>
                     </td>
                 </tr>
             }

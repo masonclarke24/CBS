@@ -211,6 +211,7 @@ CREATE TABLE AccountTransactions
 	BookedDate DATETIME NULL,
 	Amount MONEY NOT NULL,
 	Description VARCHAR(40) NOT NULL,
+	DueDate DATE NOT NULL,
 	CONSTRAINT PK_AccountTransactions PRIMARY KEY (UserId, TransactionDate, Description)
 )
 
@@ -223,7 +224,8 @@ GO
 CREATE TYPE FeeDetails AS TABLE
 (
 	Description VARCHAR(35),
-	Amount MONEY
+	Amount MONEY,
+	DueDate DATE
 )
 GO
 
@@ -555,7 +557,8 @@ AS
 		GETDATE(),
 		NULL,
 		Amount,
-		Description
+		Description,
+		DueDate
 	FROM
 		@feeDetails
 

@@ -24,6 +24,31 @@
         }
         });
     }
+
+    function getMembershipApplications() {
+        $.ajax({
+            type: "POST",
+            url: "ViewMembershipApplications?handler=GetMembershipApplications",
+            beforeSend: function (xhr) {
+                xhr.setRequestHeader("RequestVerificationToken",
+                    $('input:hidden[name="__RequestVerificationToken"]').val());
+            },
+            success: function (response) {
+                document.getElementById('grid').innerHTML = response;
+                $('#timeSpan').html(`Membership applications between ${$("#startDate").val()} and ${$("#endDate").val()}`);
+                filterMembershipApplications();
+            },
+            data: {"startDate" :$('#startDate').val(), "endDate" : $('#endDate').val()},
+        failure: function (response) {
+            console.log(response);
+        }
+        });
+    }
+
+        window.addEventListener('load', () => {
+            $("#startDate").datepicker({ dateFormat: "dd-M-yy", maxDate: 1, changeYear: true, showButtonPanel: true, changeMonth: true, yearRange: "-10:+0" });
+            $("#endDate").datepicker({ dateFormat: "dd-M-yy", maxDate: 1, changeYear: true, showButtonPanel: true, changeMonth: true, yearRange: "-10:+0" });
+        });
 </script>
 }
 <h1>View Membership Applications</h1>
@@ -31,10 +56,10 @@
 @Html.AntiForgeryToken()
 <div class="container">
     <div class="row">
-        <div class="col-sm-2">Application Status</div>
+        <div class="col-sm-1">Application Status</div>
         <div class="col-sm-2">
-            <select id="applicationStatus">
-                <option value="-1">Select</option>
+            <select id="applicationStatus" class="form-control">
+                <option value="-1" class="form-control">All</option>
                 @foreach (var item in Enum.GetValues(typeof(TechnicalServices.ApplicationStatus)))
                 {
                     <option value="@((int)item)">@item</option>
@@ -44,8 +69,19 @@
         <div class="col-sm-2">
             <button type="button" class="btn btn-outline-info" onclick="filterMembershipApplications()">Filter</button>
         </div>
+        <div class="col-sm-1">Time Span</div>
+        <div class="col-sm-2">
+            <input id="startDate" class="form-control" placeholder="Start Date"/>
+        </div>
+        <div class="col-sm-2">
+            <input id="endDate" class="form-control" placeholder="End Date"/>
+        </div>
+        <div class="col-sm-2">
+            <button type="button" class="btn btn-outline-info" onclick="getMembershipApplications()">Fetch</button>
+        </div>
     </div>
 </div>
+<h4 id="timeSpan">Membership applications between @Model.StartDate.ToString("dd-MMM-yyyy") and @Model.EndDate.ToString("dd-MMM-yyyy")</h4>
 
 <div id="grid"><partial name="_MembershipApplicationsPartial" model="@Model.MembershipApplications" /></div>
 

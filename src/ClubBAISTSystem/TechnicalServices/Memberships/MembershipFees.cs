@@ -18,11 +18,12 @@ namespace TechnicalServices.Memberships
             feeDetails = new DataTable(null);
             feeDetails.Columns.Add("Description");
             feeDetails.Columns.Add("Amount");
+            feeDetails.Columns.Add("Due Date");
 
-            feeDetails.Rows.Add("Share purchase price", 1000);
-            feeDetails.Rows.Add("Entrance fee", 10000);
-            feeDetails.Rows.Add("Membership fee", 3000);
-            feeDetails.Rows.Add("Food and beverage charge",500);
+            feeDetails.Rows.Add("Share purchase price", 1000, DateTime.Today);
+            feeDetails.Rows.Add("Entrance fee", 10000, DateTime.Today.AddYears(2));
+            feeDetails.Rows.Add("Membership fee", 3000, new DateTime(DateTime.Today.Year, 4,1));
+            feeDetails.Rows.Add("Food and beverage charge",500, DateTime.Today);
         }
 
         public override DataTable FeeDetails { get => feeDetails; protected set => base.FeeDetails = value; }
@@ -37,13 +38,14 @@ namespace TechnicalServices.Memberships
             feeDetails = new DataTable(null);            
             feeDetails.Columns.Add("Description");
             feeDetails.Columns.Add("Amount");
+            feeDetails.Columns.Add("Due Date");
 
-            feeDetails.Rows.Add("Entrance fee", 10000);
-            feeDetails.Rows.Add("Membership fee", 4500);
-            feeDetails.Rows.Add("Food and beverage charge", 500);
+            feeDetails.Rows.Add("Entrance fee", 10000, DateTime.Today.AddYears(2));
+            feeDetails.Rows.Add("Membership fee", 4500, new DateTime(DateTime.Today.Year, 4, 1));
+            feeDetails.Rows.Add("Food and beverage charge", 500, DateTime.Today);
         }
 
-        public override DataTable FeeDetails { get => feeDetails; protected set => base.FeeDetails = value; }
+        public override DataTable FeeDetails { get => feeDetails; }
 
     }
 }

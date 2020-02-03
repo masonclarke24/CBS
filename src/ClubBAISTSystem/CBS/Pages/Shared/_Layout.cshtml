@@ -1,5 +1,6 @@
 ﻿<!DOCTYPE html>
 @using static Microsoft.AspNetCore.Http.SessionExtensions
+@using Microsoft.AspNetCore.Mvc.RazorPages
 @using System.Linq
 @using Microsoft.AspNetCore.Authorization
 @inject IAuthorizationService AuthorizationService
@@ -59,12 +60,12 @@
     <div class="container">
         <main role="main" class="pb-3">
             <div id="statusMessage">
-                @if (!(Model is null))
+                @if (Model is PageModel)
                 {
                     @if (Model.HttpContext.Session.TryGetValue("success", out byte[] message))
                     {
                         <div class="alert alert-success alert-dismissible" role="alert">
-                            @(new string((from c in message select (char)c).ToArray()))
+                            @(new string((from c in message select (char)c).ToArray()).Replace("\"",""))
                             <button type="button" class="close" data-dismiss="alert" aria-label="Close">
                                 <span aria-hidden="true">&times;</span>
                             </button>
@@ -73,12 +74,12 @@
                     }
                 }
 
-                @if (!(Model is null))
+                @if (Model is PageModel)
                 {
                     @if (Model.HttpContext.Session.TryGetValue("danger", out byte[] message))
                     {
                         <div class="alert alert-danger alert-dismissible" role="alert">
-                            @(new string((from c in message select (char)c).ToArray()))
+                            @(new string((from c in message select (char)c).ToArray()).Replace("\"",""))
                             <button type="button" class="close" data-dismiss="alert" aria-label="Close">
                                 <span aria-hidden="true">&times;</span>
                             </button>

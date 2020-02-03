@@ -534,7 +534,8 @@ AS
 		RETURN 1
 	END
 
-	INSERT INTO AspNetUserRoles(UserId, RoleId) VALUES(@id, (SELECT Id FROM AspNetRoles WHERE [Name] = 'Golfer'))
+	INSERT INTO AspNetUserRoles(UserId, RoleId) 
+		SELECT @id, Id FROM AspNetRoles WHERE [Name] IN('Golfer', @membershipType)
 
 	IF @@ROWCOUNT = 0 OR @@ERROR <> 0
 	BEGIN
@@ -547,6 +548,7 @@ AS
 	RETURN 0
 GO
 
+exec CreateMemberAccount @membershipType=N'Shareholder',@lastName=N'Doe',@firstName=N'John',@email=N'john.doe@test.com',@phoneNumber=N'5873373664',@passwordHash=N'ABujTV0Oqc7QZF2uuqYzppcade+wyCieUiGKiJ6Ydno6zuoONPJJCRsZUYtMmpICwQ==',@securityStamp=N'DSGOVLY66NSZGN9QL58K48AE5QE1RA5W',@concurrencyStamp='C3F2316B-6816-49F0-8C00-4AFC2C78B91A',@id='6BB46A3D-AD0A-45A5-8D6A-0CF382EBDB6B'
 CREATE PROCEDURE AssessMembershipFees(@userId NVARCHAR(450), @feeDetails FeeDetails READONLY)
 AS
 	BEGIN TRANSACTION

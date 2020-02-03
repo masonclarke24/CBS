@@ -57,7 +57,7 @@
                             <div class="form-group">
                                 <input type="submit" value="Details" asp-page-handler="Details" class="btn btn-outline-info"/>
                                 <input type="hidden" name="email" value="@membershipApplication.ProspectiveMemberContactInfo.Email" />
-                                <input type="hidden" name="applicationDate" value="@membershipApplication.ApplicationDate.GetValueOrDefault().Ticks" />
+                                <input type="hidden" name="applicationDate" value="@membershipApplication.ApplicationDate.GetValueOrDefault().Date.Ticks" />
                             </div>
                         </form>
                     </td>

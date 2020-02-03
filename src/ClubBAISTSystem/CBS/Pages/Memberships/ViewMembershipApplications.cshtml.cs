@@ -53,7 +53,7 @@ namespace CBS
             return Partial("_MembershipApplicationsPartial", MembershipApplications);
         }
 
-        public PartialViewResult OnPostGetMembershipApplications([FromForm]string startDate, [FromForm]string endDate)
+        public IActionResult OnPostGetMembershipApplications([FromForm]string startDate, [FromForm]string endDate)
         {
 
             Domain.CBS requestDirector = new Domain.CBS(Startup.ConnectionString);
@@ -63,6 +63,14 @@ namespace CBS
             }
             else
             {
+                if(startDateDate.Ticks == 0 || endDateDate.Ticks == 0)
+                {
+                    if(startDateDate.Ticks == 0)
+                        ModelState.AddModelError(string.Empty, "Please select a valid start date");
+                    if(EndDate.Ticks == 0)
+                        ModelState.AddModelError(string.Empty, "Please select a valid start date");
+                    return Page();
+                }
                 StartDate = startDateDate;
                 EndDate = endDateDate;
                 MembershipApplications = requestDirector.GetMembershipApplications(StartDate, EndDate);
@@ -73,9 +81,56 @@ namespace CBS
             return Partial("_MembershipApplicationsPartial", MembershipApplications);
         }
 
-        public PartialViewResult OnPostDetails()
+        public IActionResult OnPostDetails(string email, string applicationDate)
         {
-            return Partial("_UpdateMembershipApplicationPartial");
+            MembershipApplication foundMembershipApplication = null;
+            if(long.TryParse(applicationDate, out long dateTicks))
+            {
+                MembershipApplications = HttpContext.Session.Get<List<MembershipApplication>>(nameof(MembershipApplications));
+                foundMembershipApplication = MembershipApplications.Find(ma => ma.ApplicationDate.GetValueOrDefault().Date.Ticks == dateTicks &&
+                ma.ProspectiveMemberContactInfo.Email == email);
+            }
+
+            if(foundMembershipApplication is null)
+            {
+                ModelState.AddModelError(string.Empty, "Could not locate membership application");
+                return Page();
+            }
+
+            return Partial("_UpdateMembershipApplicationPartial", foundMembershipApplication);
+        }
+
+        public IActionResult OnPostUpdate(int applicationStatus, string email, long applicationDate)
+        {
+            MembershipApplications = HttpContext.Session.Get<List<MembershipApplication>>(nameof(MembershipApplications));
+            MembershipApplication foundMembershipApplication = MembershipApplications.Find(ma => ma.ApplicationDate.GetValueOrDefault().Date.Ticks == applicationDate &&
+             ma.ProspectiveMemberContactInfo.Email == email);
+
+            if(applicationStatus == (int)foundMembershipApplication.ApplicationStatus)
+            {
+                ModelState.AddModelError(string.Empty, "Please select a new application status");
+                return Partial("_UpdateMembershipApplicationPartial", foundMembershipApplication);
+            }
+
+            if(foundMembershipApplication.ApplicationStatus == TechnicalServices.ApplicationStatus.Accepted)
+            {
+                ModelState.AddModelError(string.Empty, "Cannot revoke an accepted application");
+                return Partial("_UpdateMembershipApplicationPartial", foundMembershipApplication);
+            }
+
+            if(foundMembershipApplication.UpdateMembershipApplication((TechnicalServices.ApplicationStatus)applicationStatus, out string message))
+            {
+                bool accountCreated = false;
+                if(applicationStatus == (int)TechnicalServices.ApplicationStatus.Accepted)
+                {
+                    accountCreated = foundMembershipApplication.CreateMemberAccount(out message);
+                }
+                HttpContext.Session.Put("success", "Membership application updated successfully." + (accountCreated ? " An account has been created for this member." : ""));
+                return RedirectToPage();
+            }
+
+            ModelState.AddModelError(string.Empty, "Could not update membership application");
+            return Partial("_UpdateMembershipApplicationPartial", foundMembershipApplication);
         }
     }
 }

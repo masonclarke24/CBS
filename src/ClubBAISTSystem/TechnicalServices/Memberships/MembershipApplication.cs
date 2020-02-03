@@ -25,15 +25,16 @@ namespace TechnicalServices.Memberships
 
         private const string defaultPassword = "Baist123$";
         private readonly DateTime? applicationDate;
+        [JsonProperty]
         private string connectionString;
 
+        [JsonConstructor]
         public MembershipApplication(string connectionString, DateTime? applicationDate)
             :this(connectionString)
         {
             this.applicationDate = applicationDate;
         }
 
-        [JsonConstructor]
         public MembershipApplication(string connectionString)
         {
             this.connectionString = connectionString;

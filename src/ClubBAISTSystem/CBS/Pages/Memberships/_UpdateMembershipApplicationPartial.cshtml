@@ -1,7 +1,195 @@
 ﻿@model TechnicalServices.Memberships.MembershipApplication
+@using System.Linq
 @{
     Layout = "~/Pages/Shared/_Layout.cshtml";
 }
 
-<h3>Application Status</h3>
+<div class="container">
+    <div class="row">
+        <div class="col-sm-4"><h3>Application Status</h3></div>
+        <form method="POST">
+            <div class="col-sm-4">
+                <select name="applicationStatus">
+                    <option value="@((int)Model.ApplicationStatus)">@Model.ApplicationStatus.ToString()</option>
+                    @foreach (var item in (from int applicationStatus in Enum.GetValues(typeof(TechnicalServices.ApplicationStatus)) where applicationStatus != (int)Model.ApplicationStatus select applicationStatus))
+                    {
+                        <option value="@item">@((TechnicalServices.ApplicationStatus)item)</option>
+                    }
+                </select>
+            </div>
+            <div class="col-sm-4">
+                <input type="hidden" name="email" value="@Model.ProspectiveMemberContactInfo.Email" />
+                <input type="hidden" name="applicationDate" value="@Model.ApplicationDate.GetValueOrDefault().Date.Ticks" />
+                @if (Model.ApplicationStatus != TechnicalServices.ApplicationStatus.Accepted)
+                {
+                    <input type="submit" value="Update" asp-page-handler="Update" class="btn btn-outline-info" />
+                }
+            </div>
+        </form>
+    </div>
+    <h4>Application Date: @Model.ApplicationDate.GetValueOrDefault().ToString("dd-MMM-yyyy")</h4>
+</div>
+
+<div asp-validation-summary="All" class="text-danger"></div>
+
 <hr />
+
+<section>
+
+    <h4>Personal Information</h4>
+    <hr style="width: 50%; float: inline-start;" />
+    <p>&nbsp;</p>
+
+    <div class="row">
+        <div class="form-group col-sm-6">
+            <label>Last Name:</label>
+            <input disabled class="form-control" value="@Model.ProspectiveMemberContactInfo.LastName" />
+        </div>
+        <div class="form-group col-sm-6">
+            <label>First Name:</label>
+            <input disabled class="form-control" value="@Model.ProspectiveMemberContactInfo.FirstName" />
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="form-group col-sm-9">
+            <label>Address:</label>
+            <input disabled class="form-control" value="@Model.ProspectiveMemberContactInfo.Address" />
+        </div>
+        <div class="col-sm-3"></div>
+    </div>
+
+    <div class="row">
+        <div class="form-group col-sm-6">
+            <label>City:</label>
+            <input disabled class="form-control" value="@Model.ProspectiveMemberContactInfo.City" />
+        </div>
+        <div class="form-group col-sm-6">
+            <label>Postal Code:</label>
+            <input disabled class="form-control" value="@Model.ProspectiveMemberContactInfo.PostalCode" />
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="form-group col-sm-6">
+            <label>Phone:</label>
+            <input disabled class="form-control" value="@Model.ProspectiveMemberContactInfo.PrimaryPhone" />
+        </div>
+        <div class="form-group col-sm-6">
+            <label>Alternate Phone:</label>
+            <input disabled class="form-control" value="@Model.ProspectiveMemberContactInfo.AlternatePhone" />
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="form-group col-sm-6">
+            <label>Email:</label>
+            <input disabled class="form-control" value="@Model.ProspectiveMemberContactInfo.Email" />
+        </div>
+        <div class="form-group col-sm-6">
+            <label>First Name:</label>
+            <input disabled class="form-control" value="@Model.DateOfBirth.ToString("dd-MMM-yyyy")" />
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="form-group col-sm-3">
+            <label>Membership Type:</label>
+            <input disabled class="form-control" value="@Model.MembershipType" />
+        </div>
+        <div class="col-sm-9"></div>
+    </div>
+</section>
+
+<section class="container">
+
+    <h4>Employment Information</h4>
+    <hr style="width: 50%; float: inline-start;" />
+    <p>&nbsp;</p>
+
+    <div class="row">
+        <div class="form-group col-sm-6">
+            <label>Occupation:</label>
+            <input disabled class="form-control" value="@Model.Occupation" />
+        </div>
+        <div class="form-group col-sm-6">
+            <label>Company Name:</label>
+            <input disabled class="form-control" value="@Model.EmploymentDetails.CompanyName" />
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="form-group col-sm-9">
+            <label>Address:</label>
+            <input disabled class="form-control" value="@Model.EmploymentDetails.Address" />
+        </div>
+        <div class="col-sm-3"></div>
+    </div>
+
+    <div class="row">
+        <div class="form-group col-sm-6">
+            <label>City:</label>
+            <input disabled class="form-control" value="@Model.EmploymentDetails.City" />
+        </div>
+        <div class="form-group col-sm-6">
+            <label>Company Name:</label>
+            <input disabled class="form-control" value="@Model.EmploymentDetails.PostalCode" />
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="form-group col-sm-3">
+            <label>Phone:</label>
+            <input disabled class="form-control" value="@Model.EmploymentDetails.PrimaryPhone" />
+        </div>
+        <div class="col-sm-9"></div>
+    </div>
+</section>
+
+<section class="container">
+
+    <h4>Sponsorship Details</h4>
+    <hr style="width: 50%; float: inline-start;" />
+    <p>&nbsp;</p>
+
+    <div class="row">
+        <div class="form-group col-sm-6">
+            <label>Shareholder Name:</label>
+            <input disabled class="form-control" value="@Model.Shareholder1" />
+        </div>
+        <div class="form-group col-sm-6">
+            <label>Shareholder Name:</label>
+            <input disabled class="form-control" value="@Model.Shareholder2" />
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="form-group col-sm-6">
+            <label>Date:</label>
+            <input disabled class="form-control" value="@Model.Shareholder1SigningDate.ToString("dd-MMM-yyyy")"/>
+        </div>
+        <div class="form-group col-sm-6">
+            <label>Date:</label>
+            <input disabled class="form-control" value="@Model.Shareholder2SigningDate.ToString("dd-MMM-yyyy")" />
+        </div>
+    </div>
+</section>
+
+<section class="container">
+
+    <h4>Certifications</h4>
+    <hr style="width: 50%; float: inline-start;" />
+    <p>&nbsp;</p>
+
+    <div class="row">
+        <div class="form-group col-sm-6 d-flex flex-row-reverse" style="align-items: first-baseline">
+            <label>Prospective members aggrees to pay the annual dues and to be bound the the Memorandum and article of Accociation of Club BAIST, and the rules, regulations and by-laws of the Directors of club BAIST, and all amendments thereto.</label>
+            <input type="checkbox" @(Model.ProspectiveMemberCertification ? "checked" : "") disabled class="form-control-sm mr-1" />
+        </div>
+        <div class="form-group col-sm-6 d-flex flex-row-reverse" style="align-items: first-baseline">
+            <label>Shareholders certify that the above named applicant is deemed to be a sutiable person to be elected as a member of club BAIST.</label>
+            <input type="checkbox" @(Model.ShareholderCertification ? "checked" : "") disabled class="form-control-sm mr-1" />
+        </div>
+    </div>
+
+</section>

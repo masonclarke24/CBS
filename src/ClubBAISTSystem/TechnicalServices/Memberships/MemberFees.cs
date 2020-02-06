@@ -5,12 +5,12 @@ using System.Text;
 
 namespace TechnicalServices.Memberships
 {
-    public class MembershipFees
+    public class MemberFees
     {
         public virtual DataTable FeeDetails { get; protected set; }
     }
 
-    public class Shareholder : MembershipFees
+    public class Shareholder : MemberFees
     {
         private DataTable feeDetails;
         public Shareholder()
@@ -30,7 +30,7 @@ namespace TechnicalServices.Memberships
 
     }
 
-    public class Associate : MembershipFees
+    public class Associate : MemberFees
     {
         private DataTable feeDetails;
         public Associate()

@@ -102,6 +102,10 @@ IF EXISTS(SELECT * FROM SYSOBJECTS WHERE [name] LIKE 'AssessMembershipFees')
 	DROP PROCEDURE AssessMembershipFees
 GO
 
+IF EXISTS(SELECT * FROM SYSOBJECTS WHERE [name] LIKE 'GetAccountDetail')
+	DROP PROCEDURE GetAccountDetail
+GO
+
 IF EXISTS(SELECT * FROM SYS.TYPES WHERE [name] LIKE 'GolferList')
 	DROP TYPE GolferList
 GO
@@ -548,7 +552,7 @@ AS
 	RETURN 0
 GO
 
-exec CreateMemberAccount @membershipType=N'Shareholder',@lastName=N'Doe',@firstName=N'John',@email=N'john.doe@test.com',@phoneNumber=N'5873373664',@passwordHash=N'ABujTV0Oqc7QZF2uuqYzppcade+wyCieUiGKiJ6Ydno6zuoONPJJCRsZUYtMmpICwQ==',@securityStamp=N'DSGOVLY66NSZGN9QL58K48AE5QE1RA5W',@concurrencyStamp='C3F2316B-6816-49F0-8C00-4AFC2C78B91A',@id='6BB46A3D-AD0A-45A5-8D6A-0CF382EBDB6B'
+
 CREATE PROCEDURE AssessMembershipFees(@userId NVARCHAR(450), @feeDetails FeeDetails READONLY)
 AS
 	BEGIN TRANSACTION
@@ -575,4 +579,32 @@ AS
 	RETURN 0
 GO
 
-SELECT * FROM AspNetUsers
+CREATE PROCEDURE GetAccountDetail(@email VARCHAR(48), @fromDate DATE, @toDate DATE)
+AS
+	SELECT
+		MemberName [Name],
+		MembershipLevel,
+		MembershipType,
+		SUM(Amount) [Balance]
+	FROM
+		AspNetUsers INNER JOIN AccountTransactions ON UserId = Id
+	WHERE
+		Email = @email
+	GROUP BY 
+		MemberName,
+		MembershipLevel,
+		MembershipType
+
+	SELECT
+		TransactionDate,
+		BookedDate,
+		Amount,
+		Description,
+		DueDate
+	FROM
+		AccountTransactions INNER JOIN AspNetUsers ON UserId = Id
+	WHERE
+		TransactionDate BETWEEN @fromDate AND @toDate
+GO
+
+sp_help AspNetUsers

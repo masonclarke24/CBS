@@ -101,5 +101,12 @@ namespace Domain
             ClubMemberships membershipManager = new ClubMemberships(connectionString);
             return membershipManager.FilterMembershipApplications(membershipApplications, applicationStatus);
         }
+
+        public MemberAccount GetAccountDetail(string email, DateTime dateTime1, DateTime dateTime2)
+        {
+            MemberAccount requestedAccount = new MemberAccount(email, connectionString);
+            requestedAccount.GetAccountDetails(dateTime1, dateTime2);
+            return requestedAccount;
+        }
     }
 }

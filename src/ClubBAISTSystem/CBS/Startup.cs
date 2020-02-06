@@ -78,6 +78,7 @@ namespace CBS
             services.AddAuthorization(options =>
             {
                 options.AddPolicy("ManageMemberships", policy => policy.RequireRole("MembershipCommittee"));
+                options.AddPolicy("ViewMemberAccount", policy => policy.RequireRole("FinanceComittee", "Golfer"));
             });
         }
 
@@ -114,10 +115,10 @@ namespace CBS
                 endpoints.MapControllerRoute("default", "{controller=Home}/{action=Index}/{id?}");
             });
 
-            //var membershipCommittee = new ApplicationUser() { Email = "memberships@cbg.ca", UserName = "memberships@cbg.ca" };
-            //var newUser = userManager.CreateAsync(membershipCommittee, "Baist123$").GetAwaiter().GetResult();
-            //roleManager.CreateAsync(new IdentityRole("MembershipCommittee")).GetAwaiter().GetResult();
-            //userManager.AddToRoleAsync(membershipCommittee, "MembershipCommittee").GetAwaiter().GetResult();
+            var membershipCommittee = new ApplicationUser() { Email = "memberships@cbg.ca", UserName = "memberships@cbg.ca" };
+            var newUser = userManager.CreateAsync(membershipCommittee, "Baist123$").GetAwaiter().GetResult();
+            roleManager.CreateAsync(new IdentityRole("MembershipCommittee")).GetAwaiter().GetResult();
+            userManager.AddToRoleAsync(membershipCommittee, "MembershipCommittee").GetAwaiter().GetResult();
 
             //var golfProfessional = new ApplicationUser() { Email = "golfProfessional@cbg.ca", UserName = "golfProfessional@cbg.ca" };
             //userManager.CreateAsync(golfProfessional, "Baist123$").GetAwaiter().GetResult();

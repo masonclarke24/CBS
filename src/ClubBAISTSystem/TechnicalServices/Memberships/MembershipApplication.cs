@@ -140,7 +140,7 @@ namespace TechnicalServices.Memberships
             {
                 using(SqlCommand command = new SqlCommand("AssessMembershipFees", connection) { CommandType = System.Data.CommandType.StoredProcedure })
                 {
-                    MembershipFees fees = Activator.CreateInstance(typeof(MembershipFees).Assembly.ToString(), $"TechnicalServices.Memberships.{MembershipType.ToString()}").Unwrap() as MembershipFees;
+                    MemberFees fees = Activator.CreateInstance(typeof(MemberFees).Assembly.ToString(), $"TechnicalServices.Memberships.{MembershipType.ToString()}").Unwrap() as MemberFees;
                     command.Parameters.AddWithValue("@feeDetails", fees.FeeDetails);
                     command.Parameters.AddWithValue("@userId", id);
                     command.Parameters.Add(new SqlParameter("@returnCode", -1) { Direction = System.Data.ParameterDirection.ReturnValue });

@@ -190,6 +190,38 @@ namespace CBSAutomatedTests
             }
         }
 
+        [Theory]
+        [InlineData(MembershipType.Associate)]
+        [InlineData(MembershipType.Shareholder)]
+        public void GetAccountDetails_NotEmpty(MembershipType membershipType)
+        {
+            membershipApplication = CreateAndRecordMembershipApplication(membershipType);
+            membershipApplication.CreateMemberAccount(out string _);
+            CBS requestDirector = new CBS(connectionString);
+            MemberAccount foundAccount = requestDirector.GetAccountDetail(membershipApplication.ProspectiveMemberContactInfo.Email, DateTime.Today.AddDays(-29), DateTime.Today.AddDays(1));
+
+            Assert.NotEmpty(foundAccount.Transactions);
+            Assert.False(string.IsNullOrWhiteSpace(foundAccount.Name));
+            Assert.False(string.IsNullOrWhiteSpace(foundAccount.MembershipLevel));
+            Assert.NotNull(foundAccount.MembershipType);
+
+            RemoveMemberAccount();
+            RemoveMembershipApplication();
+        }
+
+        [Fact]
+        public void FilteredAccountDetails_ContainsOnlyFilterCriteria()
+        {
+            membershipApplication = CreateAndRecordMembershipApplication(MembershipType.Shareholder);
+            membershipApplication.CreateMemberAccount(out string _);
+            CBS requestDirector = new CBS(connectionString);
+            MemberAccount foundAccount = requestDirector.GetAccountDetail(membershipApplication.ProspectiveMemberContactInfo.Email, DateTime.Today.AddDays(-29), DateTime.Today.AddDays(1));
+
+            foundAccount.FilterAccountDetails("membership");
+
+            Assert.All(foundAccount.Transactions, (Transaction tran) => tran.Description.Contains("membership"));
+        }
+
         private void RemoveMemberAccount()
         {
             using (SqlConnection connection = new SqlConnection(connectionString))

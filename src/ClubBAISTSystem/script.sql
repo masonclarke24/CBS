@@ -1,6 +1,7 @@
 USE CBS
 GO
 
+SELECT * FROM AccountTransactions
 
 IF EXISTS(SELECT * FROM SYS.TABLES WHERE [name] LIKE 'GolferMembershipLevels')
 	DROP TABLE GolferMembershipLevels
@@ -579,7 +580,7 @@ AS
 	RETURN 0
 GO
 
-CREATE PROCEDURE GetAccountDetail(@email VARCHAR(48), @fromDate DATE, @toDate DATE)
+ALTER PROCEDURE GetAccountDetail(@email VARCHAR(48), @fromDate DATE, @toDate DATE)
 AS
 	SELECT
 		MemberName [Name],
@@ -604,7 +605,5 @@ AS
 	FROM
 		AccountTransactions INNER JOIN AspNetUsers ON UserId = Id
 	WHERE
-		TransactionDate BETWEEN @fromDate AND @toDate
+		CONVERT(DATE, TransactionDate) BETWEEN @fromDate AND @toDate
 GO
-
-sp_help AspNetUsers

@@ -3,19 +3,33 @@ using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Text;
 using System.Linq;
+using Newtonsoft.Json;
 
 namespace TechnicalServices.Memberships
 {
     public class MemberAccount
     {
+        [JsonProperty]
         public string Name { get; private set; }
+        [JsonProperty]
         public string MembershipLevel { get; private set; }
+        [JsonProperty]
         public MembershipType? MembershipType { get; private set; }
+        [JsonProperty]
         public double Balance { get; private set; }
+        [JsonProperty]
+        public DateTime FromDate { get; private set; }
+        [JsonProperty]
+        public DateTime ToDate { get; private set; }
+        [JsonProperty]
         private List<Transaction> transactions;
-        public List<Transaction> Transactions { get { return new List<Transaction>(transactions); } }
+        [JsonProperty]
+        private List<Transaction> filteredTransactions;
+        public List<Transaction> Transactions { get { return filteredTransactions is null ? new List<Transaction>(transactions) : new List<Transaction>(filteredTransactions); } }
         private readonly string email;
+        [JsonProperty]
         private readonly string connectionString;
+        [JsonConstructor]
         public MemberAccount(string email, string connectionString)
         {
             this.email = email;
@@ -24,6 +38,8 @@ namespace TechnicalServices.Memberships
 
         public void GetAccountDetails(DateTime fromDate, DateTime toDate)
         {
+            FromDate = fromDate;
+            ToDate = toDate;
             using(SqlConnection connection = new SqlConnection(connectionString))
             {
                 using(SqlCommand command = new SqlCommand("GetAccountDetail", connection) { CommandType = System.Data.CommandType.StoredProcedure })
@@ -75,7 +91,7 @@ namespace TechnicalServices.Memberships
 
         public void FilterAccountDetails(string description)
         {
-            transactions = (from tran in transactions where tran.Description.Contains(description) select tran).ToList();
+            filteredTransactions = (from tran in transactions where tran.Description.ToUpper().Contains(description?.ToUpper() ?? "") select tran).ToList();
         }
     }
 }

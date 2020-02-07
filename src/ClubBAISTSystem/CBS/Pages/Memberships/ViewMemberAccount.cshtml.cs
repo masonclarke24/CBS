@@ -36,8 +36,16 @@ namespace CBS
                     FromDate = DateTime.Today.AddDays(-30);
                     ToDate = DateTime.Today;
                 }
-                FoundMemberAccount = new Domain.CBS(Startup.ConnectionString).GetAccountDetail(userManager.GetUserAsync(User).GetAwaiter().GetResult().Email, FromDate, ToDate);
+                FoundMemberAccount = new Domain.CBS(Startup.ConnectionString).GetAccountDetail(userManager.FindByEmailAsync(User.Identity.Name).GetAwaiter().GetResult().Email, FromDate, ToDate);
+                HttpContext.Session.Put(nameof(FoundMemberAccount), FoundMemberAccount);
             }
+        }
+
+        public void OnPostFilterByDescription(string description)
+        {
+            FoundMemberAccount = HttpContext.Session.Get<MemberAccount>(nameof(FoundMemberAccount));
+            FoundMemberAccount.FilterAccountDetails(description);
+            HttpContext.Session.Put(nameof(FoundMemberAccount), FoundMemberAccount);
         }
     }
 }

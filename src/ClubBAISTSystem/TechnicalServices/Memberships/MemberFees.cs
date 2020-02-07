@@ -5,9 +5,9 @@ using System.Text;
 
 namespace TechnicalServices.Memberships
 {
-    public class MemberFees
+    public abstract class MemberFees
     {
-        public virtual DataTable FeeDetails { get; protected set; }
+        public abstract DataTable FeeDetails { get; protected set; }
     }
 
     public class Shareholder : MemberFees
@@ -20,13 +20,13 @@ namespace TechnicalServices.Memberships
             feeDetails.Columns.Add("Amount");
             feeDetails.Columns.Add("Due Date");
 
-            feeDetails.Rows.Add("Share purchase price", 1000, DateTime.Today);
-            feeDetails.Rows.Add("Entrance fee", 10000, DateTime.Today.AddYears(2));
-            feeDetails.Rows.Add("Membership fee", 3000, new DateTime(DateTime.Today.Year, 4,1));
-            feeDetails.Rows.Add("Food and beverage charge",500, DateTime.Today);
+            feeDetails.Rows.Add("Share purchase price", -1000, DateTime.Today);
+            feeDetails.Rows.Add("Entrance fee", -10000, DateTime.Today.AddYears(2));
+            feeDetails.Rows.Add("Membership fee", -3000, new DateTime(DateTime.Today.Year, 4,1));
+            feeDetails.Rows.Add("Food and beverage charge",-500, DateTime.Today);
         }
 
-        public override DataTable FeeDetails { get => feeDetails; protected set => base.FeeDetails = value; }
+        public override DataTable FeeDetails { get => feeDetails; protected set => feeDetails = value; }
 
     }
 
@@ -40,12 +40,12 @@ namespace TechnicalServices.Memberships
             feeDetails.Columns.Add("Amount");
             feeDetails.Columns.Add("Due Date");
 
-            feeDetails.Rows.Add("Entrance fee", 10000, DateTime.Today.AddYears(2));
-            feeDetails.Rows.Add("Membership fee", 4500, new DateTime(DateTime.Today.Year, 4, 1));
-            feeDetails.Rows.Add("Food and beverage charge", 500, DateTime.Today);
+            feeDetails.Rows.Add("Entrance fee", -10000, DateTime.Today.AddYears(2));
+            feeDetails.Rows.Add("Membership fee", -4500, new DateTime(DateTime.Today.Year, 4, 1));
+            feeDetails.Rows.Add("Food and beverage charge", -500, DateTime.Today);
         }
 
-        public override DataTable FeeDetails { get => feeDetails; }
+        public override DataTable FeeDetails { get => feeDetails; protected set { feeDetails = value; } }
 
     }
 }

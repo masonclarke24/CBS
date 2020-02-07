@@ -46,6 +46,13 @@
                             </li>
                         }
 
+                        @if((await AuthorizationService.AuthorizeAsync(User, "ViewMemberAccount")).Succeeded)
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-page="/Memberships/ViewMemberAccount">View Member Account</a>
+                            </li>
+                        }
+
                         @if (User.IsInRole("Shareholder"))
                         {
                             <li class="nav-item">

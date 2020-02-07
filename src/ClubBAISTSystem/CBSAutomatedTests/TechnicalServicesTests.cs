@@ -246,8 +246,8 @@ namespace CBSAutomatedTests
         }
 
         [Theory]
-        [InlineData(MembershipType.Associate, 4500)]
-        [InlineData(MembershipType.Shareholder, 3000)]
+        [InlineData(MembershipType.Associate, -4500)]
+        [InlineData(MembershipType.Shareholder, -3000)]
         public void CreateAccount_CorrectFeesAssessed(MembershipType type, double membershipFee)
         {
             membershipApplication = CreateAndRecordMembershipApplication(type);

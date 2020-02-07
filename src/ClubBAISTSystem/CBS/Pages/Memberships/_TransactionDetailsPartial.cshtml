@@ -1,0 +1,12 @@
+﻿@model TechnicalServices.Memberships.Transaction
+
+<div class="rounded border d-flex flex-column mt-1 mb-1">
+    <label>Description: @Model.Description</label>
+    <label @(Math.Sign(Model.Amount) == -1 ? "class=text-danger" : "")>Amount: @(Model.Amount.ToString("C2"))</label>
+    <label>Transaction Date: @Model.TransactionDate.ToString("dd-MMM-yyyy")</label>
+    @if (!(Model.BookedDate is null))
+    {
+        <label>Booked Date: @Model.BookedDate.GetValueOrDefault().ToString("dd-MMM-yyyy")</label>
+    }
+<label class="font-weight-bold">Due Date: @Model.DueDate.ToString("dd-MMM-yyyy")</label>
+</div>

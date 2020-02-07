@@ -4,5 +4,11 @@
     ViewData["Title"] = "ViewMemberAccount";
 }
 
-<h1>ViewMemberAccount</h1>
+<h1>View Member Account</h1>
+
+<div asp-validation-summary="All" class="text-danger"></div>
+@if (User.IsInRole("Golfer"))
+{
+    <partial name="_MemberAccountPartial" model="@Model.FoundMemberAccount"/>
+}
 

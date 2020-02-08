@@ -20,6 +20,7 @@ namespace CBS
         public DateTime FromDate { get; set; }
         [TempData]
         public DateTime ToDate { get; set; }
+        public IEnumerable<(string Name, string Email, double Balance)> AllAccountsSummary { get; private set; }
 
         public ViewMemberAccountModel(UserManager<ApplicationUser> userManager)
         {
@@ -31,13 +32,12 @@ namespace CBS
 
             if (User.IsInRole("Golfer"))
             {
-                if(FromDate.Ticks == 0 || ToDate.Ticks == 0)
-                {
-                    FromDate = DateTime.Today.AddDays(-30);
-                    ToDate = DateTime.Today;
-                }
-                FoundMemberAccount = new Domain.CBS(Startup.ConnectionString).GetAccountDetail(User.Identity.Name, FromDate, ToDate);
-                HttpContext.Session.Put(nameof(FoundMemberAccount), FoundMemberAccount);
+                GetMemberAccount(User.Identity.Name);
+            }
+            else
+            {
+                AllAccountsSummary = new Domain.CBS(Startup.ConnectionString).ViewAllAccountsSummary();
+                HttpContext.Session.Put(nameof(AllAccountsSummary), AllAccountsSummary);
             }
         }
 
@@ -66,6 +66,31 @@ namespace CBS
                 ModelState.AddModelError(string.Empty, "'Start Date' cannot be beyond 'End Date'");
             }
             FoundMemberAccount.GetAccountDetails(fromDate, toDate);
+            HttpContext.Session.Put(nameof(FoundMemberAccount), FoundMemberAccount);
+        }
+
+        public PartialViewResult OnPostFilterAccountSummary([FromForm] string filter)
+        {
+            AllAccountsSummary = HttpContext.Session.Get<IEnumerable<(string, string, double)>>(nameof(AllAccountsSummary));
+
+            return Partial("./MemberAccountPartials/_SelectMemberAccountPartial",
+                from summary in AllAccountsSummary where summary.Name.ToUpper().Contains(filter?.ToUpper() ?? "") 
+                || summary.Email.ToUpper().Contains(filter.ToUpper() ?? "") select summary);
+        }
+
+        public void OnPostGetMemberAccount(string email)
+        {
+            GetMemberAccount(email);
+        }
+
+        private void GetMemberAccount(string email)
+        {
+            if (FromDate.Ticks == 0 || ToDate.Ticks == 0)
+            {
+                FromDate = DateTime.Today.AddDays(-30);
+                ToDate = DateTime.Today;
+            }
+            FoundMemberAccount = new Domain.CBS(Startup.ConnectionString).GetAccountDetail(email, FromDate, ToDate);
             HttpContext.Session.Put(nameof(FoundMemberAccount), FoundMemberAccount);
         }
     }

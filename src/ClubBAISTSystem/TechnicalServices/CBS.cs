@@ -48,6 +48,12 @@ namespace Domain
             return standingTeeTimeManager.ViewStandingTeeTimeRequests(startDate, endDate);
         }
 
+        public List<(string Name, string Email, double Balance)> ViewAllAccountsSummary()
+        {
+            ClubMemberships membershipManager = new ClubMemberships(connectionString);
+            return membershipManager.ViewAllAccountsSummary();
+        }
+
         public bool RequestStandingTeeTime(StandingTeeTime requestedStandingTeeTime, out string message)
         {
             StandingTeeTimeRequests standingTeeTimeManager = new StandingTeeTimeRequests(connectionString);

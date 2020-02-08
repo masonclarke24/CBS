@@ -64,6 +64,32 @@ namespace TechnicalServices.Memberships
             }
         }
 
+        public List<(string Name, string Email, double Balance)> ViewAllAccountsSummary()
+        {
+            List<(string, string, double)> accountsSummary = null;
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                using(SqlCommand command = new SqlCommand("ViewAllAccountsSummary", connection) { CommandType = System.Data.CommandType.StoredProcedure })
+                {
+                    connection.Open();
+
+                    using(SqlDataReader reader = command.ExecuteReader())
+                    {
+                        if (reader.HasRows)
+                        {
+                            accountsSummary = new List<(string Name, string Email, double Balance)>();
+                            while (reader.Read())
+                            {
+                                accountsSummary.Add((reader["Name"].ToString(), reader["Email"].ToString(), double.Parse(reader["Balance"].ToString())));
+                            }
+                        }
+                    }
+                }
+            }
+
+            return accountsSummary;
+        }
+
         public List<MembershipApplication> GetMembershipApplications(DateTime startDate, DateTime endDate)
         {
             List<MembershipApplication> foundMembershipApplications = null;

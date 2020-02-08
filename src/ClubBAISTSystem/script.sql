@@ -107,6 +107,10 @@ IF EXISTS(SELECT * FROM SYSOBJECTS WHERE [name] LIKE 'GetAccountDetail')
 	DROP PROCEDURE GetAccountDetail
 GO
 
+IF EXISTS(SELECT * FROM SYSOBJECTS WHERE [name] LIKE 'ViewAllAccountsSummary')
+	DROP PROCEDURE ViewAllAccountsSummary
+GO
+
 IF EXISTS(SELECT * FROM SYS.TYPES WHERE [name] LIKE 'GolferList')
 	DROP TYPE GolferList
 GO
@@ -580,7 +584,7 @@ AS
 	RETURN 0
 GO
 
-ALTER PROCEDURE GetAccountDetail(@email VARCHAR(48), @fromDate DATE, @toDate DATE)
+CREATE PROCEDURE GetAccountDetail(@email VARCHAR(48), @fromDate DATE, @toDate DATE)
 AS
 	SELECT
 		MemberName [Name],
@@ -606,4 +610,17 @@ AS
 		AccountTransactions INNER JOIN AspNetUsers ON UserId = Id
 	WHERE
 		CONVERT(DATE, TransactionDate) BETWEEN @fromDate AND @toDate
+GO
+
+CREATE PROCEDURE ViewAllAccountsSummary
+AS
+	SELECT
+		MemberName [Name],
+		Email,
+		SUM(Amount) [Balance]
+	FROM
+		AspNetUsers INNER JOIN AccountTransactions ON AspNetUsers.Id = AccountTransactions.UserId
+	GROUP BY
+		MemberName,
+		Email
 GO

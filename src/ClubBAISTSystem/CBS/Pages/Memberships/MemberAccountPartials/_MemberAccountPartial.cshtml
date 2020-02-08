@@ -12,7 +12,7 @@
     </div>
 </div>
 
-<partial name="_TransactionFilterPartial" model="@((Model.FromDate, Model.ToDate))" />
+<partial name="./MemberAccountPartials/_TransactionFilterPartial" model="@((Model.FromDate, Model.ToDate))" />
 
 <div style="height: 50vh; overflow: auto">
     @if (!Model.Transactions.Any())
@@ -23,7 +23,7 @@
     {
         @foreach (TechnicalServices.Memberships.Transaction transaction in Model.Transactions)
         {
-            <partial name="_TransactionDetailsPartial" model="transaction" />
+            <partial name="./MemberAccountPartials/_TransactionDetailsPartial" model="transaction" />
         }
     }
 </div>   

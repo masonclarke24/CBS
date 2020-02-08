@@ -3,12 +3,56 @@
 @{
     ViewData["Title"] = "ViewMemberAccount";
 }
+@Html.AntiForgeryToken()
+@section Scripts{
+    @if (User.IsInRole("FinanceCommittee"))
+    {
+        <script>
+            function filterAccounts() {
+                let filterText = $(window.event.target).val();
+
+                $.ajax({
+                    type: "POST",
+                    url: "ViewMemberAccount?handler=FilterAccountSummary",
+                    beforeSend: function (xhr) {
+                        xhr.setRequestHeader("RequestVerificationToken",
+                            $('input:hidden[name="__RequestVerificationToken"]').val());
+                    },
+                    success: function (response) {
+                        document.getElementById('accountsSummary').innerHTML = response;
+                    },
+                    data: { "filter": filterText },
+                    failure: function (response) {
+                        console.log(response);
+                    }
+                });
+            }
+        </script>
+    }
+
+}
 
 <h1>View Member Account</h1>
 
 <div asp-validation-summary="All" class="text-danger"></div>
-@if (User.IsInRole("Golfer"))
+@if (User.IsInRole("FinanceCommittee") && Model.FoundMemberAccount is null)
 {
-    <partial name="_MemberAccountPartial" model="@Model.FoundMemberAccount" />
+    <div class="form-group">
+        <label>Filter:</label>
+        <input class="form-control" placeholder="Enter name or email" oninput="filterAccounts()" />
+    </div>
+    <div id="accountsSummary">
+        <partial name="./MemberAccountPartials/_SelectMemberAccountPartial" model="@Model.AllAccountsSummary" />
+    </div>
 }
+else if (Model.FoundMemberAccount is null)
+{
+    <h3>There is no account to display</h3>
+}
+else
+{
+    <partial name="./MemberAccountPartials/_MemberAccountPartial" model="@Model.FoundMemberAccount" />
+}
+
+
 

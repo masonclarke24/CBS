@@ -78,7 +78,7 @@ namespace CBS
             services.AddAuthorization(options =>
             {
                 options.AddPolicy("ManageMemberships", policy => policy.RequireRole("MembershipCommittee"));
-                options.AddPolicy("ViewMemberAccount", policy => policy.RequireRole("FinanceComittee", "Golfer"));
+                options.AddPolicy("ViewMemberAccount", policy => policy.RequireRole("FinanceCommittee", "Golfer"));
             });
         }
 
@@ -115,24 +115,11 @@ namespace CBS
                 endpoints.MapControllerRoute("default", "{controller=Home}/{action=Index}/{id?}");
             });
 
-            var membershipCommittee = new ApplicationUser() { Email = "memberships@cbg.ca", UserName = "memberships@cbg.ca" };
-            var newUser = userManager.CreateAsync(membershipCommittee, "Baist123$").GetAwaiter().GetResult();
-            roleManager.CreateAsync(new IdentityRole("MembershipCommittee")).GetAwaiter().GetResult();
-            userManager.AddToRoleAsync(membershipCommittee, "MembershipCommittee").GetAwaiter().GetResult();
+            //var membershipCommittee = new ApplicationUser() { Email = "finances@cbg.ca", UserName = "finances@cbg.ca" };
+            //var newUser = userManager.CreateAsync(membershipCommittee, "Baist123$").GetAwaiter().GetResult();
+            //roleManager.CreateAsync(new IdentityRole("FinanceCommittee")).GetAwaiter().GetResult();
+            //userManager.AddToRoleAsync(membershipCommittee, "FinanceCommittee").GetAwaiter().GetResult();
 
-            //var golfProfessional = new ApplicationUser() { Email = "golfProfessional@cbg.ca", UserName = "golfProfessional@cbg.ca" };
-            //userManager.CreateAsync(golfProfessional, "Baist123$").GetAwaiter().GetResult();
-
-            //roleManager.CreateAsync(new IdentityRole("ProShop")).GetAwaiter().GetResult();
-            //userManager.AddToRoleAsync(userManager.FindByIdAsync("ffb114b9-a4ec-4aac-be5a-63e84e9d0719").GetAwaiter().GetResult(), "ProShop").GetAwaiter().GetResult();
-
-            
-
-            //var golfer = new ApplicationUser() { Email = "golfer4@test.com", UserName = "golfer4@test.com", PhoneNumber = "(780) 456 9335", MemberName = "Copper Member", MemberNumber = "4", MembershipLevel = "Bronze"};
-            //userManager.CreateAsync(golfer, "Baist123$").GetAwaiter().GetResult();
-            ////roleManager.CreateAsync(new IdentityRole("Shareholder")).GetAwaiter().GetResult();
-            //userManager.AddToRoleAsync(golfer, "Golfer").GetAwaiter().GetResult();
-            //userManager.AddToRoleAsync(golfer, "Shareholder").GetAwaiter().GetResult();
         }
     }
 }

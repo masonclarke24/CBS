@@ -212,7 +212,6 @@ namespace CBSAutomatedTests
         [Fact]
         public void FilteredAccountDetails_ContainsOnlyFilterCriteria()
         {
-            membershipApplication = CreateAndRecordMembershipApplication(MembershipType.Shareholder);
             membershipApplication.CreateMemberAccount(out string _);
             CBS requestDirector = new CBS(connectionString);
             MemberAccount foundAccount = requestDirector.GetAccountDetail(membershipApplication.ProspectiveMemberContactInfo.Email, DateTime.Today.AddDays(-29), DateTime.Today.AddDays(1));
@@ -222,6 +221,15 @@ namespace CBSAutomatedTests
             Assert.All(foundAccount.Transactions, (Transaction tran) => tran.Description.Contains("membership"));
         }
 
+        [Fact]
+        public void ViewAllAccountsSummaryConainsNewAccount()
+        {
+            membershipApplication.CreateMemberAccount(out string _);
+
+            var accountsSummary = new CBS(connectionString).ViewAllAccountsSummary();
+            RemoveMemberAccount();
+            Assert.Contains(accountsSummary, s => s.Email == membershipApplication.ProspectiveMemberContactInfo.Email);
+        }
         private void RemoveMemberAccount()
         {
             using (SqlConnection connection = new SqlConnection(connectionString))

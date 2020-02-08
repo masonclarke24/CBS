@@ -15,8 +15,15 @@
 <partial name="_TransactionFilterPartial" model="@((Model.FromDate, Model.ToDate))" />
 
 <div style="height: 50vh; overflow: auto">
-    @foreach (TechnicalServices.Memberships.Transaction transaction in Model.Transactions)
+    @if (!Model.Transactions.Any())
     {
-        <partial name="_TransactionDetailsPartial" model="transaction" />
+        <h3>There are no transactions to display</h3>
+    }
+    else
+    {
+        @foreach (TechnicalServices.Memberships.Transaction transaction in Model.Transactions)
+        {
+            <partial name="_TransactionDetailsPartial" model="transaction" />
+        }
     }
 </div>   

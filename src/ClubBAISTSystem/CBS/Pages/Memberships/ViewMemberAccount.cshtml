@@ -1,4 +1,4 @@
-﻿@page
+﻿@page "{handler?}"
 @model CBS.ViewMemberAccountModel
 @{
     ViewData["Title"] = "ViewMemberAccount";
@@ -9,6 +9,6 @@
 <div asp-validation-summary="All" class="text-danger"></div>
 @if (User.IsInRole("Golfer"))
 {
-    <partial name="_MemberAccountPartial" model="@Model.FoundMemberAccount"/>
+    <partial name="_MemberAccountPartial" model="@Model.FoundMemberAccount" />
 }
 

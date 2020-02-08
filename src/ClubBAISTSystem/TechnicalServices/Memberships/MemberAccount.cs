@@ -25,7 +25,8 @@ namespace TechnicalServices.Memberships
         private List<Transaction> transactions;
         [JsonProperty]
         private List<Transaction> filteredTransactions;
-        public List<Transaction> Transactions { get { return filteredTransactions is null ? new List<Transaction>(transactions) : new List<Transaction>(filteredTransactions); } }
+        public List<Transaction> Transactions { get { return new List<Transaction>(filteredTransactions); } }
+        [JsonProperty]
         private readonly string email;
         [JsonProperty]
         private readonly string connectionString;
@@ -40,7 +41,8 @@ namespace TechnicalServices.Memberships
         {
             FromDate = fromDate;
             ToDate = toDate;
-            using(SqlConnection connection = new SqlConnection(connectionString))
+            transactions = new List<Transaction>();
+            using (SqlConnection connection = new SqlConnection(connectionString))
             {
                 using(SqlCommand command = new SqlCommand("GetAccountDetail", connection) { CommandType = System.Data.CommandType.StoredProcedure })
                 {
@@ -70,7 +72,6 @@ namespace TechnicalServices.Memberships
                         reader.NextResult();
                         if (reader.HasRows)
                         {
-                            transactions = new List<Transaction>();
                             while (reader.Read())
                             {
                                 Transaction transaction = new Transaction
@@ -87,6 +88,8 @@ namespace TechnicalServices.Memberships
                     }
                 }
             }
+
+            filteredTransactions = transactions is null ? new List<Transaction>() : new List<Transaction>(transactions);
         }
 
         public void FilterAccountDetails(string description)

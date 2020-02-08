@@ -1,7 +1,24 @@
 ﻿@model (DateTime From, DateTime To)
+<script>
+    window.addEventListener("load", () => {
+        $("input[name='fromDate']").datepicker({
+            dateFormat: "dd-M-yy", changeYear: true,
+            showButtonPanel: true, changeMonth: true, yearRange: "-10:+0", onSelect: function (selected) {
+                $("input[name='toDate']").datepicker("option", "minDate", selected);
+            }
+        });
+
+        $("input[name='toDate']").datepicker({
+            dateFormat: "dd-M-yy", changeYear: true,
+            showButtonPanel: true, changeMonth: true, yearRange: "-10:+0", onSelect: function (selected) {
+                $("input[name='fromDate']").datepicker("option", "maxDate", selected);
+            }
+        });
+    });
+</script>
 
 <div class="container-fluid">
-    <form method="POST" class="form-check d-flex" >
+    <form method="GET" class="form-check d-flex">
 
         <div class="form-group d-flex flex-column mr-2">
 
@@ -10,10 +27,10 @@
                 <input name="fromDate" class="form-control" value="@Model.From.ToString("dd-MMM-yyyy")" />
             </div>
 
-            <input type="submit" class="form-control btn btn-outline-info" asp-page-handler="FilterByTimespan" value="Filter By Timespan"/>
+            <input type="submit" class="form-control btn btn-outline-info" asp-page-handler="FilterByTimespan" value="Filter By Timespan" />
         </div>
 
-        <div class="form-group d-flex flex-column ml-2" >
+        <div class="form-group d-flex flex-column ml-2">
 
             <div class="d-flex justify-content-between pb-1 pl-1">
                 <label style="white-space:nowrap" class="mr-1">End Date:</label>
@@ -21,8 +38,8 @@
             </div>
 
             <div class="d-flex justify-content-between">
-                <input type="text" class="form-control mr-2" name="description" placeholder="Transaction Description" />
-                <input type="submit" class="form-control btn btn-outline-info ml-2" asp-page-handler="FilterByDescription" value="Filter By Description"/>
+                <input type="text" class="form-control mr-2" name="description" placeholder="Transaction Description" value="@(Context.Request.Query.TryGetValue("description", out Microsoft.Extensions.Primitives.StringValues description) ? description.ToString() : "")"/>
+                <input type="submit" class="form-control btn btn-outline-info ml-2" asp-page-handler="FilterByDescription" value="Filter By Description" />
             </div>
 
         </div>

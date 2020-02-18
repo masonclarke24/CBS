@@ -45,7 +45,12 @@
                                 <a class="nav-link text-dark" asp-area="" asp-page="/Memberships/ViewMembershipApplications">View Membership Applications</a>
                             </li>
                         }
-
+                        @if (User.IsInRole("Golfer"))
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-page="/PlayerScores/RecordScores">Record Scores</a>
+                            </li>
+                        }
                         @if((await AuthorizationService.AuthorizeAsync(User, "ViewMemberAccount")).Succeeded)
                         {
                             <li class="nav-item">

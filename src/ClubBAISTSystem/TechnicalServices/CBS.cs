@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using TechnicalServices;
 using TechnicalServices.Memberships;
+using TechnicalServices.PlayerScores;
 
 namespace Domain
 {
@@ -40,6 +41,12 @@ namespace Domain
             DailyTeeSheets teeSheetManager = new DailyTeeSheets(MemberNumber, connectionString);
             confirmation = teeSheetManager.ReserveTeeTime(requestedTeeTime, out message);
             return confirmation;
+        }
+
+        public bool RecordScores(ScoreCard providedScores, out string message)
+        {
+            PlayerScores scoreManager = new PlayerScores(connectionString, providedScores.Email);
+            return scoreManager.RecordScores(providedScores, out message);
         }
 
         public List<StandingTeeTime> ViewStandingTeeTimeRequests(DateTime startDate, DateTime endDate)

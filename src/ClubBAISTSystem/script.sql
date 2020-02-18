@@ -43,6 +43,17 @@ IF EXISTS(SELECT * FROM SYS.TABLES WHERE [name] LIKE 'AccountTransactions')
 	DROP TABLE AccountTransactions
 GO
 
+IF EXISTS(SELECT * FROM SYS.TABLES WHERE [name] LIKE 'ScoreDetails')
+	DROP TABLE ScoreDetails
+GO
+
+IF EXISTS(SELECT * FROM SYS.TABLES WHERE [name] LIKE 'ScoreCard')
+	DROP TABLE ScoreCard
+GO
+
+IF EXISTS(SELECT * FROM SYS.TABLES WHERE [name] LIKE 'HandicapReport')
+	DROP TABLE HandicapReport
+GO
 IF EXISTS(SELECT * FROM SYSOBJECTS WHERE [name] LIKE 'ViewStandingTeeTimeRequests')
 	DROP PROCEDURE ViewStandingTeeTimeRequests
 GO
@@ -109,6 +120,14 @@ GO
 
 IF EXISTS(SELECT * FROM SYSOBJECTS WHERE [name] LIKE 'ViewAllAccountsSummary')
 	DROP PROCEDURE ViewAllAccountsSummary
+GO
+
+IF EXISTS(SELECT * FROM SYSOBJECTS WHERE [name] LIKE 'RecordScores')
+	DROP PROCEDURE RecordScores
+GO
+
+IF EXISTS(SELECT * FROM SYS.TYPES WHERE [name] LIKE 'HoleByHoleScores')
+	DROP TYPE HoleByHoleScore
 GO
 
 IF EXISTS(SELECT * FROM SYS.TYPES WHERE [name] LIKE 'GolferList')
@@ -215,13 +234,45 @@ GO
 
 CREATE TABLE AccountTransactions
 (
-	UserId NVARCHAR(450) NOT NULL CONSTRAINT FK_AccountTransactions_UserId FOREIGN KEY REFERENCES AspNetUsers(Id) ON DELETE CASCADE,
+	UserId NVARCHAR(450) NOT NULL CONSTRAINT FK_AccountTransactions_UserId FOREIGN KEY REFERENCES AspNetUsers(Id),
 	TransactionDate DATETIME NOT NULL,
 	BookedDate DATETIME NULL,
 	Amount MONEY NOT NULL,
 	Description VARCHAR(40) NOT NULL,
 	DueDate DATE NOT NULL,
 	CONSTRAINT PK_AccountTransactions PRIMARY KEY (UserId, TransactionDate, Description)
+)
+
+CREATE TABLE ScoreCard
+(
+	Course VARCHAR(30) NOT NULL,
+	Rating DECIMAL(6,3) NOT NULL,
+	Slope DECIMAL(6,3) NOT NULL,
+	Date DATETIME NOT NULL,
+	UserId NVARCHAR(450) NOT NULL CONSTRAINT FK_ScoreCard_UserId FOREIGN KEY REFERENCES AspNetUsers(Id),
+	CONSTRAINT PK_ScoreCard_DateId PRIMARY KEY (Date,UserId)
+)
+
+CREATE TABLE ScoreDetails
+(
+	Date DATETIME NOT NULL,
+	UserId NVARCHAR(450) NOT NULL,
+	Hole INT NOT NULL CONSTRAINT CHK_ScoreDetails_Hole CHECK (Hole BETWEEN 1 AND 18),
+	Score INT NOT NULL,
+	CONSTRAINT FK_ScoreDetails_DateId FOREIGN KEY (Date,UserId) REFERENCES ScoreCard(Date,UserId),
+	CONSTRAINT PK_ScoreDetails_DateIdHole PRIMARY KEY (Date, UserId, Hole)
+)
+
+CREATE TABLE HandicapReport
+(
+	UserId NVARCHAR(450) NOT NULL CONSTRAINT FK_HandicapReport_UserId FOREIGN KEY REFERENCES AspNetUsers(Id),
+	LastUpdated DATE NOT NULL CONSTRAINT CHK_HandicapReport_LastUpdate CHECK (LastUpdated <= GETDATE()),
+	Month AS DATENAME(MONTH,LastUpdated),
+	Year AS DATEPART(YEAR,LastUpdated),
+	HandicapFactor DECIMAL(6,3) NOT NULL,
+	Average DECIMAL(6,3) NOT NULL,
+	BestOfTenAverage DECIMAL(6,3) NOT NULL,
+	CONSTRAINT PK_HandicapReport_UserIdDate PRIMARY KEY (UserId, LastUpdated)
 )
 
 CREATE TYPE GolferList AS TABLE
@@ -235,6 +286,12 @@ CREATE TYPE FeeDetails AS TABLE
 	Description VARCHAR(35),
 	Amount MONEY,
 	DueDate DATE
+)
+GO
+
+CREATE TYPE HoleByHoleScores AS TABLE
+(
+	HoleScore INT
 )
 GO
 
@@ -624,3 +681,158 @@ AS
 		MemberName,
 		Email
 GO
+
+CREATE PROCEDURE RecordScores(@course VARCHAR(30), @rating DECIMAL(6,3), @slope DECIMAL(6,3), @date DATETIME, @email NVARCHAR(128), @holeByHoleScores AS HoleByHoleScores READONLY, @message VARCHAR(128) OUT)
+AS
+	BEGIN TRANSACTION
+
+	DECLARE @userId NVARCHAR(450) = (SELECT TOP 1 Id FROM AspNetUsers WHERE Email = @email)
+
+	INSERT INTO ScoreCard(Course, Rating, Slope, Date, UserId)
+	SELECT TOP 1
+		@course,
+		@rating,
+		@slope,
+		@date,
+		@userId
+
+	IF @@ERROR <> 0
+	BEGIN
+		ROLLBACK TRANSACTION
+		SET @message = 'Unable to create scorecard for user with email ''' + @email + '''' 
+		RAISERROR(@message,16,1)
+		RETURN 1
+	END
+
+	INSERT INTO ScoreDetails(Date, UserId, Hole, Score)
+	SELECT
+		@date,
+		@userId,
+		ROW_NUMBER() OVER(ORDER BY @date),
+		HoleScore
+	FROM
+		@holeByHoleScores
+
+	IF @@ERROR <> 0
+	BEGIN
+		ROLLBACK TRANSACTION
+		SET @message = 'Unable to add score details to scoreCard' 
+		RAISERROR(@message,16,1)
+		RETURN 1
+	END
+
+	COMMIT TRANSACTION
+	RETURN 0
+GO
+
+CREATE PROCEDURE UpdateHandicapReport(@email NVARCHAR(128), @message VARCHAR(128) OUT)
+AS
+
+	DECLARE @userId NVARCHAR(450) = (SELECT TOP 1 Id FROM AspNetUsers WHERE Email = @email)
+	DECLARE @lifetimeRounds INT = (SELECT COUNT(*) FROM ScoreCard WHERE UserId = @userId)
+	
+	IF @lifetimeRounds < 5
+	BEGIN
+		SET @message = 'Cannot update handicap report at this time due to insufficient history'
+		RAISERROR(@message,16,1)
+		RETURN 1
+	END 
+
+	DECLARE @numberOfDifferentailsToUse INT = CASE
+		WHEN @lifetimeRounds BETWEEN 5 AND 6 THEN 1
+		WHEN @lifetimeRounds BETWEEN 7 AND 8 THEN 2
+		WHEN @lifetimeRounds BETWEEN 9 AND 10 THEN 3
+		WHEN @lifetimeRounds BETWEEN 11 AND 12 THEN 4
+		WHEN @lifetimeRounds BETWEEN 13 AND 14 THEN 5
+		WHEN @lifetimeRounds BETWEEN 15 AND 16 THEN 6
+		WHEN @lifetimeRounds = 17 THEN 8
+		WHEN @lifetimeRounds = 19 THEN 9
+		ELSE 10
+		END
+
+	SELECT
+	ROUND(([Score Per Day] - Rating) * 113.0 / Slope, 1) AS 'HandicapDifferential' INTO #HandicapDifferentials
+	FROM
+		(SELECT DISTINCT TOP 20
+			ScoreDetails.Date,
+			CAST(SUM(Score) OVER(PARTITION BY ScoreDetails.Date) AS DECIMAL) AS [Score Per Day]
+		FROM
+			ScoreDetails
+		WHERE
+			ScoreDetails.UserId = @userId
+	) AS [Scores]
+	INNER JOIN ScoreCard ON Scores.Date = ScoreCard.Date AND ScoreCard.UserId = @userId
+	ORDER BY ScoreCard.Date DESC
+
+	IF NOT EXISTS(SELECT * FROM HandicapReport INNER JOIN AspNetUsers ON UserId = Id WHERE Email = @email AND Year = DATEPART(YEAR, GETDATE()) AND Month = DATENAME(MONTH, GETDATE()))
+	BEGIN
+		INSERT INTO HandicapReport(UserId, LastUpdated, HandicapFactor, Average, BestOfTenAverage)
+			SELECT
+				@userId,
+				GETDATE(),
+				(SELECT ROUND(AVG(HandicapDifferential) * 0.96,1,1) FROM (SELECT TOP (@numberOfDifferentailsToUse) HandicapDifferential FROM #HandicapDifferentials ORDER BY HandicapDifferential ASC) [TopDifferentials]),
+				(SELECT ROUND(AVG(HandicapDifferential * 1.0),1) FROM #HandicapDifferentials),
+				(SELECT ROUND(AVG(HandicapDifferential * 1.0),1) FROM (SELECT TOP (@numberOfDifferentailsToUse) HandicapDifferential FROM #HandicapDifferentials ORDER BY HandicapDifferential ASC) [TopDifferentails])
+	END
+	ELSE
+	BEGIN
+		DECLARE @lastUpdated AS DATETIME = (SELECT TOP 1 LastUpdated FROM HandicapReport WHERE UserId = @userId ORDER BY LastUpdated DESC)
+		UPDATE HandicapReport
+			SET LastUpdated = GETDATE(),
+			HandicapFactor = (SELECT ROUND(AVG(HandicapDifferential * 0.96),1,1) FROM (SELECT TOP (@numberOfDifferentailsToUse) HandicapDifferential FROM #HandicapDifferentials ORDER BY HandicapDifferential ASC) [TopDifferentials]),
+			Average = (SELECT ROUND(AVG(HandicapDifferential * 1.0),1) FROM #HandicapDifferentials),
+			BestOfTenAverage = (SELECT ROUND(AVG(HandicapDifferential * 1.0),1) FROM (SELECT TOP (@numberOfDifferentailsToUse) HandicapDifferential FROM #HandicapDifferentials ORDER BY HandicapDifferential ASC) [TopDifferentails])
+		WHERE
+			UserId = @userId AND LastUpdated = @lastUpdated
+	END
+
+	IF @@ERROR <> 0 
+	RETURN 1
+
+	RETURN 0
+GO
+
+
+DECLARE @holeByHoleScores AS HoleByHoleScores
+DECLARE @message AS VARCHAR(123)
+
+--INSERT INTO @holeByHoleScores VALUES(4),(4),(4),(4),(4),(4),(4),(4),(4),(4),(4),(4),(4),(4),(4),(4),(4),(4)
+
+--EXEC RecordScores 'Club BAIST', 70.6, 128, 'April 29, 2020 17:00', 'shareholder1@test.com', @holeByHoleScores, @message OUT
+
+--SELECT * FROM AspNetUsers
+
+EXEC UpdateHandicapReport 'shareholder1@test.com', @message OUT
+
+
+SELECT SUM(Score) FROM ScoreDetails WHERE Date = '18-Feb-20 09:52:57' AND UserId = (SELECT TOP 1 UserId FROM AspNetUsers WHERE Email = 'shareholder1@test.com')
+
+declare @p6 dbo.HoleByHoleScores
+insert into @p6 values(N'5')
+insert into @p6 values(N'7')
+insert into @p6 values(N'6')
+insert into @p6 values(N'7')
+insert into @p6 values(N'4')
+insert into @p6 values(N'5')
+insert into @p6 values(N'6')
+insert into @p6 values(N'3')
+insert into @p6 values(N'4')
+insert into @p6 values(N'5')
+insert into @p6 values(N'7')
+insert into @p6 values(N'6')
+insert into @p6 values(N'4')
+insert into @p6 values(N'5')
+insert into @p6 values(N'7')
+insert into @p6 values(N'5')
+insert into @p6 values(N'6')
+insert into @p6 values(N'4')
+
+declare @p7 nvarchar(1)
+set @p7=NULL
+exec RecordScores @course=N'Club BAIST',@rating=70.599999999999994,@slope=128,@date='2020-02-18 09:52:57.517',@email=N'shareholder1@test.com',@holeByHoleScores=@p6,@message=@p7 output
+
+ALTER TABLE ScoreDetails DROP CONSTRAINT FK_ScoreDetails_DateId ALTER TABLE ScoreDetails ADD CONSTRAINT FK_ScoreDetails_DateId FOREIGN KEY (Date,UserId) REFERENCES ScoreCard(Date,UserId) ON DELETE CASCADE DELETE ScoreCard WHERE Date IN('18-Feb-20 09:52:57.517') AND UserId IN(SELECT UserId FROM AspNetUsers WHERE Email IN('shareholder1@test.com')) ALTER TABLE ScoreDetails ADD CONSTRAINT FK_ScoreDetails_DateId FOREIGN KEY (Date,UserId) REFERENCES ScoreCard(Date,UserId)
+
+SELECT * FROM ScoreDetails WHERE CONVERT(VARCHAR(24),Date,120) = '2020-02-22 00:00:00'
+
+SELECT CONVERT(VARCHAR(24),Date,120) FROM ScoreDetails

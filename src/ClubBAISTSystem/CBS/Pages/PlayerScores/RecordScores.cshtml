@@ -1,0 +1,80 @@
+﻿@page
+@model CBS.RecordScoresModel
+@{
+    ViewData["Title"] = "RecordScores";
+    Layout = "~/Pages/Shared/_Layout.cshtml";
+}
+@section Scripts{ 
+    <partial name="_ValidationScriptsPartial" />
+}
+
+<h1>Record Scores</h1>
+
+<form class="form" method="post">
+    <div asp-validation-summary="All" class="text-danger"></div>
+    <div class="form-group">
+        <label>Course:</label>
+        <input class="form-control" asp-for="@Model.Course" tabindex="1"/>
+        <span class="text-danger" asp-validation-for="@Model.Course"></span>
+    </div>
+
+    <div class="d-flex flex-row justify-content-between">
+        <div class="form-group">
+            <label>Course Rating:</label>
+            <input class="form-control" asp-for="@Model.CourseRating" tabindex="2" />
+            <span class="text-danger" asp-validation-for="@Model.CourseRating"></span>
+        </div>
+
+        <div class="form-group">
+            <label>Course Slope:</label>
+            <input class="form-control" asp-for="@Model.CourseSlope" tabindex="3" />
+            <span class="text-danger" asp-validation-for="@Model.CourseSlope"></span>
+        </div>
+
+        <div class="form-group">
+            <label>Date:</label>
+            <input class="form-control" name="Date" tabindex="4" />
+            <span class="text-danger" asp-validation-for="@Model.Date"></span>
+        </div>
+    </div>
+
+    <div class="d-flex flex-row justify-content-start">
+        <label>Number of Holes in Round:</label>
+        <select class="form-control ml-2" style="width:min-content" tabindex="5" name="numberOfHoles">
+            <option value="18">18</option>
+            <option value="9">9</option>
+        </select>
+    </div>
+
+    <div class="container">
+        <div class="row">
+            <div class="col-sm-6 font-weight-bold">
+                In
+            </div>
+            <div class="col-sm-6 font-weight-bold">
+                Out
+            </div>
+        </div>
+        @for (int i = 0; i < 9; i++)
+        {
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <input name="HoleByHoleScores[@(i)]" class="form-control" tabindex="@(i + 6)"/>
+                </div>
+                <div class="col-sm-6">
+                    <input name="HoleByHoleScores[@(i + 9)]" class="form-control" tabindex="@(i + 15)"/>
+                </div>
+            </div>
+        }
+    </div>
+    <input class="form-control btn btn-outline-success" type="submit" value="Record Scores" tabindex="24"/>
+</form>
+
+<style>
+    .form-group > label {
+  white-space: nowrap;
+  margin-right: 0.5em;
+  margin-left: 0.5em;
+}
+</style>
+

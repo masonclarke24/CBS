@@ -32,10 +32,6 @@ namespace TechnicalServices.PlayerScores
 
                     DataTable holeByHoleScores = new DataTable();
                     holeByHoleScores.Columns.Add("HoleScore");
-                    //for (int i = providedScores.HoleByHoleScore.Count - 1; i >= 0; i--)
-                    //{
-                    //    holeByHoleScores.Rows.Add(providedScores.HoleByHoleScore[i]);
-                    //}
 
                     foreach (var score in providedScores.HoleByHoleScore)
                     {
@@ -54,6 +50,39 @@ namespace TechnicalServices.PlayerScores
                         command.ExecuteNonQuery();
                         confirmation = command.Parameters[command.Parameters.Count - 1].Value.ToString() == "0";
                     }
+                    catch (SqlException ex)
+                    {
+                        confirmation = false;
+                        message = ex.Message;
+                    }
+                }
+            }
+            if (confirmation)
+                UpdateHandicapReport(out message);
+            return confirmation;
+        }
+
+        private bool UpdateHandicapReport(out string message)
+        {
+            message = string.Empty;
+            bool confirmation = false;
+
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                using(SqlCommand command = new SqlCommand("UpdateHandicapReport", connection) { CommandType = CommandType.StoredProcedure })
+                {
+                    command.Parameters.AddWithValue("@email", email);
+                    SqlParameter sqlMessage = new SqlParameter("@message", SqlDbType.VarChar, 128) { Direction = ParameterDirection.Output };
+                    command.Parameters.Add(sqlMessage);
+                    command.Parameters.Add(new SqlParameter("@returnCode",-1) { Direction = ParameterDirection.ReturnValue });
+
+                    connection.Open();
+
+                    try
+                    {
+                        command.ExecuteNonQuery();
+                        confirmation = command.Parameters[command.Parameters.Count - 1].Value.ToString() == "0";
+                    }
                     catch (SqlException)
                     {
                         confirmation = false;
@@ -63,11 +92,6 @@ namespace TechnicalServices.PlayerScores
             }
 
             return confirmation;
-        }
-
-        private bool UpdateHandicapReport()
-        {
-            throw new NotImplementedException();
         }
     }
 }

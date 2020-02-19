@@ -77,7 +77,7 @@
                     @if (Model.HttpContext.Session.TryGetValue("success", out byte[] message))
                     {
                         <div class="alert alert-success alert-dismissible" role="alert">
-                            @(new string((from c in message select (char)c).ToArray()).Replace("\"",""))
+                            @(new string((from c in message select (char)c).ToArray()).Replace("\"", ""))
                             <button type="button" class="close" data-dismiss="alert" aria-label="Close">
                                 <span aria-hidden="true">&times;</span>
                             </button>
@@ -91,13 +91,28 @@
                     @if (Model.HttpContext.Session.TryGetValue("danger", out byte[] message))
                     {
                         <div class="alert alert-danger alert-dismissible" role="alert">
-                            @(new string((from c in message select (char)c).ToArray()).Replace("\"",""))
+                            @(new string((from c in message select (char)c).ToArray()).Replace("\"", ""))
                             <button type="button" class="close" data-dismiss="alert" aria-label="Close">
                                 <span aria-hidden="true">&times;</span>
                             </button>
                         </div>
 
                         Model.HttpContext.Session.Remove("danger");
+                    }
+                }
+
+                @if (Model is PageModel)
+                {
+                    @if (Model.HttpContext.Session.TryGetValue("warning", out byte[] message))
+                    {
+                        <div class="alert alert-warning alert-dismissible" role="alert">
+                            @(new string((from c in message select (char)c).ToArray()).Replace("\"", ""))
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+
+                        Model.HttpContext.Session.Remove("warning");
                     }
                 }
             </div>

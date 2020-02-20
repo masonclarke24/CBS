@@ -130,6 +130,10 @@ IF EXISTS(SELECT * FROM SYSOBJECTS WHERE [name] LIKE 'GetHandicapReport')
 	DROP PROCEDURE GetHandicapReport
 GO
 
+IF EXISTS(SELECT * FROM SYSOBJECTS WHERE [name] LIKE 'GetAllHandicapReports')
+	DROP PROCEDURE GetAllHandicapReports
+GO
+
 IF EXISTS(SELECT * FROM SYS.TYPES WHERE [name] LIKE 'HoleByHoleScores')
 	DROP TYPE HoleByHoleScore
 GO
@@ -803,7 +807,8 @@ AS
 		MemberName,
 		HandicapFactor,
 		Average,
-		BestOfTenAverage
+		BestOfTenAverage,
+		LastUpdated
 	FROM
 		HandicapReport INNER JOIN AspNetUsers ON
 		HandicapReport.UserId = AspNetUsers.Id
@@ -840,9 +845,17 @@ AS
 		ScoreDetails.UserId = @userId
 GO
 
-EXEC GetHandicapReport 'shareholder1@test.com','February', 2020
+CREATE PROCEDURE GetAllHandicapReports
+AS
+	SELECT
+		MemberName,
+		HandicapFactor,
+		Average,
+		BestOfTenAverage,
+		LastUpdated
+	FROM
+		HandicapReport INNER JOIN AspNetUsers ON
+		HandicapReport.UserId = AspNetUsers.Id
+GO
+EXEC GetHandicapReport 'shareholder1@test.com', 'February', 2020
 
-DECLARE @message AS VARCHAR(128)
-EXEC UpdateHandicapReport 'shareholder1@test.com', @message OUT
-
-SELECT * FROM HandicapReport

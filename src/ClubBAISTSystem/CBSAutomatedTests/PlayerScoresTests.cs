@@ -49,6 +49,26 @@ namespace CBSAutomatedTests
             }
         }
 
+        [Fact]
+        public void TestCorrectHandicapReportLocated()
+        {
+            HandicapReport foundHandicapReport = playerScores.GetHandicapReport(new DateTime(2020,02,01));
+            Assert.NotNull(foundHandicapReport);
+            Assert.Equal("Shareholder Member",foundHandicapReport.MemberName);
+            Assert.Equal(2, foundHandicapReport.LastUpdated.Month);
+            Assert.Equal(2020, foundHandicapReport.LastUpdated.Year);
+            Assert.Equal(5.9, foundHandicapReport.HandicapFactor); 
+            Assert.Equal(12.9, foundHandicapReport.Average);
+            Assert.Equal(6.20, foundHandicapReport.BestOfTenAverage);
+        }
+
+        [Fact]
+        public void TestGetAllHandicapReportsNotEmpty()
+        {
+            var allHandicapReports = playerScores.GetAllHandicapReports();
+            Assert.NotNull(allHandicapReports);
+            Assert.Contains(allHandicapReports, hr => hr.MemberName == "Shareholder Member" && hr.LastUpdated.Date == new DateTime(2020, 02, 18));
+        }
         public void Dispose()
         {
             StringBuilder stringBuilder = new StringBuilder("ALTER TABLE ScoreDetails DROP CONSTRAINT FK_ScoreDetails_DateId " +

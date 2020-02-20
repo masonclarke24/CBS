@@ -62,6 +62,84 @@ namespace TechnicalServices.PlayerScores
             return confirmation;
         }
 
+        public HandicapReport GetHandicapReport(DateTime requestedMonth)
+        {
+            HandicapReport foundHandicapReport = null;
+            using(SqlConnection connection = new SqlConnection(connectionString))
+            {
+                using(SqlCommand command = new SqlCommand("GetHandicapReport", connection) { CommandType = CommandType.StoredProcedure })
+                {
+                    command.Parameters.AddWithValue("@email", email);
+                    command.Parameters.AddWithValue("@month", requestedMonth.ToString("MMMM"));
+                    command.Parameters.AddWithValue("@year", requestedMonth.Year);
+
+                    connection.Open();
+
+                    using(SqlDataReader reader = command.ExecuteReader())
+                    {
+                        if (reader.HasRows)
+                        {
+                            string memberName = default;
+                            DateTime lastUpdated = default;
+                            double handicapFactor = default;
+                            double average = default;
+                            double bestofTenAverage = default;
+
+                            while (reader.Read())
+                            {
+                                memberName = reader["MemberName"].ToString();
+                                handicapFactor = double.Parse(reader["HandicapFactor"].ToString());
+                                average = double.Parse(reader["Average"].ToString());
+                                bestofTenAverage = double.Parse(reader["BestOfTenAverage"].ToString());
+                                lastUpdated = (DateTime)reader["LastUpdated"]; 
+                            }
+                            reader.NextResult();
+                            List<ScoreCard> scoreCards = new List<ScoreCard>();
+                            while (reader.Read())
+                            {
+                                scoreCards.Add(new ScoreCard((string)reader["Course"], double.Parse(reader["Rating"].ToString()), double.Parse(reader["Slope"].ToString()), (DateTime)reader["Date"], email, new List<int>()));
+                            }
+                            reader.NextResult();
+                            while (reader.Read())
+                            {                                
+                                scoreCards.Find(s => s.Date == (DateTime)reader["Date"]).HoleByHoleScore.Add((int)reader["HoleScore"]);
+                            }
+
+                            foundHandicapReport = new HandicapReport(memberName, lastUpdated, handicapFactor, average, bestofTenAverage, scoreCards.ToArray());
+                        }
+                    }
+                }
+            }
+
+            return foundHandicapReport;
+        }
+
+        public List<HandicapReport> GetAllHandicapReports()
+        {
+            List<HandicapReport> allHandicapReports = null;
+            using(SqlConnection connection = new SqlConnection(connectionString))
+            {
+                using(SqlCommand command = new SqlCommand("GetAllHandicapReports", connection) { CommandType = CommandType.StoredProcedure })
+                {
+                    connection.Open();
+                    
+                    using(SqlDataReader reader = command.ExecuteReader())
+                    {
+                        if (reader.HasRows)
+                        {
+                            allHandicapReports = new List<HandicapReport>();
+                            while (reader.Read())
+                            {
+                                allHandicapReports.Add(new HandicapReport(reader["MemberName"].ToString(), (DateTime)reader["LastUpdated"],
+                                    double.Parse(reader["HandicapFactor"].ToString()), double.Parse(reader["Average"].ToString()), double.Parse(reader["BestOfTenAverage"].ToString()), null));
+                            }
+                        }
+                    }
+                }
+            }
+
+            return allHandicapReports;
+        }
         private bool UpdateHandicapReport(out string message)
         {
             message = string.Empty;

@@ -12,7 +12,7 @@ namespace TechnicalServices.PlayerScores
         public DateTime Date { get; }
         public int Score { get; }
         public string Email { get; }
-        public List<int> HoleByHoleScore { get;}
+        public List<int> HoleByHoleScore { get; internal set; }
 
         public ScoreCard(string course, double rating, double slope, DateTime date,
             string email, List<int> holeByHoleScore)

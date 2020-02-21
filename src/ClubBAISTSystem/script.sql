@@ -824,8 +824,7 @@ AS
 		Course,
 		Rating,
 		Slope,
-		ScoreDetails.Date,
-		SUM(Score) OVER(PARTITION BY ScoreDetails.Date) [Score]
+		ScoreDetails.Date
 	INTO #PreviousScores
 	FROM
 		ScoreCard INNER JOIN ScoreDetails ON ScoreCard.UserId = ScoreDetails.UserId AND ScoreDetails.Date = ScoreCard.Date
@@ -857,5 +856,5 @@ AS
 		HandicapReport INNER JOIN AspNetUsers ON
 		HandicapReport.UserId = AspNetUsers.Id
 GO
-EXEC GetHandicapReport 'shareholder1@test.com', 'February', 2020
+EXEC GetAllHandicapReports
 

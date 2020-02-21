@@ -77,8 +77,11 @@ namespace CBS
 
             services.AddAuthorization(options =>
             {
+                options.AddPolicy("ManageTeeTimes", policy => policy.RequireRole("Clerk", "ProShop", "Golfer"));
                 options.AddPolicy("ManageMemberships", policy => policy.RequireRole("MembershipCommittee"));
+                options.AddPolicy("MembershipMenu", policy => policy.RequireRole("MembershipCommittee", "FinanceCommittee", "Golfer"));
                 options.AddPolicy("ViewMemberAccount", policy => policy.RequireRole("FinanceCommittee", "Golfer"));
+                options.AddPolicy("ViewHandicapReport", policy => policy.RequireRole("Clerk", "Golfer"));
             });
         }
 

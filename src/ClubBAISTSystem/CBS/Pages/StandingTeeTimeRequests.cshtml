@@ -8,9 +8,6 @@
 
 @section Scripts{
     <script>
-        document.addEventListener("onload", startDateEntered("@TempData.Peek(nameof(Model.StartDate))",
-            selectEndDate, "@TempData.Peek(nameof(Model.EndDate))"));
-        document.addEventListener("onload", selectAvaliableTime());
         window.addEventListener('load', () => {
             $("input[name='StartDate']").datepicker({ dateFormat: "DD, MM dd, yy", minDate: 8 });
             $("input[name='EndDate']").datepicker({
@@ -23,6 +20,10 @@
                         return [true, ""]
                     }
             });
+
+            selectAvaliableTime();
+            startDateEntered("@TempData.Peek(nameof(Model.StartDate))",
+                selectEndDate, "@TempData.Peek(nameof(Model.EndDate))");
         })
     </script>
 }

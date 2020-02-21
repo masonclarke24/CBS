@@ -105,7 +105,7 @@ namespace TechnicalServices.PlayerScores
                                 scoreCards.Find(s => s.Date == (DateTime)reader["Date"]).HoleByHoleScore.Add((int)reader["HoleScore"]);
                             }
 
-                            foundHandicapReport = new HandicapReport(memberName, lastUpdated, handicapFactor, average, bestofTenAverage, scoreCards.ToArray());
+                            foundHandicapReport = new HandicapReport(memberName, email, lastUpdated, handicapFactor, average, bestofTenAverage, scoreCards.ToArray());
                         }
                     }
                 }
@@ -130,7 +130,7 @@ namespace TechnicalServices.PlayerScores
                             allHandicapReports = new List<HandicapReport>();
                             while (reader.Read())
                             {
-                                allHandicapReports.Add(new HandicapReport(reader["MemberName"].ToString(), (DateTime)reader["LastUpdated"],
+                                allHandicapReports.Add(new HandicapReport(reader["MemberName"].ToString(), reader["Email"].ToString(), (DateTime)reader["LastUpdated"],
                                     double.Parse(reader["HandicapFactor"].ToString()), double.Parse(reader["Average"].ToString()), double.Parse(reader["BestOfTenAverage"].ToString()), null));
                             }
                         }

@@ -4,9 +4,10 @@ namespace TechnicalServices.PlayerScores
 {
     public class HandicapReport
     {
-        public HandicapReport(string memberName, DateTime lastUpdated, double handicapFactor, double average, double bestOfTenAverage, ScoreCard[] previousRounds)
+        public HandicapReport(string memberName, string email, DateTime lastUpdated, double handicapFactor, double average, double bestOfTenAverage, ScoreCard[] previousRounds)
         {
             MemberName = memberName;
+            Email = email;
             LastUpdated = lastUpdated;
             HandicapFactor = handicapFactor;
             Average = average;
@@ -20,5 +21,6 @@ namespace TechnicalServices.PlayerScores
         public double Average { get; private set; }
         public double BestOfTenAverage { get; private set; }
         public ScoreCard[] PreviousRounds { get; private set; }
+        public string Email { get; private set; }
     }
 }

@@ -35,6 +35,17 @@ namespace Domain
             DailyTeeSheets teeSheetManager = new DailyTeeSheets(MemberNumber, connectionString);
             return teeSheetManager.FilterDailyTeeSheet(date, MemberNumber, teeTimes);
         }
+
+        public List<HandicapReport> GetAllHandicapReports()
+        {
+            return new PlayerScores(connectionString, null).GetAllHandicapReports();
+        }
+
+        public HandicapReport GetHandicapReport(string email, DateTime reportDate)
+        {
+            return new PlayerScores(connectionString, email).GetHandicapReport(reportDate);
+        }
+
         public bool ReserveTeeTime(TeeTime requestedTeeTime, out string message)
         {
             bool confirmation;

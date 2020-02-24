@@ -1,0 +1,75 @@
+﻿@page
+@model CBS.ViewHandicapDetailsModel
+@{
+    ViewData["Title"] = "Handicap Report - Details";
+    Layout = "~/Pages/Shared/_Layout.cshtml";
+}
+
+<h1>Handicap Report - Details</h1>
+
+<div class="container">
+    <div class="row">
+        <div class="col-sm">
+            <label class="font-weight-bold">Last Updated:</label>
+            <p>@Model.FoundHandicapReport.LastUpdated.ToString("dd-MMM-yyyy")</p>
+        </div>
+        <div class="col-sm">
+            <label class="font-weight-bold">Handicap Factor:</label>
+            <p>@Model.FoundHandicapReport.HandicapFactor</p>
+        </div>
+        <div class="col-sm">
+            <label class="font-weight-bold">Average:</label>
+            <p>@Model.FoundHandicapReport.Average</p>
+        </div>
+        <div class="col-sm">
+            <label class="font-weight-bold">Best of 10 Average:</label>
+            <p>@Model.FoundHandicapReport.BestOfTenAverage</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-sm">
+            <label class="font-weight-bold">Member Name:</label>
+            <p>@Model.FoundHandicapReport.MemberName</p>
+        </div>
+    </div>
+</div>
+
+<table class="table table-hover">
+    <thead>
+        <tr>
+            <th>
+                Date
+            </th>
+            <th>
+                Course
+            </th>
+            <th>
+                Score
+            </th>
+            <th>
+                Differential
+            </th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach(var scoreCard in Model.FoundHandicapReport.PreviousRounds)
+        {
+            <tr>
+                <td>
+                    @scoreCard.Date.ToString("dd-MMM-yyyy")
+                </td>
+                <td>
+                    @scoreCard.Course
+                </td>
+                <td>
+                    @scoreCard.Score
+                </td>
+                <td>
+                    NaN
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+

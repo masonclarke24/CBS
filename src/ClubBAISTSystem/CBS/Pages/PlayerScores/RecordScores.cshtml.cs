@@ -23,7 +23,6 @@ namespace CBS
         public DateTime Date { get; set; } = DateTime.Now;
         [Required]
         public int NumberOfHoles { get; set; }
-        [Range(-10 * 18, 10), Display(Name = "Hole n")]
         public int?[] HoleByHoleScores { get; set; }
         public void OnGet()
         {
@@ -45,7 +44,7 @@ namespace CBS
             }
 
             ScoreCard providedScores = new ScoreCard(Course, CourseRating, CourseSlope, Date, User.Identity.Name, 
-                HoleByHoleScores.TakeWhile(s => !(s is null)).Cast<int>().ToList());
+                HoleByHoleScores.Where(s => !(s is null)).Cast<int>().ToList());
 
             if(providedScores.HoleByHoleScore.Count != NumberOfHoles)
             {

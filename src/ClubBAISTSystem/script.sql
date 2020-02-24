@@ -1,8 +1,6 @@
 USE CBS
 GO
 
-SELECT * FROM AccountTransactions
-
 IF EXISTS(SELECT * FROM SYS.TABLES WHERE [name] LIKE 'GolferMembershipLevels')
 	DROP TABLE GolferMembershipLevels
 GO
@@ -859,3 +857,6 @@ AS
 GO
 
 
+SELECT * FROM AspNetUserRoles INNER JOIN AspNetRoles ON AspNetUserRoles.RoleId = AspNetRoles.Id
+
+INSERT INTO AspNetUserRoles(UserId, RoleId) VALUES('8cf5f3cd-b772-4e26-80e5-5b977ba824a8', 'd58c72ce-e675-48b4-aea6-2499710e76d8')

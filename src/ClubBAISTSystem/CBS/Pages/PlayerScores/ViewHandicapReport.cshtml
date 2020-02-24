@@ -37,7 +37,7 @@
 
 <h1>View Handicap Report</h1>
 
-<form class="form d-flex flex-row"  method="post">
+<form class="form d-flex flex-row" method="post">
     <div class="form-group p-2">
         <label>Report Month:</label>
         <input asp-for="ReportDate" class="form-control" />
@@ -51,3 +51,58 @@
 
     <div class="form-group align-self-end p-2"><input type="submit" asp-page-handler="GetHandicapReport" class="form-control btn btn-outline-dark" value="Get Handicap Report" /></div>
 </form>
+
+<table class="table table-hover">
+    <thead>
+        <tr>
+            <th>
+                Member Name
+            </th>
+            <th>
+                Handicap Factor
+            </th>
+            <th>
+                Average
+            </th>
+            <th>
+                Best of 10 Average
+            </th>
+            <th>
+                Details
+            </th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (User.IsInRole("Golfer"))
+        {
+            @if (Model.FoundHandicapReport is null)
+            {
+                <tr>
+                    <td class="font-weight-bold" colspan="5">
+                        Your handicap report could not be generated due to insufficient history.
+                    </td>
+                </tr>
+                <tr></tr>
+            }
+            else
+            {
+                <tr class="table-info">
+                    <partial name="_HandicapReportPartial" model="@Model.FoundHandicapReport" />
+                </tr>
+            }
+
+        }
+        @if (Model.FilteredHandicapReports?.Any() ?? false)
+        {
+            <partial name="_ListHandicapReportsPartial" model="@Model.FilteredHandicapReports" />
+        }
+        else
+        {
+            <tr>
+                <td class="font-weight-bold" colspan="5">
+                    No handicap reports could be found with the given search criteria
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

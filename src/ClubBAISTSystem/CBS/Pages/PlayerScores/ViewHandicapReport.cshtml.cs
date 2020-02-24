@@ -27,7 +27,11 @@ namespace CBS
                 FoundHandicapReport = requestDirector.GetHandicapReport(User.Identity.Name, ReportDate);
 
             var allHandicapReports = requestDirector.GetAllHandicapReports();
-            HttpContext.Session.Put("AllHandicapReports", from report in allHandicapReports select new { report.MemberName, report.Email, report.HandicapFactor, report.Average, report.BestOfTenAverage });
+            if (allHandicapReports != null)
+            {
+                HttpContext.Session.Put("AllHandicapReports", from report in allHandicapReports select new { report.MemberName, report.Email, report.HandicapFactor, report.Average, report.BestOfTenAverage, report.LastUpdated });
+                FilteredHandicapReports = HttpContext.Session.Get<IEnumerable<dynamic>>("AllHandicapReports").Where(r => r["LastUpdated"].Value.Month == ReportDate.Month && r["LastUpdated"].Value.Year == ReportDate.Year); 
+            }
         }
         public void OnPost()
         {

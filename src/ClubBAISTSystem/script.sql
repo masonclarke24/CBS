@@ -1,6 +1,6 @@
 USE CBS
 GO
-
+SELECT * from AspNetUsers
 IF EXISTS(SELECT * FROM SYS.TABLES WHERE [name] LIKE 'GolferMembershipLevels')
 	DROP TABLE GolferMembershipLevels
 GO
@@ -751,7 +751,8 @@ AS
 		WHEN @lifetimeRounds BETWEEN 11 AND 12 THEN 4
 		WHEN @lifetimeRounds BETWEEN 13 AND 14 THEN 5
 		WHEN @lifetimeRounds BETWEEN 15 AND 16 THEN 6
-		WHEN @lifetimeRounds = 17 THEN 8
+		WHEN @lifetimeRounds = 17 THEN 7
+		WHEN @lifetimeRounds = 18 THEN 8
 		WHEN @lifetimeRounds = 19 THEN 9
 		ELSE 10
 		END

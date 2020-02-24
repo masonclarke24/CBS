@@ -22,7 +22,7 @@
             <p>@Model.FoundHandicapReport.Average</p>
         </div>
         <div class="col-sm">
-            <label class="font-weight-bold">Best of 10 Average:</label>
+            <label class="font-weight-bold">@Model.BestOfLabel</label>
             <p>@Model.FoundHandicapReport.BestOfTenAverage</p>
         </div>
     </div>
@@ -66,7 +66,7 @@
                     @scoreCard.Score
                 </td>
                 <td>
-                    NaN
+                    @scoreCard.Differential
                 </td>
             </tr>
         }

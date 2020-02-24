@@ -6,6 +6,7 @@
 }
 
 @section Scripts{
+    <partial name="_ValidationScriptsPartial" />
     <script>
         $(window).on("load", () => {
             $("input[name='ReportDate']").datepicker({
@@ -46,7 +47,7 @@
 
     <div class="form-group p-2">
         <label>Filter By Name/Email:</label>
-        <input asp-for="FilterCriteria" class="form-control" />
+        <input asp-for="FilterCriteria" class="form-control" placeholder="member.name@example.com" />
     </div>
 
     <div class="form-group align-self-end p-2"><input type="submit" asp-page-handler="GetHandicapReport" class="form-control btn btn-outline-dark" value="Get Handicap Report" /></div>

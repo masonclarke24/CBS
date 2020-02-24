@@ -9,6 +9,7 @@ namespace TechnicalServices.PlayerScores
         public string Course { get; }
         public double Rating { get; }
         public double Slope { get; }
+        public double Differential => Math.Round((Score - Rating) * 113.0 / Slope, 1);
         public DateTime Date { get; }
         public int Score { get { return HoleByHoleScore.Sum(); } }
         public string Email { get; }

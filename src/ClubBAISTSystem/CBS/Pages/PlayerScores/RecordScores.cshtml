@@ -91,7 +91,7 @@
         {
             <div class="row mb-2">
                 <div class="col-sm-6">
-                    <input asp-for="HoleByHoleScores[i]" class="form-control" tabindex="@(i + 6)" placeholder="@($"Hole {i + 1}")" />
+                    <input asp-for="HoleByHoleScores[i]" data-val="true" data-val-range="This field must be between -180 and 10" data-val-range-min="-180" data-val-range-max="10" class="form-control" tabindex="@(i + 6)" placeholder="@($"Hole {i + 1}")" />
                     <span class="text-danger" asp-validation-for="HoleByHoleScores[i]"></span>
                 </div>
                 <div class="col-sm-6">

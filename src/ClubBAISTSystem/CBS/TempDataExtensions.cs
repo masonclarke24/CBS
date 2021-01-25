@@ -42,6 +42,29 @@ namespace CBS
                 return default;
             return JsonConvert.DeserializeObject<T>(o);
         }
+
+        public static string SerializeObject(this object obj)
+        {
+            if (obj is null)
+                return null;
+            return JsonConvert.SerializeObject(obj);
+        }
+
+        public static T DeserilizeObject<T>(this string obj)
+        {
+            if (string.IsNullOrWhiteSpace(obj))
+                return default;
+            T result = default;
+            try
+            {
+                result = JsonConvert.DeserializeObject<T>(obj);
+            }
+            catch (Exception)
+            {
+                return default;
+            }
+            return result;
+        }
     }
 
 }

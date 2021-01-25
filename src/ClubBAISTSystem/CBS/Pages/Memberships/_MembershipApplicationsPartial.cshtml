@@ -1,0 +1,69 @@
+﻿@model List<TechnicalServices.Memberships.MembershipApplication>
+
+<table class="table table-hover">
+    <thead>
+        <tr>
+            <th>
+                First Name
+            </th>
+            <th>
+                Last Name
+            </th>
+            <th>
+                Status
+            </th>
+            <th>
+                Membership Type
+            </th>
+            <th>
+                Application Date
+            </th>
+            <th>
+                Details
+            </th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (Model is null || !Model.Any())
+        {
+            <tr>
+                <td colspan="5">
+                    <h3>There are no records to display for the selected time period</h3>
+                </td>
+            </tr>
+        }
+        else
+        {
+            @foreach (var membershipApplication in Model)
+            {
+                <tr>
+                    <td>
+                        @membershipApplication.ProspectiveMemberContactInfo.FirstName
+                    </td>
+                    <td>
+                        @membershipApplication.ProspectiveMemberContactInfo.LastName
+                    </td>
+                    <td>
+                        @membershipApplication.ApplicationStatus
+                    </td>
+                    <td>
+                        @membershipApplication.MembershipType
+                    </td>
+                    <td>
+                        @membershipApplication.ApplicationDate.GetValueOrDefault().ToString("dd-MMM-yyyy")
+                    </td>
+                    <td>
+                        <form class="form" method="POST">
+                            <div class="form-group">
+                                <input type="submit" value="Details" asp-page-handler="Details" class="btn btn-outline-info"/>
+                                <input type="hidden" name="email" value="@membershipApplication.ProspectiveMemberContactInfo.Email" />
+                                <input type="hidden" name="applicationDate" value="@membershipApplication.ApplicationDate.GetValueOrDefault().Date.Ticks" />
+                            </div>
+                        </form>
+                    </td>
+                </tr>
+            }
+        }
+
+    </tbody>
+</table>

@@ -32,7 +32,11 @@ namespace CBS
             services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(
                     Configuration.GetConnectionString("CBSConnection")));
-            services.AddIdentity<ApplicationUser,IdentityRole>(options => options.SignIn.RequireConfirmedAccount = false)
+            services.AddIdentity<ApplicationUser,IdentityRole>(options =>
+            {
+                options.SignIn.RequireConfirmedAccount = false;
+                options.User.RequireUniqueEmail = true;
+            })
                 .AddEntityFrameworkStores<ApplicationDbContext>();
             services.AddRazorPages();
 
@@ -70,6 +74,15 @@ namespace CBS
                 options.AccessDeniedPath = "/Identity/Account/AccessDenied";
                 options.SlidingExpiration = true;
             });
+
+            services.AddAuthorization(options =>
+            {
+                options.AddPolicy("ManageTeeTimes", policy => policy.RequireRole("Clerk", "ProShop", "Golfer"));
+                options.AddPolicy("ManageMemberships", policy => policy.RequireRole("MembershipCommittee"));
+                options.AddPolicy("MembershipMenu", policy => policy.RequireRole("MembershipCommittee", "FinanceCommittee", "Golfer"));
+                options.AddPolicy("ViewMemberAccount", policy => policy.RequireRole("FinanceCommittee", "Golfer"));
+                options.AddPolicy("ViewHandicapReport", policy => policy.RequireRole("Clerk", "Golfer"));
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -105,24 +118,11 @@ namespace CBS
                 endpoints.MapControllerRoute("default", "{controller=Home}/{action=Index}/{id?}");
             });
 
-            //var clerk = new ApplicationUser() { Email = "clerk@cbg.ca", UserName = "clerk@cbg.ca" };
-            //var newUser = userManager.CreateAsync(clerk, "Baist123$").GetAwaiter().GetResult();
-            //roleManager.CreateAsync(new IdentityRole("Clerk")).GetAwaiter().GetResult();
-            //userManager.AddToRoleAsync(clerk, "Clerk").GetAwaiter().GetResult();
+            //var membershipCommittee = new ApplicationUser() { Email = "finances@cbg.ca", UserName = "finances@cbg.ca" };
+            //var newUser = userManager.CreateAsync(membershipCommittee, "Baist123$").GetAwaiter().GetResult();
+            //roleManager.CreateAsync(new IdentityRole("FinanceCommittee")).GetAwaiter().GetResult();
+            //userManager.AddToRoleAsync(membershipCommittee, "FinanceCommittee").GetAwaiter().GetResult();
 
-            //var golfProfessional = new ApplicationUser() { Email = "golfProfessional@cbg.ca", UserName = "golfProfessional@cbg.ca" };
-            //userManager.CreateAsync(golfProfessional, "Baist123$").GetAwaiter().GetResult();
-
-            //roleManager.CreateAsync(new IdentityRole("ProShop")).GetAwaiter().GetResult();
-            //userManager.AddToRoleAsync(userManager.FindByIdAsync("ffb114b9-a4ec-4aac-be5a-63e84e9d0719").GetAwaiter().GetResult(), "ProShop").GetAwaiter().GetResult();
-
-            
-
-            var golfer = new ApplicationUser() { Email = "golfer4@test.com", UserName = "golfer4@test.com", PhoneNumber = "(780) 456 9335", MemberName = "Copper Member", MemberNumber = "4", MembershipLevel = "Bronze"};
-            userManager.CreateAsync(golfer, "Baist123$").GetAwaiter().GetResult();
-            //roleManager.CreateAsync(new IdentityRole("Shareholder")).GetAwaiter().GetResult();
-            userManager.AddToRoleAsync(golfer, "Golfer").GetAwaiter().GetResult();
-            //userManager.AddToRoleAsync(golfer, "Shareholder").GetAwaiter().GetResult();
         }
     }
 }

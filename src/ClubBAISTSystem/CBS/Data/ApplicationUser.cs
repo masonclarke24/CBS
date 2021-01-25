@@ -11,6 +11,8 @@ namespace CBS.Data
         public string MemberName { get; set; }
         [Microsoft.AspNetCore.Identity.PersonalData]
         public string MembershipLevel { get; set; }
+        [Microsoft.AspNetCore.Identity.PersonalData]
+        public string MembershipType { get; set; }
 
     }
 }

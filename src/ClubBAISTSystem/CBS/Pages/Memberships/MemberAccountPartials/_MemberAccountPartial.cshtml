@@ -1,0 +1,29 @@
+﻿@model TechnicalServices.Memberships.MemberAccount
+
+<div class="container d-flex justify-content-start">
+    <div class="container d-flex flex-column">
+        <h5>Name: @Model.Name</h5>
+        <label>Membership Level: @Model.MembershipLevel</label>
+        <label>Membership Type: @Model.MembershipType</label>
+        <h5 @(Math.Sign(Model.Balance) == -1 ? "class=text-danger" : "")>Balance: @Model.Balance.ToString("C2")</h5>
+
+        <h5 class="mt-3">View Transactions by Timespan</h5>
+        <hr style="width: 25%; margin: 0" class="mb-3"/>
+    </div>
+</div>
+
+<partial name="./MemberAccountPartials/_TransactionFilterPartial" model="@((Model.FromDate, Model.ToDate))" />
+
+<div style="height: 50vh; overflow: auto">
+    @if (!Model.Transactions.Any())
+    {
+        <h3>There are no transactions to display</h3>
+    }
+    else
+    {
+        @foreach (TechnicalServices.Memberships.Transaction transaction in Model.Transactions)
+        {
+            <partial name="./MemberAccountPartials/_TransactionDetailsPartial" model="transaction" />
+        }
+    }
+</div>   

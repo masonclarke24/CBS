@@ -1,0 +1,14 @@
+﻿@model dynamic
+
+<td>@Model.MemberName</td>
+<td>@Model.HandicapFactor</td>
+<td>@Model.Average</td>
+<td>@Model.BestOfTenAverage</td>
+<td>
+    <form class="form" action="ViewHandicapDetails" method="post">
+        @Html.AntiForgeryToken()
+        <input type="submit" class="form-control btn btn-outline-dark" value="Details" />
+        <input type="hidden" name="email" value="@Model.Email" />
+        <input type="hidden" name="lastUpdated" value="@Model.LastUpdated" />
+    </form>
+</td>

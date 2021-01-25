@@ -1,6 +1,9 @@
 ﻿<!DOCTYPE html>
 @using static Microsoft.AspNetCore.Http.SessionExtensions
+@using Microsoft.AspNetCore.Mvc.RazorPages
 @using System.Linq
+@using Microsoft.AspNetCore.Authorization
+@inject IAuthorizationService AuthorizationService
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -30,15 +33,56 @@
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-area="" asp-page="/Privacy">Privacy</a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-page="/ReserveTeeTime">View Tee Times</a>
-                        </li>
-                        @if (User.IsInRole("Shareholder"))
+
+                        @if ((await AuthorizationService.AuthorizeAsync(User, "ManageTeeTimes")).Succeeded)
                         {
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="" asp-page="/StandingTeeTimeRequests">Standing Tee Time Request</a>
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" role="button" data-toggle="dropdown">Tee Times</a>
+                                <div class="dropdown-menu">
+                                    <a class="dropdown-item" asp-area="" asp-page="/ReserveTeeTime">View Tee Times</a>
+                                    <a class="dropdown-item" asp-area="" asp-page="/Manage/MyTeeTimes">Manage Tee Times</a>
+                                    @if (User.IsInRole("Shareholder"))
+                                    {
+                                        <div class="dropdown-divider"></div>
+                                        <a class="dropdown-item" asp-area="" asp-page="/StandingTeeTimeRequests">Standing Tee Time Request</a>
+                                        <a class="dropdown-item" asp-area="" asp-page="/Manage/ManageStandingTeeTimeRequests">Manage Standing Tee Time Requests</a>
+                                    }
+                                </div>
                             </li>
                         }
+
+                        @if ((await AuthorizationService.AuthorizeAsync(User, "ViewHandicapReport")).Succeeded)
+                        {
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" role="button" id="playerScoresDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Player Scores</a>
+                                <div class="dropdown-menu" aria-labelledby="playerScoresDropdown">
+                                    @if (User.IsInRole("Golfer"))
+                                    {
+                                        <a class="dropdown-item" asp-page="/PlayerScores/RecordScores">Record Scores</a>
+                                    }
+                                    <a class="dropdown-item" asp-page="/PlayerScores/ViewHandicapReport">View Handicap Report</a>
+                                </div>
+                            </li>
+                        }
+
+                        @if ((await AuthorizationService.AuthorizeAsync(User, "MembershipMenu")).Succeeded)
+                        {
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" role="button" data-toggle="dropdown">Memberships</a>
+                                <div class="dropdown-menu">
+                                    @if ((await AuthorizationService.AuthorizeAsync(User, "ViewMemberAccount")).Succeeded)
+                                    {
+                                        <a class="dropdown-item" asp-page="/Memberships/ViewMemberAccount">View Member Account</a>
+                                    }
+                                    @if ((await AuthorizationService.AuthorizeAsync(User, "ManageMemberships")).Succeeded)
+                                    {
+                                        <a class="dropdown-item" asp-area="" asp-page="/Memberships/RecordMembershipApplication">Record Membership Application</a>
+                                        <a class="dropdown-item" asp-area="" asp-page="/Memberships/ViewMembershipApplications">View Membership Applications</a>
+                                    }
+                                </div>
+                            </li>
+                        }
+
                     </ul>
                 </div>
             </div>
@@ -47,28 +91,48 @@
     <div class="container">
         <main role="main" class="pb-3">
             <div id="statusMessage">
-                @if (Model.HttpContext.Session.TryGetValue("success", out byte[] message))
+                @if (Model is PageModel)
                 {
-                    <div class="alert alert-success alert-dismissible" role="alert">
-                        @(new string((from c in message select (char)c).ToArray()))
-                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
-                    </div>
-
-                    Model.HttpContext.Session.Remove("success");
+                    @if (Model.HttpContext.Session.TryGetValue("success", out byte[] message))
+                    {
+                        <div class="alert alert-success alert-dismissible" role="alert">
+                            @(new string((from c in message select (char)c).ToArray()).Replace("\"", ""))
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        Model.HttpContext.Session.Remove("success");
+                    }
                 }
 
-                @if (Model.HttpContext.Session.TryGetValue("danger", out message))
+                @if (Model is PageModel)
                 {
-                    <div class="alert alert-danger alert-dismissible" role="alert">
-                        @(new string((from c in message select (char)c).ToArray()))
-                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
-                    </div>
+                    @if (Model.HttpContext.Session.TryGetValue("danger", out byte[] message))
+                    {
+                        <div class="alert alert-danger alert-dismissible" role="alert">
+                            @(new string((from c in message select (char)c).ToArray()).Replace("\"", ""))
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
 
-                    Model.HttpContext.Session.Remove("danger");
+                        Model.HttpContext.Session.Remove("danger");
+                    }
+                }
+
+                @if (Model is PageModel)
+                {
+                    @if (Model.HttpContext.Session.TryGetValue("warning", out byte[] message))
+                    {
+                        <div class="alert alert-warning alert-dismissible" role="alert">
+                            @(new string((from c in message select (char)c).ToArray()).Replace("\"", ""))
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+
+                        Model.HttpContext.Session.Remove("warning");
+                    }
                 }
             </div>
             @RenderBody()
@@ -85,7 +149,6 @@
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/lib/jquery/dist/jquery-ui.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
-
     @RenderSection("Scripts", required: false)
 </body>
 </html>

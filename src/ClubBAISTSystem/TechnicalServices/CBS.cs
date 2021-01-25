@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Text;
 using TechnicalServices;
+using TechnicalServices.Memberships;
+using TechnicalServices.PlayerScores;
 
 namespace Domain
 {
@@ -33,6 +35,17 @@ namespace Domain
             DailyTeeSheets teeSheetManager = new DailyTeeSheets(MemberNumber, connectionString);
             return teeSheetManager.FilterDailyTeeSheet(date, MemberNumber, teeTimes);
         }
+
+        public List<HandicapReport> GetAllHandicapReports()
+        {
+            return new PlayerScores(connectionString, null).GetAllHandicapReports();
+        }
+
+        public HandicapReport GetHandicapReport(string email, DateTime reportDate)
+        {
+            return new PlayerScores(connectionString, email).GetHandicapReport(reportDate);
+        }
+
         public bool ReserveTeeTime(TeeTime requestedTeeTime, out string message)
         {
             bool confirmation;
@@ -41,10 +54,22 @@ namespace Domain
             return confirmation;
         }
 
+        public bool RecordScores(ScoreCard providedScores, out string message)
+        {
+            PlayerScores scoreManager = new PlayerScores(connectionString, providedScores.Email);
+            return scoreManager.RecordScores(providedScores, out message);
+        }
+
         public List<StandingTeeTime> ViewStandingTeeTimeRequests(DateTime startDate, DateTime endDate)
         {
             StandingTeeTimeRequests standingTeeTimeManager = new StandingTeeTimeRequests(connectionString);
             return standingTeeTimeManager.ViewStandingTeeTimeRequests(startDate, endDate);
+        }
+
+        public List<(string Name, string Email, double Balance)> ViewAllAccountsSummary()
+        {
+            ClubMemberships membershipManager = new ClubMemberships(connectionString);
+            return membershipManager.ViewAllAccountsSummary();
         }
 
         public bool RequestStandingTeeTime(StandingTeeTime requestedStandingTeeTime, out string message)
@@ -81,6 +106,31 @@ namespace Domain
         {
             StandingTeeTimeRequests standingTeeTimeManager = new StandingTeeTimeRequests(connectionString);
             return standingTeeTimeManager.CancelStandingTeeTime(startDate, endDate, requestedTime);
+        }
+
+        public bool RecordMembershipApplication(MembershipApplication membershipApplication)
+        {
+            ClubMemberships membershipManager = new ClubMemberships(connectionString);
+            return membershipManager.RecordMembershipApplication(membershipApplication);
+        }
+
+        public List<MembershipApplication> GetMembershipApplications(DateTime startDate, DateTime endDate)
+        {
+            ClubMemberships membershipManager = new ClubMemberships(connectionString);
+            return membershipManager.GetMembershipApplications(startDate, endDate);
+        }
+
+        public List<MembershipApplication> FilterMembershipApplications(List<MembershipApplication> membershipApplications, ApplicationStatus applicationStatus)
+        {
+            ClubMemberships membershipManager = new ClubMemberships(connectionString);
+            return membershipManager.FilterMembershipApplications(membershipApplications, applicationStatus);
+        }
+
+        public MemberAccount GetAccountDetail(string email, DateTime dateTime1, DateTime dateTime2)
+        {
+            MemberAccount requestedAccount = new MemberAccount(email, connectionString);
+            requestedAccount.GetAccountDetails(dateTime1, dateTime2);
+            return requestedAccount;
         }
     }
 }

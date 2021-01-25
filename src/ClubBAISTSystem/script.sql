@@ -1,6 +1,6 @@
 USE CBS
 GO
-
+SELECT * from AspNetUsers
 IF EXISTS(SELECT * FROM SYS.TABLES WHERE [name] LIKE 'GolferMembershipLevels')
 	DROP TABLE GolferMembershipLevels
 GO
@@ -37,6 +37,21 @@ IF EXISTS(SELECT * FROM SYS.TABLES WHERE [name] LIKE 'PermissableTeeTimes')
 	DROP TABLE PermissableTeeTimes
 GO
 
+IF EXISTS(SELECT * FROM SYS.TABLES WHERE [name] LIKE 'AccountTransactions')
+	DROP TABLE AccountTransactions
+GO
+
+IF EXISTS(SELECT * FROM SYS.TABLES WHERE [name] LIKE 'ScoreDetails')
+	DROP TABLE ScoreDetails
+GO
+
+IF EXISTS(SELECT * FROM SYS.TABLES WHERE [name] LIKE 'ScoreCard')
+	DROP TABLE ScoreCard
+GO
+
+IF EXISTS(SELECT * FROM SYS.TABLES WHERE [name] LIKE 'HandicapReport')
+	DROP TABLE HandicapReport
+GO
 IF EXISTS(SELECT * FROM SYSOBJECTS WHERE [name] LIKE 'ViewStandingTeeTimeRequests')
 	DROP PROCEDURE ViewStandingTeeTimeRequests
 GO
@@ -77,8 +92,56 @@ IF EXISTS(SELECT * FROM SYSOBJECTS WHERE [name] LIKE 'CancelSTTR')
 	DROP PROCEDURE CancelSTTR
 GO
 
+IF EXISTS(SELECT * FROM SYSOBJECTS WHERE [name] LIKE 'RecordMembershipApplication')
+	DROP PROCEDURE RecordMembershipApplication
+GO
+
+IF EXISTS(SELECT * FROM SYSOBJECTS WHERE [name] LIKE 'GetMembershipApplications')
+	DROP PROCEDURE GetMembershipApplications
+GO
+
+IF EXISTS(SELECT * FROM SYSOBJECTS WHERE [name] LIKE 'UpdateMembershipApplication')
+	DROP PROCEDURE UpdateMembershipApplication
+GO
+
+IF EXISTS(SELECT * FROM SYSOBJECTS WHERE [name] LIKE 'CreateMemberAccount')
+	DROP PROCEDURE CreateMemberAccount
+GO
+
+IF EXISTS(SELECT * FROM SYSOBJECTS WHERE [name] LIKE 'AssessMembershipFees')
+	DROP PROCEDURE AssessMembershipFees
+GO
+
+IF EXISTS(SELECT * FROM SYSOBJECTS WHERE [name] LIKE 'GetAccountDetail')
+	DROP PROCEDURE GetAccountDetail
+GO
+
+IF EXISTS(SELECT * FROM SYSOBJECTS WHERE [name] LIKE 'ViewAllAccountsSummary')
+	DROP PROCEDURE ViewAllAccountsSummary
+GO
+
+IF EXISTS(SELECT * FROM SYSOBJECTS WHERE [name] LIKE 'RecordScores')
+	DROP PROCEDURE RecordScores
+GO
+
+IF EXISTS(SELECT * FROM SYSOBJECTS WHERE [name] LIKE 'GetHandicapReport')
+	DROP PROCEDURE GetHandicapReport
+GO
+
+IF EXISTS(SELECT * FROM SYSOBJECTS WHERE [name] LIKE 'GetAllHandicapReports')
+	DROP PROCEDURE GetAllHandicapReports
+GO
+
+IF EXISTS(SELECT * FROM SYS.TYPES WHERE [name] LIKE 'HoleByHoleScores')
+	DROP TYPE HoleByHoleScore
+GO
+
 IF EXISTS(SELECT * FROM SYS.TYPES WHERE [name] LIKE 'GolferList')
 	DROP TYPE GolferList
+GO
+
+IF EXISTS(SELECT * FROM SYS.TYPES WHERE [name] LIKE 'FeeDetails')
+	DROP TYPE FeeDetails
 GO
 
 CREATE TABLE PermissableTeeTimes
@@ -144,6 +207,7 @@ CREATE TABLE TeeTimesForMembershipLevel
 )
 GO
 
+
 CREATE TABLE MembershipApplication
 (
 	LastName VARCHAR(25) NOT NULL,
@@ -155,8 +219,9 @@ CREATE TABLE MembershipApplication
 	ApplicantAlternatePhone VARCHAR(10) NOT NULL CONSTRAINT CHK_MembershipApplication_AltPhone CHECK (ApplicantAlternatePhone LIKE '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]'),
 	Email VARCHAR(48) NOT NULL CONSTRAINT CHK_MembershipApplication_Email CHECK (Email LIKE '%@%.%'),
 	DateOfBirth DATE NOT NULL CONSTRAINT CHK_MembershipApplication_DateOfBirth CHECK (DateOfBirth < GETDATE()),
-	MembershipType VARCHAR(15) NOT NULL,
+	MembershipType VARCHAR(15) NOT NULL CONSTRAINT CHK_MembershipApplication_MembershipType CHECK (MembershipType IN('Shareholder','Associate')),
 	Occupation VARCHAR(25) NOT NULL,
+	CompanyName VARCHAR(30) NOT NULL,
 	EmployerAddress VARCHAR(64) NOT NULL,
 	EmployerCity VARCHAR(35) NOT NULL,
 	EmployerPostalCode VARCHAR(7) NOT NULL CONSTRAINT CHK_MembershipApplication_EmployerPostalCode CHECK (EmployerPostalCode LIKE '[A-Z][0-9][A-Z] [0-9][A-Z][0-9]'),
@@ -167,13 +232,72 @@ CREATE TABLE MembershipApplication
 	Shareholder1SigningDate DATE NOT NULL CONSTRAINT CHK_MembershipApplication_Sh1Date CHECK (Shareholder1SigningDate <= GETDATE()),
 	SponsoringShareholder2 VARCHAR(25) NOT NULL,
 	Shareholder2SigningDate DATE NOT NULL CONSTRAINT CHK_MembershipApplication_Sh2Date CHECK (Shareholder2SigningDate <= GETDATE()),
-	ShareholderCertification BIT NOT NULL
+	ShareholderCertification BIT NOT NULL,
+	ApplicationStatus VARCHAR(10) NULL CONSTRAINT CHK_MembershipApplication_ApplicationStatus CHECK (ApplicationStatus IN('Accepted','Denied','OnHold', 'Waitlisted')),
+	CONSTRAINT PK_MembershipApplication PRIMARY KEY (LastName,FirstName,ApplicationDate)
 )
 GO
+
+CREATE TABLE AccountTransactions
+(
+	UserId NVARCHAR(450) NOT NULL CONSTRAINT FK_AccountTransactions_UserId FOREIGN KEY REFERENCES AspNetUsers(Id),
+	TransactionDate DATETIME NOT NULL,
+	BookedDate DATETIME NULL,
+	Amount MONEY NOT NULL,
+	Description VARCHAR(40) NOT NULL,
+	DueDate DATE NOT NULL,
+	CONSTRAINT PK_AccountTransactions PRIMARY KEY (UserId, TransactionDate, Description)
+)
+
+CREATE TABLE ScoreCard
+(
+	Course VARCHAR(30) NOT NULL,
+	Rating DECIMAL(6,3) NOT NULL,
+	Slope DECIMAL(6,3) NOT NULL,
+	Date DATETIME NOT NULL,
+	UserId NVARCHAR(450) NOT NULL CONSTRAINT FK_ScoreCard_UserId FOREIGN KEY REFERENCES AspNetUsers(Id),
+	CONSTRAINT PK_ScoreCard_DateId PRIMARY KEY (Date,UserId)
+)
+
+CREATE TABLE ScoreDetails
+(
+	Date DATETIME NOT NULL,
+	UserId NVARCHAR(450) NOT NULL,
+	Hole INT NOT NULL CONSTRAINT CHK_ScoreDetails_Hole CHECK (Hole BETWEEN 1 AND 18),
+	Score INT NOT NULL,
+	CONSTRAINT FK_ScoreDetails_DateId FOREIGN KEY (Date,UserId) REFERENCES ScoreCard(Date,UserId),
+	CONSTRAINT PK_ScoreDetails_DateIdHole PRIMARY KEY (Date, UserId, Hole)
+)
+
+CREATE TABLE HandicapReport
+(
+	UserId NVARCHAR(450) NOT NULL CONSTRAINT FK_HandicapReport_UserId FOREIGN KEY REFERENCES AspNetUsers(Id),
+	LastUpdated DATE NOT NULL CONSTRAINT CHK_HandicapReport_LastUpdate CHECK (LastUpdated <= GETDATE()),
+	Month AS DATENAME(MONTH,LastUpdated),
+	Year AS DATEPART(YEAR,LastUpdated),
+	HandicapFactor DECIMAL(6,3) NOT NULL,
+	Average DECIMAL(6,3) NOT NULL,
+	BestOfTenAverage DECIMAL(6,3) NOT NULL,
+	CONSTRAINT PK_HandicapReport_UserIdDate PRIMARY KEY (UserId, LastUpdated)
+)
 
 CREATE TYPE GolferList AS TABLE
 (
 	UserId NVARCHAR(450) NOT NULL
+)
+GO
+
+CREATE TYPE FeeDetails AS TABLE
+(
+	Description VARCHAR(35),
+	Amount MONEY,
+	DueDate DATE
+)
+GO
+
+CREATE TYPE HoleByHoleScores AS TABLE
+(
+	HoleScore INT
 )
 GO
 
@@ -423,3 +547,317 @@ AS
 	COMMIT TRANSACTION
 	RETURN 0
 GO
+
+CREATE PROCEDURE RecordMembershipApplication(@lastName VARCHAR(25), @firstName VARCHAR(25), @applicantAddress VARCHAR(64), @applicantCity VARCHAR(35),
+@applicantPostalCode VARCHAR(7), @applicantPhone VARCHAR(10), @applicantAlternatePhone VARCHAR(10), @email VARCHAR(48), @dateOfBirth DATE, @membershipType VARCHAR(25), @occupation VARCHAR(25),
+@companyName VARCHAR(30), @employerAddress VARCHAR(64), @employerCity VARCHAR(35), @employerPostalCode VARCHAR(7), @employerPhone VARCHAR(10), @prospectiveMemberCertification BIT, @sponsoringShareholder1 VARCHAR(25),
+@shareholder1SigningDate DATE, @sponsoringShareholder2 VARCHAR(25), @shareholder2SigningDate DATE, @shareholderCertification BIT)
+AS
+	BEGIN TRANSACTION
+
+	INSERT INTO MembershipApplication VALUES(@lastName, @firstName, @applicantAddress, @applicantCity, @applicantPostalCode, @applicantPhone, @applicantAlternatePhone, @email, @dateOfBirth,
+	@membershipType, @occupation, @companyName, @employerAddress, @employerCity, @employerPostalCode, @employerPhone, @prospectiveMemberCertification, GETDATE(), @sponsoringShareholder1, @shareholder1SigningDate,
+	@sponsoringShareholder2, @shareholder2SigningDate, @shareholderCertification, NULL)
+
+	IF @@ERROR <> 0
+	BEGIN
+		ROLLBACK TRANSACTION
+		RAISERROR('Unable to record membership application',16,1)
+		RETURN 1
+	END
+
+	COMMIT TRANSACTION
+	RETURN 0
+GO
+
+CREATE PROCEDURE GetMembershipApplications(@startDate DATE, @endDate DATE)
+AS
+	SELECT * FROM MembershipApplication WHERE ApplicationDate BETWEEN @startDate AND @endDate
+GO
+
+CREATE PROCEDURE UpdateMembershipApplication(@lastName VARCHAR(25), @firstName VARCHAR(25), @applicationDate DATE, @applicationStatus VARCHAR(10))
+AS
+	BEGIN TRANSACTION
+	UPDATE MembershipApplication SET ApplicationStatus = @applicationStatus WHERE LastName = @lastName AND FirstName = @firstName AND ApplicationDate = @applicationDate
+
+	IF @@ERROR <> 0
+	BEGIN
+		ROLLBACK TRANSACTION
+		RAISERROR('Unable to update membership application',16,1)
+		RETURN 1
+	END
+
+	COMMIT TRANSACTION
+	RETURN 0
+GO
+
+
+CREATE PROCEDURE CreateMemberAccount(@membershipType VARCHAR(15), @lastName VARCHAR(25), @firstName VARCHAR(25), @email VARCHAR(48), @phoneNumber VARCHAR(25), 
+@passwordHash VARCHAR(450), @securityStamp VARCHAR(450), @concurrencyStamp VARCHAR(450), @id VARCHAR(450))
+AS
+	BEGIN TRANSACTION
+	INSERT INTO AspNetUsers VALUES(@id, @email, UPPER(@email), @email, UPPER(@email), 0, @passwordHash, LOWER(@securityStamp), LOWER(@concurrencyStamp), @phoneNumber, 0, 0, NULL, 1, 0, CONCAT(@firstName,' ',@lastName),
+	(SELECT TOP 1 MemberNumber FROM AspNetUsers ORDER BY 1 DESC) + 1, 'Gold', @membershipType)
+
+	IF @@ERROR <> 0
+	BEGIN
+		ROLLBACK TRANSACTION
+		RAISERROR('Unable to add member',16,1)
+		RETURN 1
+	END
+
+	INSERT INTO AspNetUserRoles(UserId, RoleId) 
+		SELECT @id, Id FROM AspNetRoles WHERE [Name] IN('Golfer', @membershipType)
+
+	IF @@ROWCOUNT = 0 OR @@ERROR <> 0
+	BEGIN
+		ROLLBACK TRANSACTION
+		RAISERROR('Unable to add member to role ',16,1)
+		RETURN 1
+	END
+
+	COMMIT TRANSACTION
+	RETURN 0
+GO
+
+
+CREATE PROCEDURE AssessMembershipFees(@userId NVARCHAR(450), @feeDetails FeeDetails READONLY)
+AS
+	BEGIN TRANSACTION
+
+	INSERT INTO AccountTransactions
+	SELECT
+		@userId,
+		GETDATE(),
+		NULL,
+		Amount,
+		Description,
+		DueDate
+	FROM
+		@feeDetails
+
+	IF @@ERROR <> 0
+	BEGIN
+		ROLLBACK TRANSACTION
+		RAISERROR('Unable to add membership fees',16,1)
+		RETURN 1
+	END
+
+	COMMIT TRANSACTION
+	RETURN 0
+GO
+
+CREATE PROCEDURE GetAccountDetail(@email VARCHAR(48), @fromDate DATE, @toDate DATE)
+AS
+	SELECT
+		MemberName [Name],
+		MembershipLevel,
+		MembershipType,
+		SUM(Amount) [Balance]
+	FROM
+		AspNetUsers INNER JOIN AccountTransactions ON UserId = Id
+	WHERE
+		Email = @email
+	GROUP BY 
+		MemberName,
+		MembershipLevel,
+		MembershipType
+
+	SELECT
+		TransactionDate,
+		BookedDate,
+		Amount,
+		Description,
+		DueDate
+	FROM
+		AccountTransactions INNER JOIN AspNetUsers ON UserId = Id
+	WHERE
+		CONVERT(DATE, TransactionDate) BETWEEN @fromDate AND @toDate
+GO
+
+CREATE PROCEDURE ViewAllAccountsSummary
+AS
+	SELECT
+		MemberName [Name],
+		Email,
+		SUM(Amount) [Balance]
+	FROM
+		AspNetUsers INNER JOIN AccountTransactions ON AspNetUsers.Id = AccountTransactions.UserId
+	GROUP BY
+		MemberName,
+		Email
+GO
+
+CREATE PROCEDURE RecordScores(@course VARCHAR(30), @rating DECIMAL(6,3), @slope DECIMAL(6,3), @date DATETIME, @email NVARCHAR(128), @holeByHoleScores AS HoleByHoleScores READONLY, @message VARCHAR(128) OUT)
+AS
+	BEGIN TRANSACTION
+
+	DECLARE @userId NVARCHAR(450) = (SELECT TOP 1 Id FROM AspNetUsers WHERE Email = @email)
+
+	INSERT INTO ScoreCard(Course, Rating, Slope, Date, UserId)
+	SELECT TOP 1
+		@course,
+		@rating,
+		@slope,
+		@date,
+		@userId
+
+	IF @@ERROR <> 0
+	BEGIN
+		ROLLBACK TRANSACTION
+		SET @message = 'Unable to create scorecard for user with email ''' + @email + '''' 
+		RAISERROR(@message,16,1)
+		RETURN 1
+	END
+
+	INSERT INTO ScoreDetails(Date, UserId, Hole, Score)
+	SELECT
+		@date,
+		@userId,
+		ROW_NUMBER() OVER(ORDER BY @date),
+		HoleScore
+	FROM
+		@holeByHoleScores
+
+	IF @@ERROR <> 0
+	BEGIN
+		ROLLBACK TRANSACTION
+		SET @message = 'Unable to add score details to scoreCard' 
+		RAISERROR(@message,16,1)
+		RETURN 1
+	END
+
+	COMMIT TRANSACTION
+	RETURN 0
+GO
+
+CREATE PROCEDURE UpdateHandicapReport(@email NVARCHAR(128), @message VARCHAR(128) OUT)
+AS
+
+	DECLARE @userId NVARCHAR(450) = (SELECT TOP 1 Id FROM AspNetUsers WHERE Email = @email)
+	DECLARE @lifetimeRounds INT = (SELECT COUNT(*) FROM ScoreCard WHERE UserId = @userId)
+	
+	IF @lifetimeRounds < 5
+	BEGIN
+		SET @message = 'Cannot update handicap report at this time due to insufficient history'
+		RAISERROR(@message,16,1)
+		RETURN 1
+	END 
+
+	DECLARE @numberOfDifferentailsToUse INT = CASE
+		WHEN @lifetimeRounds BETWEEN 5 AND 6 THEN 1
+		WHEN @lifetimeRounds BETWEEN 7 AND 8 THEN 2
+		WHEN @lifetimeRounds BETWEEN 9 AND 10 THEN 3
+		WHEN @lifetimeRounds BETWEEN 11 AND 12 THEN 4
+		WHEN @lifetimeRounds BETWEEN 13 AND 14 THEN 5
+		WHEN @lifetimeRounds BETWEEN 15 AND 16 THEN 6
+		WHEN @lifetimeRounds = 17 THEN 7
+		WHEN @lifetimeRounds = 18 THEN 8
+		WHEN @lifetimeRounds = 19 THEN 9
+		ELSE 10
+		END
+
+	SELECT
+	ROUND(([Score Per Day] - Rating) * 113.0 / Slope, 1) AS 'HandicapDifferential' INTO #HandicapDifferentials
+	FROM
+		(SELECT DISTINCT TOP 20
+			ScoreDetails.Date,
+			CAST(SUM(Score) OVER(PARTITION BY ScoreDetails.Date) AS DECIMAL) AS [Score Per Day]
+		FROM
+			ScoreDetails
+		WHERE
+			ScoreDetails.UserId = @userId
+	) AS [Scores]
+	INNER JOIN ScoreCard ON Scores.Date = ScoreCard.Date AND ScoreCard.UserId = @userId
+	ORDER BY ScoreCard.Date DESC
+
+	IF NOT EXISTS(SELECT * FROM HandicapReport INNER JOIN AspNetUsers ON UserId = Id WHERE Email = @email AND Year = DATEPART(YEAR, GETDATE()) AND Month = DATENAME(MONTH, GETDATE()))
+	BEGIN
+		INSERT INTO HandicapReport(UserId, LastUpdated, HandicapFactor, Average, BestOfTenAverage)
+			SELECT
+				@userId,
+				GETDATE(),
+				(SELECT ROUND(AVG(HandicapDifferential) * 0.96,1,1) FROM (SELECT TOP (@numberOfDifferentailsToUse) HandicapDifferential FROM #HandicapDifferentials ORDER BY HandicapDifferential ASC) [TopDifferentials]),
+				(SELECT ROUND(AVG(HandicapDifferential * 1.0),1) FROM #HandicapDifferentials),
+				(SELECT ROUND(AVG(HandicapDifferential * 1.0),1) FROM (SELECT TOP (@numberOfDifferentailsToUse) HandicapDifferential FROM #HandicapDifferentials ORDER BY HandicapDifferential ASC) [TopDifferentails])
+	END
+	ELSE
+	BEGIN
+		DECLARE @lastUpdated AS DATETIME = (SELECT TOP 1 LastUpdated FROM HandicapReport WHERE UserId = @userId ORDER BY LastUpdated DESC)
+		UPDATE HandicapReport
+			SET LastUpdated = GETDATE(),
+			HandicapFactor = (SELECT ROUND(AVG(HandicapDifferential * 0.96),1,1) FROM (SELECT TOP (@numberOfDifferentailsToUse) HandicapDifferential FROM #HandicapDifferentials ORDER BY HandicapDifferential ASC) [TopDifferentials]),
+			Average = (SELECT ROUND(AVG(HandicapDifferential * 1.0),1) FROM #HandicapDifferentials),
+			BestOfTenAverage = (SELECT ROUND(AVG(HandicapDifferential * 1.0),1) FROM (SELECT TOP (@numberOfDifferentailsToUse) HandicapDifferential FROM #HandicapDifferentials ORDER BY HandicapDifferential ASC) [TopDifferentails])
+		WHERE
+			UserId = @userId AND LastUpdated = @lastUpdated
+	END
+
+	IF @@ERROR <> 0 
+	RETURN 1
+
+	RETURN 0
+GO
+
+CREATE PROCEDURE GetHandicapReport(@email NVARCHAR(128), @month NVARCHAR(14), @year INT)
+AS
+	DECLARE @userId AS VARCHAR(128) = (SELECT TOP 1 Id FROM AspNetUsers WHERE Email = @email)
+	SELECT
+		MemberName,
+		HandicapFactor,
+		Average,
+		BestOfTenAverage,
+		LastUpdated
+	FROM
+		HandicapReport INNER JOIN AspNetUsers ON
+		HandicapReport.UserId = AspNetUsers.Id
+	WHERE
+		Email = @email AND Month = @month AND Year = @year
+
+		IF @@ROWCOUNT = 0
+		BEGIN
+			RAISERROR('A handicap report could not be found for the given search criteria.',16,1)
+		END
+
+	SELECT DISTINCT TOP 20
+		Course,
+		Rating,
+		Slope,
+		ScoreDetails.Date
+	INTO #PreviousScores
+	FROM
+		ScoreCard INNER JOIN ScoreDetails ON ScoreCard.UserId = ScoreDetails.UserId AND ScoreDetails.Date = ScoreCard.Date
+	WHERE
+		DATEPART(MONTH, ScoreDetails.Date) <= MONTH(@month + '01 1901') AND DATEPART(YEAR, ScoreDetails.Date) <= @year AND ScoreDetails.UserId = @userId
+	ORDER BY Date DESC
+
+	SELECT * FROM #PreviousScores
+
+	SELECT
+		ScoreDetails.Date,
+		Hole,
+		ScoreDetails.Score AS [HoleScore]
+	FROM
+		#PreviousScores INNER JOIN ScoreDetails ON #PreviousScores.Date = ScoreDetails.Date
+	WHERE
+		ScoreDetails.UserId = @userId
+GO
+
+CREATE PROCEDURE GetAllHandicapReports
+AS
+	SELECT
+		MemberName,
+		Email,
+		HandicapFactor,
+		Average,
+		BestOfTenAverage,
+		LastUpdated
+	FROM
+		HandicapReport INNER JOIN AspNetUsers ON
+		HandicapReport.UserId = AspNetUsers.Id
+GO
+
+
+SELECT * FROM AspNetUserRoles INNER JOIN AspNetRoles ON AspNetUserRoles.RoleId = AspNetRoles.Id
+
+INSERT INTO AspNetUserRoles(UserId, RoleId) VALUES('8cf5f3cd-b772-4e26-80e5-5b977ba824a8', 'd58c72ce-e675-48b4-aea6-2499710e76d8')

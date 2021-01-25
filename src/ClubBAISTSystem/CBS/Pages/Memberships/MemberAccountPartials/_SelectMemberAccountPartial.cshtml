@@ -1,0 +1,43 @@
+﻿@model IEnumerable<(string Name, string Email, double Balance)>
+
+<div style="height: 50vh; overflow: auto">
+    @if (!Model.Any())
+    {
+        <h3>There are no accounts to display</h3>
+    }
+    else
+    {
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>
+                        Member Name
+                    </th>
+                    <th>
+                        Balance
+                    </th>
+                    <th>
+                        View Details
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var summary in Model)
+                {
+                    <tr>
+                        <td>
+                            @summary.Name
+                        </td>
+                        <td @(Math.Sign(summary.Balance) == -1 ? "class=text-danger" : "")>@(summary.Balance.ToString("C2"))</td>
+                        <td>
+                            <form method="POST">
+                                <input type="submit" asp-page-handler="GetMemberAccount" class="form-control btn btn-outline-info" value="Details" />
+                                <input type="hidden" name="email" value="@summary.Email" />
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>

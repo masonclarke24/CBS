@@ -1,0 +1,126 @@
+﻿@page
+@model CBS.RecordScoresModel
+@{
+    ViewData["Title"] = "RecordScores";
+    Layout = "~/Pages/Shared/_Layout.cshtml";
+}
+@section Scripts{
+
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        window.addEventListener('load', () => {
+            $("input[name='Date']").datepicker({ dateFormat: "dd-M-yy", maxDate: 0, showButtonPanel: true, yearRange: "-1:+0" });
+            holeCountChange();
+            $("input[name^='HoleByHoleScores']").on("input", updateTotal);
+        });
+
+        function holeCountChange() {
+            let holeCount = $("select[name='numberOfHoles']").first(":selected").val();
+
+            if (holeCount == 9)
+                $(".container .row div:nth-child(2)").addClass("d-none");
+            else
+                $(".container .row div:nth-child(2)").removeClass("d-none");
+
+            updateTotal();
+        }
+
+        function updateTotal() {
+            let scores = $(":not(.d-none)").children("input[name^='HoleByHoleScores']")
+
+            totalScore = scores.toArray().map(s => isNaN($(s).val() ? $(s).val() : "NaN") ? 0 : parseInt($(s).val())).reduce((accumulator, currentValue) => accumulator + currentValue);
+            $("#totalScore").val(totalScore);
+        }
+    </script>
+}
+
+<h1>Record Scores</h1>
+
+<form class="form" method="post">
+    <div asp-validation-summary="All" class="text-danger"></div>
+    <div class="form-group">
+        <label>Course:</label>
+        <input class="form-control" asp-for="@Model.Course" tabindex="1" />
+        <span class="text-danger" asp-validation-for="@Model.Course"></span>
+    </div>
+
+    <div class="d-flex flex-row justify-content-between">
+        <div class="form-group">
+            <label>Course Rating:</label>
+            <input class="form-control" asp-for="@Model.CourseRating" tabindex="2" />
+            <span class="text-danger" asp-validation-for="@Model.CourseRating"></span>
+        </div>
+
+        <div class="form-group">
+            <label>Course Slope:</label>
+            <input class="form-control" asp-for="@Model.CourseSlope" tabindex="3" />
+            <span class="text-danger" asp-validation-for="@Model.CourseSlope"></span>
+        </div>
+
+        <div class="form-group">
+            <label>Date:</label>
+            <input class="form-control" asp-for="@Model.Date" tabindex="4" />
+            <span class="text-danger" asp-validation-for="@Model.Date"></span>
+        </div>
+    </div>
+
+    <div class="d-flex flex-row justify-content-start">
+        <div class="d-flex flex-row p-1">
+            <label>Number of Holes in Round:</label>
+            <select asp-for="NumberOfHoles" class="form-control ml-2" style="width:min-content" tabindex="5" name="numberOfHoles" onchange="holeCountChange()">
+                <option value="18">18</option>
+                <option value="9">9</option>
+            </select>
+        </div>
+        <div>
+            <label>Total Score:</label>
+            <input id="totalScore" disabled />
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="row">
+            <div class="col-sm-6 font-weight-bold">
+                In
+            </div>
+            <div class="col-sm-6 font-weight-bold">
+                Out
+            </div>
+        </div>
+        @for (int i = 0; i < 9; i++)
+        {
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <input asp-for="HoleByHoleScores[i]" data-val="true" data-val-range="This field must be between -180 and 10" data-val-range-min="-180" data-val-range-max="10" class="form-control" tabindex="@(i + 6)" placeholder="@($"Hole {i + 1}")" />
+                    <span class="text-danger" asp-validation-for="HoleByHoleScores[i]"></span>
+                </div>
+                <div class="col-sm-6">
+                    <input asp-for="HoleByHoleScores[i + 9]" class="form-control" tabindex="@(i + 15)" placeholder="@($"Hole {i + 10}")"/>
+                    <span class="text-danger" asp-validation-for="HoleByHoleScores[i + 9]"></span>
+                </div>
+            </div>
+        }
+    </div>
+    <input class="form-control btn btn-outline-success" type="submit" value="Record Scores" tabindex="24" />
+</form>
+
+<style>
+    .form-group > label {
+        white-space: nowrap;
+        margin-right: 0.5em;
+        margin-left: 0.5em;
+    }
+
+    /* Chrome, Safari, Edge, Opera */
+    input::-webkit-outer-spin-button,
+    input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    /* Firefox */
+    input[type=number] {
+        -moz-appearance: textfield;
+    }
+</style>
+

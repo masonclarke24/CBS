@@ -1,0 +1,8 @@
+﻿@model IEnumerable<dynamic>
+
+@foreach(var report in Model)
+{
+    <tr>
+        <partial name="_HandicapReportPartial" model="report" />
+    </tr>
+}
